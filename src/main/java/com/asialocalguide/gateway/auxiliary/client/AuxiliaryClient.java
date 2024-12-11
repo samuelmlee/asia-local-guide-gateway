@@ -7,7 +7,6 @@ import com.asialocalguide.gateway.auxiliary.dto.DestinationResponseDTO;
 import com.asialocalguide.gateway.auxiliary.exception.DestinationApiException;
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -15,15 +14,15 @@ import org.springframework.web.client.RestClient;
 @Component
 public class AuxiliaryClient {
 
-  private final RestClient auxiliaryClient;
+  private final RestClient auxiliaryRestClient;
 
-  public AuxiliaryClient(RestClient auxiliaryClient) {
-    this.auxiliaryClient = auxiliaryClient;
+  public AuxiliaryClient(RestClient auxiliaryRestClient) {
+    this.auxiliaryRestClient = auxiliaryRestClient;
   }
 
   public List<Destination> getAllDestinations() {
     DestinationResponseDTO destinationResponse =
-        auxiliaryClient
+        auxiliaryRestClient
             .get()
             .uri("/destinations")
             .accept(APPLICATION_JSON)
