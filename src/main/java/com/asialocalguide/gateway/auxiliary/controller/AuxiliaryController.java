@@ -1,7 +1,7 @@
-package com.asialocalguide.gateway.controller;
+package com.asialocalguide.gateway.auxiliary.controller;
 
-import com.asialocalguide.gateway.dto.DestinationDTO;
-import com.asialocalguide.gateway.service.AuxiliaryService;
+import com.asialocalguide.gateway.auxiliary.dto.DestinationDTO;
+import com.asialocalguide.gateway.auxiliary.service.AuxiliaryService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

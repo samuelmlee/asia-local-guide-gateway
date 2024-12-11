@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.entity;
+package com.asialocalguide.gateway.auxiliary.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

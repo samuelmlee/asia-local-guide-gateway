@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.entity;
+package com.asialocalguide.gateway.auxiliary.domain;
 
 public enum DestinationType {
   CITY,
