@@ -1,24 +1,26 @@
 package com.asialocalguide.gateway.auxiliary.client;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-
 import com.asialocalguide.gateway.auxiliary.domain.Destination;
 import com.asialocalguide.gateway.auxiliary.dto.DestinationResponseDTO;
 import com.asialocalguide.gateway.auxiliary.exception.DestinationApiException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class AuxiliaryClient {
+public class DestinationClient {
 
   private final RestClient auxiliaryRestClient;
 
-  public AuxiliaryClient(RestClient auxiliaryRestClient) {
+  public DestinationClient(RestClient auxiliaryRestClient) {
     this.auxiliaryRestClient = auxiliaryRestClient;
   }
 
@@ -28,7 +30,11 @@ public class AuxiliaryClient {
           auxiliaryRestClient
               .get()
               .uri("/destinations")
-              .accept(APPLICATION_JSON)
+              .headers(
+                  httpHeaders -> {
+                    httpHeaders.set("Accept", "application/json;version=2.0");
+                    httpHeaders.set("Accept-Language", "fr");
+                  })
               .retrieve()
               .onStatus(
                   HttpStatusCode::is4xxClientError,
@@ -53,13 +59,14 @@ public class AuxiliaryClient {
   }
 
   private void handleError(ClientHttpResponse response, String source) throws IOException {
+    String responseBody =
+        new BufferedReader(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))
+            .lines()
+            .collect(Collectors.joining("\n"));
+
     throw new DestinationApiException(
-        source
-            + " error while calling Destination API: "
-            + response.getStatusCode()
-            + "-"
-            + response.getHeaders()
-            + "-"
-            + response.getBody());
+        String.format(
+            "%s error while calling Destination API: %s - %s - %s",
+            source, response.getStatusCode(), response.getHeaders(), responseBody));
   }
 }
