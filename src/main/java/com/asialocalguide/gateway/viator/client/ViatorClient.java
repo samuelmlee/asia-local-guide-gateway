@@ -1,8 +1,8 @@
-package com.asialocalguide.gateway.auxiliary.client;
+package com.asialocalguide.gateway.viator.client;
 
-import com.asialocalguide.gateway.auxiliary.domain.Destination;
-import com.asialocalguide.gateway.auxiliary.dto.DestinationResponseDTO;
-import com.asialocalguide.gateway.auxiliary.exception.DestinationApiException;
+import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorDestinationResponseDTO;
+import com.asialocalguide.gateway.viator.exception.ViatorDestinationApiException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,17 +16,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class DestinationClient {
+public class ViatorClient {
 
   private final RestClient auxiliaryRestClient;
 
-  public DestinationClient(RestClient auxiliaryRestClient) {
+  public ViatorClient(RestClient auxiliaryRestClient) {
     this.auxiliaryRestClient = auxiliaryRestClient;
   }
 
-  public List<Destination> getAllDestinations() {
+  public List<ViatorDestinationDTO> getAllDestinations() {
     try {
-      DestinationResponseDTO destinationResponse =
+      ViatorDestinationResponseDTO destinationResponse =
           auxiliaryRestClient
               .get()
               .uri("/destinations")
@@ -42,19 +42,20 @@ public class DestinationClient {
               .onStatus(
                   HttpStatusCode::is5xxServerError,
                   (request, response) -> handleError(response, "Server"))
-              .body(DestinationResponseDTO.class);
+              .body(ViatorDestinationResponseDTO.class);
 
       return Optional.ofNullable(destinationResponse)
-          .map(DestinationResponseDTO::destinations)
+          .map(ViatorDestinationResponseDTO::viatorDestinationDTOS)
           .orElseGet(List::of);
 
-    } catch (DestinationApiException e) {
+    } catch (ViatorDestinationApiException e) {
 
       throw e;
 
     } catch (Exception e) {
 
-      throw new DestinationApiException("Failed to call Destination API: " + e.getMessage(), e);
+      throw new ViatorDestinationApiException(
+          "Failed to call Destination API: " + e.getMessage(), e);
     }
   }
 
@@ -64,7 +65,7 @@ public class DestinationClient {
             .lines()
             .collect(Collectors.joining("\n"));
 
-    throw new DestinationApiException(
+    throw new ViatorDestinationApiException(
         String.format(
             "%s error while calling Destination API: %s - %s - %s",
             source, response.getStatusCode(), response.getHeaders(), responseBody));

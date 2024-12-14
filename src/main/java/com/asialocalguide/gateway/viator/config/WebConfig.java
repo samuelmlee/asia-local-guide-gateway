@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.auxiliary.config;
+package com.asialocalguide.gateway.viator.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +14,7 @@ public class WebConfig {
   }
 
   @Bean
-  public RestClient auxiliaryRestClient() {
+  public RestClient viatorRestClient() {
 
     return RestClient.builder()
         .baseUrl(viatorProperties.baseUrl())

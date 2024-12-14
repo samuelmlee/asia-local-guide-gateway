@@ -1,6 +1,6 @@
-package com.asialocalguide.gateway.auxiliary.domain;
+package com.asialocalguide.gateway.viator.dto;
 
-public enum DestinationType {
+public enum ViatorDestinationType {
   AREA,
   CITY,
   COUNTRY,
