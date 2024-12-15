@@ -1,9 +1,7 @@
 package com.asialocalguide.gateway.core.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,7 +14,8 @@ public class Destination {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  private String name;
+  @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<DestinationTranslation> destinationTranslations;
 
   private DestinationType type;
 }
