@@ -1,11 +1,13 @@
 package com.asialocalguide.gateway.viator.service;
 
+import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.Destination;
+import com.asialocalguide.gateway.core.domain.DestinationTranslation;
 import com.asialocalguide.gateway.core.domain.DestinationType;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,16 +20,43 @@ public class ViatorDestinationService {
   }
 
   public List<Destination> getAllDestinations() {
-    List<ViatorDestinationDTO> viatorDestinations = viatorClient.getAllDestinations();
+    List<Destination> allDestinations = new ArrayList<>();
 
-    return viatorDestinations.stream().map(this::convertToDestination).collect(Collectors.toList());
+    for (SupportedLocale supportedLocale : SupportedLocale.values()) {
+      List<ViatorDestinationDTO> viatorDestinations =
+          viatorClient.getAllDestinationsForLocale(supportedLocale.getCode());
+
+      allDestinations.addAll(
+          viatorDestinations.stream()
+              .map(
+                  viatorDestinationDTO ->
+                      convertToDestination(viatorDestinationDTO, supportedLocale))
+              .toList());
+    }
+
+    return allDestinations;
   }
 
-  private Destination convertToDestination(ViatorDestinationDTO viatorDestinationDTO) {
+  private Destination convertToDestination(
+      ViatorDestinationDTO viatorDestinationDTO, SupportedLocale supportedLocale) {
+    List<DestinationTranslation> translations =
+        createTranslations(viatorDestinationDTO, supportedLocale);
+
     return Destination.builder()
-        .name(viatorDestinationDTO.name())
         .type(mapToDestinationType(viatorDestinationDTO.type()))
+        .destinationTranslations(translations)
         .build();
+  }
+
+  private List<DestinationTranslation> createTranslations(
+      ViatorDestinationDTO viatorDestinationDTO, SupportedLocale supportedLocale) {
+    DestinationTranslation translation =
+        DestinationTranslation.builder()
+            .locale(supportedLocale.getCode())
+            .destinationName(viatorDestinationDTO.name())
+            .build();
+
+    return List.of(translation);
   }
 
   private DestinationType mapToDestinationType(String viatorType) {

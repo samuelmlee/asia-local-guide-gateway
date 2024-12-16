@@ -18,22 +18,22 @@ import org.springframework.web.client.RestClient;
 @Component
 public class ViatorClient {
 
-  private final RestClient auxiliaryRestClient;
+  private final RestClient viatorClient;
 
-  public ViatorClient(RestClient auxiliaryRestClient) {
-    this.auxiliaryRestClient = auxiliaryRestClient;
+  public ViatorClient(RestClient viatorClient) {
+    this.viatorClient = viatorClient;
   }
 
-  public List<ViatorDestinationDTO> getAllDestinations() {
+  public List<ViatorDestinationDTO> getAllDestinationsForLocale(String localeString) {
     try {
       ViatorDestinationResponseDTO destinationResponse =
-          auxiliaryRestClient
+          viatorClient
               .get()
               .uri("/destinations")
               .headers(
                   httpHeaders -> {
                     httpHeaders.set("Accept", "application/json;version=2.0");
-                    httpHeaders.set("Accept-Language", "fr");
+                    httpHeaders.set("Accept-Language", localeString);
                   })
               .retrieve()
               .onStatus(

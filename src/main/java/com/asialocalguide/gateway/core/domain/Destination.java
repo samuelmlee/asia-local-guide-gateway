@@ -14,8 +14,13 @@ public class Destination {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "id", referencedColumnName = "id")
   private List<DestinationTranslation> destinationTranslations;
 
   private DestinationType type;
+
+  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "destination_id", referencedColumnName = "id")
+  private List<BookingProviderMapping> bookingProviderMappings;
 }

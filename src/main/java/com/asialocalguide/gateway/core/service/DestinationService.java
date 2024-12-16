@@ -4,7 +4,6 @@ import com.asialocalguide.gateway.core.domain.Destination;
 import com.asialocalguide.gateway.core.dto.DestinationDTO;
 import com.asialocalguide.gateway.core.exception.DestinationRepositoryException;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.service.ViatorDestinationService;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,19 +17,22 @@ public class DestinationService {
   private final DestinationRepository destinationRepository;
 
   public DestinationService(
-      ViatorClient viatorClient,
       ViatorDestinationService viatorDestinationService,
       DestinationRepository destinationRepository) {
+
     this.viatorDestinationService = viatorDestinationService;
     this.destinationRepository = destinationRepository;
   }
 
-  public void getAndPersistAllDestinations() {
+  public void syncViatorDestinations() {
 
     List<Destination> destinations = viatorDestinationService.getAllDestinations();
 
     destinations.stream()
-        .filter(e -> !destinationRepository.existsByName(e.getName()))
+        .filter(
+            d -> {
+              return !destinationRepository.existsByName(d.getName());
+            })
         .forEach(destinationRepository::save);
   }
 

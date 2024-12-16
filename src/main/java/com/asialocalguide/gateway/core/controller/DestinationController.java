@@ -14,17 +14,17 @@ public class DestinationController {
 
   private final DestinationService destinationService;
 
-    public DestinationController(DestinationService destinationService) {
-        this.destinationService = destinationService;
-    }
+  public DestinationController(DestinationService destinationService) {
+    this.destinationService = destinationService;
+  }
 
-    @GetMapping
+  @GetMapping
   public List<DestinationDTO> getAllDestinations() {
     return destinationService.getAllDestinations();
   }
 
-  @PostMapping("/sync")
+  @PostMapping("/sync/viator")
   public void syncDestinations() {
-    destinationService.getAndPersistAllDestinations();
+    destinationService.syncViatorDestinations();
   }
 }

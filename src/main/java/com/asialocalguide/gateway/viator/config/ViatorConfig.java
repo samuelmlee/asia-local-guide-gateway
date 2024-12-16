@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-public class WebConfig {
+public class ViatorConfig {
 
   private final ViatorProperties viatorProperties;
 
-  public WebConfig(ViatorProperties viatorProperties) {
+  public ViatorConfig(ViatorProperties viatorProperties) {
     this.viatorProperties = viatorProperties;
   }
 
