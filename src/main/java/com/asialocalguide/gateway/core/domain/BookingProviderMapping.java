@@ -11,6 +11,7 @@ public class BookingProviderMapping {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @ManyToOne(fetch = FetchType.LAZY)
   private BookingProvider bookingProvider;
 
   private String providerDestinationId;

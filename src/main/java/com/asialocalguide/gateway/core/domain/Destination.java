@@ -18,6 +18,7 @@ public class Destination {
   @JoinColumn(name = "id", referencedColumnName = "id")
   private List<DestinationTranslation> destinationTranslations;
 
+  @Enumerated(EnumType.STRING)
   private DestinationType type;
 
   @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
