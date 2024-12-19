@@ -39,6 +39,7 @@ public class ViatorDestinationService {
 
   private Destination convertToDestination(
       ViatorDestinationDTO viatorDestinationDTO, SupportedLocale supportedLocale) {
+
     List<DestinationTranslation> translations =
         createTranslations(viatorDestinationDTO, supportedLocale);
 
@@ -51,10 +52,7 @@ public class ViatorDestinationService {
   private List<DestinationTranslation> createTranslations(
       ViatorDestinationDTO viatorDestinationDTO, SupportedLocale supportedLocale) {
     DestinationTranslation translation =
-        DestinationTranslation.builder()
-            .locale(supportedLocale.getCode())
-            .destinationName(viatorDestinationDTO.name())
-            .build();
+        new DestinationTranslation(supportedLocale.getCode(), viatorDestinationDTO.name());
 
     return List.of(translation);
   }
