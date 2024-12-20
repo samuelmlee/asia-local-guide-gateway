@@ -11,7 +11,7 @@ public interface BookingProviderMappingRepository
     extends JpaRepository<BookingProviderMapping, Long> {
 
   @Query(
-      "SELECT DISTINCT m.providerDestinationId FROM BookingProviderMapping m WHERE m.bookingProvider.name = :providerName")
+      "SELECT DISTINCT m.providerDestinationId FROM BookingProviderMapping m WHERE m.providerName = :providerName")
   Set<String> findProviderDestinationIdsByProviderName(
       @Param("providerName") BookingProviderName providerName);
 }

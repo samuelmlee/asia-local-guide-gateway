@@ -1,7 +1,9 @@
 package com.asialocalguide.gateway.viator.config;
 
+import java.awt.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -18,7 +20,12 @@ public class ViatorConfig {
 
     return RestClient.builder()
         .baseUrl(viatorProperties.baseUrl())
-        .defaultHeader(viatorProperties.authHeader(), viatorProperties.apiKey())
+        .defaultHeaders(
+            headers -> {
+              headers.set(viatorProperties.authHeader(), viatorProperties.apiKey());
+              headers.set(
+                  "Accept", MediaType.APPLICATION_JSON + ";" + viatorProperties.apiVersion());
+            })
         .build();
   }
 }

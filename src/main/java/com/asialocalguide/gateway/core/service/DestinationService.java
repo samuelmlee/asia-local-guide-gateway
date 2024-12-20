@@ -41,6 +41,8 @@ public class DestinationService {
 
     List<Destination> destinations = viatorDestinationService.getAllDestinations();
 
+    System.out.println("destinations: " + destinations);
+
     Set<String> destinationIds =
         bookingProviderMappingRepository.findProviderDestinationIdsByProviderName(
             BookingProviderName.VIATOR);
@@ -61,6 +63,8 @@ public class DestinationService {
                   return !destinationIds.contains(newMapping.getProviderDestinationId());
                 })
             .toList();
+
+    System.out.println("destinationsToSave: " + destinationsToSave);
 
     destinationRepository.saveAll(destinationsToSave);
   }
