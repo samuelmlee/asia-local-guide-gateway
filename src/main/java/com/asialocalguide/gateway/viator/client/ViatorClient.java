@@ -35,7 +35,7 @@ public class ViatorClient {
               .body(ViatorDestinationResponseDTO.class);
 
       return Optional.ofNullable(destinationResponse)
-          .map(ViatorDestinationResponseDTO::viatorDestinationDTOS)
+          .map(ViatorDestinationResponseDTO::destinations)
           .orElseGet(List::of);
 
     } catch (ViatorDestinationApiException e) {

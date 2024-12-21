@@ -26,6 +26,7 @@ public class ViatorConfig {
               headers.set(
                   "Accept", MediaType.APPLICATION_JSON + ";" + viatorProperties.apiVersion());
             })
+        .requestInterceptor(new ViatorRequestInterceptor())
         .build();
   }
 }
