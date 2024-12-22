@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class DestinationTranslationId implements Serializable {
-  private Long id;
+  private Long destination;
 
   private String locale;
 }

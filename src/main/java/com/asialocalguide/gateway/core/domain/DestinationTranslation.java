@@ -3,6 +3,8 @@ package com.asialocalguide.gateway.core.domain;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
+import jakarta.persistence.ManyToOne;
+import java.util.Objects;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DestinationTranslation {
 
-  @Id private Long id;
+  @Id @ManyToOne private Destination destination;
 
   @Id private String locale;
 
@@ -21,5 +23,24 @@ public class DestinationTranslation {
   public DestinationTranslation(String locale, String destinationName) {
     this.locale = locale;
     this.destinationName = destinationName;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 31 * Objects.hashCode(locale);
+    result = 31 * result + Objects.hashCode(destinationName);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "DestinationTranslation{"
+        + ", locale='"
+        + locale
+        + '\''
+        + ", destinationName='"
+        + destinationName
+        + '\''
+        + '}';
   }
 }

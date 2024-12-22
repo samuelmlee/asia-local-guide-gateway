@@ -19,33 +19,34 @@ public class ViatorDestinationService {
 
   public List<Destination> getAllDestinations() {
 
-    SupportedLocale defaultLocale =
-        SupportedLocale.stream().filter(SupportedLocale::isDefault).findFirst().orElse(null);
+    SupportedLocale defaultLocale = getDefaultLocale();
 
     List<ViatorDestinationDTO> defaultDestinationDTOs = getDefaultDestinationDTOs(defaultLocale);
 
-    Map<Long, List<DestinationTranslation>> translationsMap = buildAdditionalTranslations();
+    Map<Long, Set<DestinationTranslation>> translationsMap = buildAdditionalTranslationsMap();
 
     return defaultDestinationDTOs.stream()
         .map(dto -> buildDestination(dto, defaultLocale, translationsMap))
         .toList();
   }
 
-  private List<ViatorDestinationDTO> getDefaultDestinationDTOs(SupportedLocale defaultLocale) {
+  private static SupportedLocale getDefaultLocale() {
+    return SupportedLocale.stream()
+        .filter(SupportedLocale::isDefault)
+        .findFirst()
+        .orElseThrow(() -> new ViatorDestinationMappingException("No default locale found"));
+  }
 
-    if (defaultLocale == null) {
-      throw new ViatorDestinationMappingException("No default locale found");
-    }
+  private List<ViatorDestinationDTO> getDefaultDestinationDTOs(SupportedLocale defaultLocale) {
 
     return viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
   }
 
-  private Map<Long, List<DestinationTranslation>> buildAdditionalTranslations() {
+  private Map<Long, Set<DestinationTranslation>> buildAdditionalTranslationsMap() {
 
-    Map<Long, List<DestinationTranslation>> translationsMap = new HashMap<>();
+    Map<Long, Set<DestinationTranslation>> translationsMap = new HashMap<>();
 
-    List<SupportedLocale> additionalLocales =
-        SupportedLocale.stream().filter(locale -> !locale.isDefault()).toList();
+    List<SupportedLocale> additionalLocales = getAdditionalLocales();
 
     additionalLocales.forEach(
         locale -> {
@@ -57,9 +58,12 @@ public class ViatorDestinationService {
                 Long destinationId = dto.destinationId();
 
                 DestinationTranslation translation = createTranslations(dto, locale);
-                List<DestinationTranslation> translationList =
-                    translationsMap.getOrDefault(destinationId, new ArrayList<>());
+
+                Set<DestinationTranslation> translationList =
+                    translationsMap.getOrDefault(destinationId, new HashSet<>());
+
                 translationList.add(translation);
+
                 translationsMap.put(destinationId, translationList);
               });
         });
@@ -67,16 +71,19 @@ public class ViatorDestinationService {
     return translationsMap;
   }
 
+  private static List<SupportedLocale> getAdditionalLocales() {
+    return SupportedLocale.stream().filter(locale -> !locale.isDefault()).toList();
+  }
+
+  private DestinationTranslation createTranslations(
+      ViatorDestinationDTO viatorDestination, SupportedLocale supportedLocale) {
+    return new DestinationTranslation(supportedLocale.getCode(), viatorDestination.name());
+  }
+
   private Destination buildDestination(
       ViatorDestinationDTO dto,
       SupportedLocale defaultLocale,
-      Map<Long, List<DestinationTranslation>> translationsMap) {
-
-    DestinationTranslation defaultTranslation = createTranslations(dto, defaultLocale);
-
-    List<DestinationTranslation> translationList =
-        translationsMap.getOrDefault(dto.destinationId(), new ArrayList<>());
-    translationList.add(defaultTranslation);
+      Map<Long, Set<DestinationTranslation>> translationsMap) {
 
     BookingProviderMapping bookingProviderMapping =
         BookingProviderMapping.builder()
@@ -84,16 +91,31 @@ public class ViatorDestinationService {
             .providerName(BookingProviderName.VIATOR)
             .build();
 
-    return Destination.builder()
-        .type(mapToDestinationType(dto.type()))
-        .bookingProviderMappings(List.of(bookingProviderMapping))
-        .destinationTranslations(translationList)
-        .build();
+    Destination destination = new Destination();
+    destination.setType(mapToDestinationType(dto.type()));
+    destination.setBookingProviderMappings(Set.of(bookingProviderMapping));
+
+    Set<DestinationTranslation> translationSet =
+        getDestinationTranslations(dto, defaultLocale, translationsMap);
+
+    translationSet.forEach(destination::addTranslation);
+
+    return destination;
   }
 
-  private DestinationTranslation createTranslations(
-      ViatorDestinationDTO viatorDestination, SupportedLocale supportedLocale) {
-    return new DestinationTranslation(supportedLocale.getCode(), viatorDestination.name());
+  private Set<DestinationTranslation> getDestinationTranslations(
+      ViatorDestinationDTO dto,
+      SupportedLocale defaultLocale,
+      Map<Long, Set<DestinationTranslation>> translationsMap) {
+
+    Set<DestinationTranslation> translationSet =
+        translationsMap.getOrDefault(dto.destinationId(), new HashSet<>());
+
+    DestinationTranslation defaultTranslation = createTranslations(dto, defaultLocale);
+
+    translationSet.add(defaultTranslation);
+
+    return translationSet;
   }
 
   private DestinationType mapToDestinationType(String viatorType) {

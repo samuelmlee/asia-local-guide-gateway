@@ -1,7 +1,9 @@
 package com.asialocalguide.gateway.core.domain;
 
 import jakarta.persistence.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,14 +20,49 @@ public class Destination {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "id", referencedColumnName = "id")
-  private List<DestinationTranslation> destinationTranslations;
+  @OneToMany(
+      mappedBy = "destination",
+      fetch = FetchType.EAGER,
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
+  private Set<DestinationTranslation> destinationTranslations = new HashSet<>();
 
   @Enumerated(EnumType.STRING)
   private DestinationType type;
 
   @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "destination_id", referencedColumnName = "id")
-  private List<BookingProviderMapping> bookingProviderMappings;
+  private Set<BookingProviderMapping> bookingProviderMappings = new HashSet<>();
+
+  public void addTranslation(DestinationTranslation translation) {
+    translation.setDestination(this);
+    destinationTranslations.add(translation);
+  }
+
+  public void removeTranslation(DestinationTranslation translation) {
+    if (destinationTranslations != null) {
+      translation.setDestination(null);
+      destinationTranslations.remove(translation);
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(type);
+    result = 31 * result + Objects.hashCode(bookingProviderMappings);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "Destination{"
+        + "id="
+        + id
+        + ", type="
+        + type
+        + ", bookingProviderMappings="
+        + bookingProviderMappings
+        + '}';
+  }
 }

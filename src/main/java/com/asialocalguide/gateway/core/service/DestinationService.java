@@ -3,16 +3,12 @@ package com.asialocalguide.gateway.core.service;
 import com.asialocalguide.gateway.core.domain.BookingProviderMapping;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.Destination;
-import com.asialocalguide.gateway.core.dto.DestinationDTO;
-import com.asialocalguide.gateway.core.exception.DestinationRepositoryException;
 import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.service.ViatorDestinationService;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,9 +37,7 @@ public class DestinationService {
 
     List<Destination> destinations = viatorDestinationService.getAllDestinations();
 
-    System.out.println("destinations: " + destinations);
-
-    Set<String> destinationIds =
+    Set<String> viatorDestinationIds =
         bookingProviderMappingRepository.findProviderDestinationIdsByProviderName(
             BookingProviderName.VIATOR);
 
@@ -51,8 +45,11 @@ public class DestinationService {
         destinations.stream()
             .filter(
                 d -> {
-                  // Only one new mapping for Destination fetched from Viator API
-                  BookingProviderMapping newMapping = d.getBookingProviderMappings().getFirst();
+                  BookingProviderMapping newMapping =
+                      d.getBookingProviderMappings().stream()
+                          .filter(m -> m.getProviderName().equals(BookingProviderName.VIATOR))
+                          .findFirst()
+                          .orElse(null);
 
                   if (newMapping == null) {
                     log.warn("No BookingProviderMapping to persist for Viator Destination: {}", d);
@@ -60,30 +57,10 @@ public class DestinationService {
                     return false;
                   }
 
-                  return !destinationIds.contains(newMapping.getProviderDestinationId());
+                  return !viatorDestinationIds.contains(newMapping.getProviderDestinationId());
                 })
             .toList();
 
-    System.out.println("destinationsToSave: " + destinationsToSave);
-
     destinationRepository.saveAll(destinationsToSave);
-  }
-
-  public List<DestinationDTO> getAllDestinations() {
-    List<Destination> destinations = destinationRepository.findAll();
-
-    if (destinations.isEmpty()) {
-      throw new DestinationRepositoryException("No destinations returned from the Repository");
-    }
-
-    Locale locale = LocaleContextHolder.getLocale();
-
-    String userLocaleCode = locale.getLanguage();
-
-    return List.of();
-
-    //    return destinations.stream()
-    //        .map(d -> DestinationDTO.of(d.getId(), d.ge, d.getType()))
-    //        .collect(Collectors.toList());
   }
 }
