@@ -20,6 +20,10 @@ public class Destination {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_destination_id")
+  private Destination parentDestination;
+
   @OneToMany(
       mappedBy = "destination",
       fetch = FetchType.EAGER,

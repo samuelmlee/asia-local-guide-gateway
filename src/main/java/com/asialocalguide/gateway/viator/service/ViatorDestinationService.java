@@ -6,6 +6,7 @@ import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorDestinationMappingException;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,12 +22,13 @@ public class ViatorDestinationService {
 
     SupportedLocale defaultLocale = getDefaultLocale();
 
-    List<ViatorDestinationDTO> defaultDestinationDTOs = getDefaultDestinationDTOs(defaultLocale);
+    Map<Long, ViatorDestinationDTO> defaultDestinationDtoMap =
+        getDefaultDestinationDTOs(defaultLocale);
 
     Map<Long, Set<DestinationTranslation>> translationsMap = buildAdditionalTranslationsMap();
 
-    return defaultDestinationDTOs.stream()
-        .map(dto -> buildDestination(dto, defaultLocale, translationsMap))
+    return defaultDestinationDtoMap.values().stream()
+        .map(dto -> buildDestination(dto, defaultDestinationDtoMap, defaultLocale, translationsMap))
         .toList();
   }
 
@@ -37,9 +39,13 @@ public class ViatorDestinationService {
         .orElseThrow(() -> new ViatorDestinationMappingException("No default locale found"));
   }
 
-  private List<ViatorDestinationDTO> getDefaultDestinationDTOs(SupportedLocale defaultLocale) {
+  private Map<Long, ViatorDestinationDTO> getDefaultDestinationDTOs(SupportedLocale defaultLocale) {
 
-    return viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
+    List<ViatorDestinationDTO> destinationDTOS =
+        viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
+
+    return destinationDTOS.stream()
+        .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, d -> d));
   }
 
   private Map<Long, Set<DestinationTranslation>> buildAdditionalTranslationsMap() {
@@ -82,6 +88,7 @@ public class ViatorDestinationService {
 
   private Destination buildDestination(
       ViatorDestinationDTO dto,
+      Map<Long, ViatorDestinationDTO> defaultDestinationDtoMap,
       SupportedLocale defaultLocale,
       Map<Long, Set<DestinationTranslation>> translationsMap) {
 
@@ -99,6 +106,13 @@ public class ViatorDestinationService {
         getDestinationTranslations(dto, defaultLocale, translationsMap);
 
     translationSet.forEach(destination::addTranslation);
+
+    Long parentDestinationId = dto.parentDestinationId();
+    if (parentDestinationId != null) {
+      ViatorDestinationDTO parentDestination = defaultDestinationDtoMap.get(parentDestinationId);
+
+      //      destination.setParentDestination(parentDestination);
+    }
 
     return destination;
   }
