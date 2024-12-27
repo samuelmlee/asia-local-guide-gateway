@@ -6,7 +6,6 @@ import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorDestinationMappingException;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,14 +25,15 @@ public class ViatorDestinationService {
 
     SupportedLocale defaultLocale = getDefaultLocale();
 
-    List<ViatorDestinationDTO> destinationDtoMap = getDefaultDestinationDTOs(defaultLocale);
+    List<ViatorDestinationDTO> defaultDestinationDTOs = getDefaultDestinationDTOs(defaultLocale);
 
-    List<Destination> destinations =
-        destinationDtoMap.values().stream()
-            .map(dto -> buildDestination(dto, defaultLocale))
-            .toList();
+    defaultDestinationDTOs.sort(Comparator.comparing(dto -> dto.getLookupIds().size()));
 
-    return destinations;
+    Map<Long, Destination> createdDestinations = new HashMap<>();
+
+    return defaultDestinationDTOs.stream()
+        .map(dto -> buildDestination(dto, createdDestinations, defaultLocale))
+        .toList();
   }
 
   private static SupportedLocale getDefaultLocale() {
@@ -43,20 +43,21 @@ public class ViatorDestinationService {
         .orElseThrow(() -> new ViatorDestinationMappingException("No default locale found"));
   }
 
-  private Map<Long, ViatorDestinationDTO> getDefaultDestinationDTOs(SupportedLocale defaultLocale) {
+  private List<ViatorDestinationDTO> getDefaultDestinationDTOs(SupportedLocale defaultLocale) {
 
-    List<ViatorDestinationDTO> destinationDTOS =
-        viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
-
-    return destinationDTOS.stream()
-        .collect(Collectors.toMap(ViatorDestinationDTO::getDestinationId, d -> d));
+    return viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
   }
 
-  private Destination buildDestination(ViatorDestinationDTO dto, SupportedLocale defaultLocale) {
+  private Destination buildDestination(
+      ViatorDestinationDTO dto,
+      Map<Long, Destination> createdDestinations,
+      SupportedLocale defaultLocale) {
+
+    Long destinationId = dto.getDestinationId();
 
     BookingProviderMapping bookingProviderMapping =
         BookingProviderMapping.builder()
-            .providerDestinationId(dto.getDestinationId().toString())
+            .providerDestinationId(String.valueOf(destinationId))
             .providerName(BookingProviderName.VIATOR)
             .build();
 
@@ -68,7 +69,26 @@ public class ViatorDestinationService {
         viatorTranslationService.createTranslation(dto, defaultLocale);
     destination.addTranslation(translation);
 
+    Destination parentDestination = resolveParentDestination(dto, createdDestinations);
+    destination.setParentDestination(parentDestination);
+
+    createdDestinations.put(destinationId, destination);
+
     return destination;
+  }
+
+  private Destination resolveParentDestination(
+      ViatorDestinationDTO dto, Map<Long, Destination> createdDestinations) {
+
+    List<Long> lookupIds = dto.getLookupIds();
+
+    for (Long parentId : lookupIds) {
+      Destination parent = createdDestinations.get(parentId);
+      if (parent != null && parent.getType() == DestinationType.COUNTRY) {
+        return parent;
+      }
+    }
+    return null;
   }
 
   private DestinationType mapToDestinationType(String viatorType) {

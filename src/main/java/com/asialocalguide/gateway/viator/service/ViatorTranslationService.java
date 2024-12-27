@@ -18,7 +18,7 @@ public class ViatorTranslationService {
 
   public DestinationTranslation createTranslation(
       ViatorDestinationDTO viatorDestination, SupportedLocale supportedLocale) {
-    return new DestinationTranslation(supportedLocale.getCode(), viatorDestination.name());
+    return new DestinationTranslation(supportedLocale.getCode(), viatorDestination.getName());
   }
 
   private Map<Long, Set<DestinationTranslation>> buildAdditionalTranslationsMap() {
@@ -34,7 +34,7 @@ public class ViatorTranslationService {
 
           destinationDTOs.forEach(
               dto -> {
-                Long destinationId = dto.destinationId();
+                Long destinationId = dto.getDestinationId();
 
                 DestinationTranslation translation = createTranslation(dto, locale);
 

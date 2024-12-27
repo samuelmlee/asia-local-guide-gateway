@@ -2,6 +2,8 @@ package com.asialocalguide.gateway.viator.dto;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Data;
 
 @Data
@@ -13,12 +15,18 @@ public class ViatorDestinationDTO {
 
   private String type;
 
-  private Long[] lookupIds;
+  private List<Long> lookupIds;
 
   @JsonSetter("lookupId")
   public void setLookupIds(String lookupIdString) {
 
-    this.lookupIds =
-        Arrays.stream(lookupIdString.split("\\.")).map(Long::parseLong).toArray(Long[]::new);
+    List<Long> allIds =
+        Arrays.stream(lookupIdString.split("\\."))
+            .map(Long::parseLong)
+            .collect(Collectors.toList());
+    // Last lookupId is own destinationId
+    allIds.removeLast();
+
+    this.lookupIds = allIds;
   }
 }
