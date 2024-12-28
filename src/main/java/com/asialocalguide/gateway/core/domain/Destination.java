@@ -50,6 +50,13 @@ public class Destination {
     }
   }
 
+  public BookingProviderMapping getBookingProviderMapping(BookingProviderName providerName) {
+    return bookingProviderMappings.stream()
+        .filter(mapping -> mapping.getProviderName().equals(providerName))
+        .findFirst()
+        .orElse(null);
+  }
+
   @Override
   public int hashCode() {
     int result = Objects.hashCode(id);
