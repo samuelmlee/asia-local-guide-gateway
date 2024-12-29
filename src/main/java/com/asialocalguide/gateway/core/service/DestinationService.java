@@ -25,7 +25,7 @@ public class DestinationService {
 
   private final BookingProviderMappingRepository bookingProviderMappingRepository;
 
-  private static final String defaultLocale = "en";
+  private static final String DEFAULT_LANGUAGE_CODE = "en";
 
   public DestinationService(
       ViatorDestinationService viatorDestinationService,
@@ -80,7 +80,13 @@ public class DestinationService {
             destination -> {
               String translationName = resolveTranslationName(destination, locale);
 
-              return DestinationDTO.of(destination.getId(), translationName, destination.getType());
+              String parentName =
+                  destination.getParentDestination() != null
+                      ? resolveTranslationName(destination.getParentDestination(), locale)
+                      : "";
+
+              return DestinationDTO.of(
+                  destination.getId(), translationName, destination.getType(), parentName);
             })
         .toList();
   }
@@ -92,7 +98,7 @@ public class DestinationService {
         .or(
             () ->
                 destination.getDestinationTranslations().stream()
-                    .filter(t -> t.getLocale().equals(defaultLocale))
+                    .filter(t -> t.getLocale().equals(DEFAULT_LANGUAGE_CODE))
                     .findFirst())
         .map(DestinationTranslation::getDestinationName)
         .orElse("");
