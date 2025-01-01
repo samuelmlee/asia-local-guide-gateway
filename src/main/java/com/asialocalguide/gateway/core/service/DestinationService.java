@@ -71,9 +71,8 @@ public class DestinationService {
     Locale locale = LocaleContextHolder.getLocale();
 
     List<Destination> destinations =
-        destinationRepository
-            .findByDestinationTranslations_LocaleAndDestinationTranslations_DestinationNameContainingIgnoreCase(
-                locale.getLanguage(), query);
+        destinationRepository.findCityAndRegionByTranslationsForLocaleAndDestinationName(
+            locale.getLanguage(), query);
 
     return destinations.stream()
         .map(
