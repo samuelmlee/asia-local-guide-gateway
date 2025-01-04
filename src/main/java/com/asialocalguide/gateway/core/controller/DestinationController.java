@@ -21,7 +21,7 @@ public class DestinationController {
   }
 
   @PostMapping("/sync/viator")
-  public void syncDestinations() {
+  public void syncViatorDestinations() {
     destinationService.syncViatorDestinations();
   }
 }
