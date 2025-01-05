@@ -6,8 +6,7 @@ import lombok.Getter;
 @Getter
 public enum SupportedLocale {
   ENGLISH("en", true),
-  FRENCH("fr", false),
-  ;
+  FRENCH("fr", false);
 
   private final String code;
 
