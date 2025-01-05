@@ -55,15 +55,15 @@ public class ViatorDestinationService {
 
     Long destinationId = dto.getDestinationId();
 
-    BookingProviderMapping bookingProviderMapping =
-        BookingProviderMapping.builder()
+    DestinationProviderMapping destinationProviderMapping =
+        DestinationProviderMapping.builder()
             .providerDestinationId(String.valueOf(destinationId))
             .providerName(BookingProviderName.VIATOR)
             .build();
 
     Destination destination = new Destination();
     destination.setType(mapToDestinationType(dto.getType()));
-    destination.setBookingProviderMappings(Set.of(bookingProviderMapping));
+    destination.setBookingProviderMappings(Set.of(destinationProviderMapping));
 
     DestinationTranslation translation =
         viatorTranslationService.createTranslation(dto, defaultLocale);

@@ -36,7 +36,7 @@ public class Destination {
 
   @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "destination_id", referencedColumnName = "id")
-  private Set<BookingProviderMapping> bookingProviderMappings = new HashSet<>();
+  private Set<DestinationProviderMapping> bookingProviderMappings = new HashSet<>();
 
   public void addTranslation(DestinationTranslation translation) {
     translation.setDestination(this);
@@ -50,7 +50,7 @@ public class Destination {
     }
   }
 
-  public BookingProviderMapping getBookingProviderMapping(BookingProviderName providerName) {
+  public DestinationProviderMapping getBookingProviderMapping(BookingProviderName providerName) {
     return bookingProviderMappings.stream()
         .filter(mapping -> mapping.getProviderName().equals(providerName))
         .findFirst()

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class BookingProviderMapping {
+public class DestinationProviderMapping {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

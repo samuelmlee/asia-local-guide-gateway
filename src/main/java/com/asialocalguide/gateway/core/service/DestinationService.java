@@ -1,8 +1,8 @@
 package com.asialocalguide.gateway.core.service;
 
-import com.asialocalguide.gateway.core.domain.BookingProviderMapping;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.Destination;
+import com.asialocalguide.gateway.core.domain.DestinationProviderMapping;
 import com.asialocalguide.gateway.core.domain.DestinationTranslation;
 import com.asialocalguide.gateway.core.dto.DestinationDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
@@ -55,7 +55,7 @@ public class DestinationService {
 
   private static boolean isNewBookingProviderMapping(
       Destination d, Set<String> viatorDestinationIds) {
-    BookingProviderMapping newMapping = d.getBookingProviderMapping(BookingProviderName.VIATOR);
+    DestinationProviderMapping newMapping = d.getBookingProviderMapping(BookingProviderName.VIATOR);
 
     if (newMapping == null) {
       log.warn("No BookingProviderMapping to persist for Viator Destination: {}", d);
