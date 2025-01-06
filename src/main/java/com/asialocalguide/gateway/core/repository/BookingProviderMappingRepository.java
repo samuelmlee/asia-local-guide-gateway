@@ -1,6 +1,5 @@
 package com.asialocalguide.gateway.core.repository;
 
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.DestinationProviderMapping;
 import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +10,6 @@ public interface BookingProviderMappingRepository
     extends JpaRepository<DestinationProviderMapping, Long> {
 
   @Query(
-      "SELECT DISTINCT m.providerDestinationId FROM DestinationProviderMapping m WHERE m.providerName = :providerName")
-  Set<String> findProviderDestinationIdsByProviderName(
-      @Param("providerName") BookingProviderName providerName);
+      "SELECT DISTINCT m.providerDestinationId FROM DestinationProviderMapping m WHERE m.provider.id = :providerId")
+  Set<String> findProviderDestinationIdsByProviderId(@Param("providerId") Long providerId);
 }

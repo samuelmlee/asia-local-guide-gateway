@@ -17,8 +17,13 @@ public class DestinationProviderMapping {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Enumerated(EnumType.STRING)
-  private BookingProviderName providerName;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "destination_id", nullable = false)
+  private Destination destination;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "provider_id", nullable = false)
+  private BookingProvider provider;
 
   private String providerDestinationId;
 }

@@ -34,8 +34,11 @@ public class Destination {
   @Enumerated(EnumType.STRING)
   private DestinationType type;
 
-  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "destination_id", referencedColumnName = "id")
+  @OneToMany(
+      mappedBy = "destination",
+      fetch = FetchType.EAGER,
+      cascade = CascadeType.ALL,
+      orphanRemoval = true)
   private Set<DestinationProviderMapping> bookingProviderMappings = new HashSet<>();
 
   public void addTranslation(DestinationTranslation translation) {
@@ -50,9 +53,9 @@ public class Destination {
     }
   }
 
-  public DestinationProviderMapping getBookingProviderMapping(BookingProviderName providerName) {
+  public DestinationProviderMapping getBookingProviderMapping(Long providerId) {
     return bookingProviderMappings.stream()
-        .filter(mapping -> mapping.getProviderName().equals(providerName))
+        .filter(mapping -> mapping.getProvider().getId().equals(providerId))
         .findFirst()
         .orElse(null);
   }
@@ -63,6 +66,14 @@ public class Destination {
     result = 31 * result + Objects.hashCode(type);
     result = 31 * result + Objects.hashCode(bookingProviderMappings);
     return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Destination that = (Destination) o;
+    return id.equals(that.id) && type == that.type;
   }
 
   @Override
