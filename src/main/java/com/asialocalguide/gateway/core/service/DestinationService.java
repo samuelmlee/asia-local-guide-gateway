@@ -9,10 +9,7 @@ import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorDestinationMappingException;
 import com.asialocalguide.gateway.viator.service.ViatorDestinationService;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -22,6 +19,8 @@ import org.springframework.stereotype.Service;
 public class DestinationService {
 
   private final ViatorDestinationService viatorDestinationService;
+
+  private final DestinationPersistenceService destinationPersistenceService;
 
   private final DestinationRepository destinationRepository;
 
@@ -33,11 +32,13 @@ public class DestinationService {
 
   public DestinationService(
       ViatorDestinationService viatorDestinationService,
+      DestinationPersistenceService destinationPersistenceService,
       DestinationRepository destinationRepository,
       BookingProviderRepository bookingProviderRepository,
       BookingProviderMappingRepository bookingProviderMappingRepository) {
 
     this.viatorDestinationService = viatorDestinationService;
+    this.destinationPersistenceService = destinationPersistenceService;
     this.destinationRepository = destinationRepository;
     this.bookingProviderRepository = bookingProviderRepository;
     this.bookingProviderMappingRepository = bookingProviderMappingRepository;
@@ -59,13 +60,12 @@ public class DestinationService {
         bookingProviderMappingRepository.findProviderDestinationIdsByProviderId(
             viatorProvider.getId());
 
-    List<Destination> destinationsToSave =
+    List<ViatorDestinationDTO> newDestinationDTOs =
         destinations.stream()
-            .filter(
-                d -> isNewBookingProviderMapping(d, viatorDestinationIds, viatorProvider.getId()))
+            .filter(d -> isNewViatorDestinationDto(d, viatorDestinationIds))
             .toList();
 
-    destinationRepository.saveAll(destinationsToSave);
+    destinationPersistenceService.buildAndSaveDestinationsFromViatorDtos(newDestinationDTOs);
   }
 
   private static SupportedLocale getDefaultLocale() {
@@ -75,48 +75,13 @@ public class DestinationService {
         .orElseThrow(() -> new ViatorDestinationMappingException("No default locale found"));
   }
 
-  private Destination buildDestination(
-      ViatorDestinationDTO dto,
-      Map<Long, Destination> createdDestinations,
-      SupportedLocale defaultLocale) {
+  private static boolean isNewViatorDestinationDto(
+      ViatorDestinationDTO d, Set<String> viatorDestinationIds) {
 
-    DestinationTranslation translation =
-        viatorTranslationService.createTranslation(dto, defaultLocale);
-    destination.addTranslation(translation);
+    // Update method when Destination can be added by other providers to check for name and
+    // coordinates
 
-    Destination parentDestination = resolveParentDestination(dto, createdDestinations);
-    destination.setParentDestination(parentDestination);
-
-    createdDestinations.put(destinationId, destination);
-
-    return destination;
-  }
-
-  private Destination resolveParentDestination(
-      ViatorDestinationDTO dto, Map<Long, Destination> createdDestinations) {
-
-    List<Long> lookupIds = dto.getLookupIds();
-
-    for (Long parentId : lookupIds) {
-      Destination parent = createdDestinations.get(parentId);
-      if (parent != null && parent.getType() == DestinationType.COUNTRY) {
-        return parent;
-      }
-    }
-    return null;
-  }
-
-  private static boolean isNewBookingProviderMapping(
-      Destination d, Set<String> viatorDestinationIds, Long viatorProviderId) {
-    DestinationProviderMapping newMapping = d.getBookingProviderMapping(viatorProviderId);
-
-    if (newMapping == null) {
-      log.warn("No BookingProviderMapping to persist for Viator Destination: {}", d);
-
-      return false;
-    }
-
-    return !viatorDestinationIds.contains(newMapping.getProviderDestinationId());
+    return !viatorDestinationIds.contains(d.getDestinationId().toString());
   }
 
   public List<DestinationDTO> getAutocompleteSuggestions(String query) {

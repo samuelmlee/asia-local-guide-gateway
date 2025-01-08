@@ -53,6 +53,18 @@ public class Destination {
     }
   }
 
+  public void addProviderMapping(DestinationProviderMapping mapping) {
+    mapping.setDestination(this);
+    bookingProviderMappings.add(mapping);
+  }
+
+  public void removeProviderMapping(DestinationProviderMapping mapping) {
+    if (mapping != null) {
+      mapping.setDestination(null);
+      bookingProviderMappings.remove(mapping);
+    }
+  }
+
   public DestinationProviderMapping getBookingProviderMapping(Long providerId) {
     return bookingProviderMappings.stream()
         .filter(mapping -> mapping.getProvider().getId().equals(providerId))

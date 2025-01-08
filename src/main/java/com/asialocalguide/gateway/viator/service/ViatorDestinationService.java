@@ -17,6 +17,15 @@ public class ViatorDestinationService {
 
   public List<ViatorDestinationDTO> getDestinationDTOs(SupportedLocale defaultLocale) {
 
-    return viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
+    List<ViatorDestinationDTO> destinationDtos =
+        viatorClient.getAllDestinationsForLocale(defaultLocale.getCode());
+
+    return destinationDtos.stream()
+        .map(
+            dto -> {
+              dto.setLocaleCode(defaultLocale.getCode());
+              return dto;
+            })
+        .toList();
   }
 }

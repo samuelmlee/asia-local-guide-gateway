@@ -17,6 +17,8 @@ public class ViatorDestinationDTO {
 
   private List<Long> lookupIds;
 
+  private String localeCode;
+
   @JsonSetter("lookupId")
   public void setLookupIds(String lookupIdString) {
 
