@@ -26,4 +26,17 @@ public class DestinationProviderMapping {
   private BookingProvider provider;
 
   private String providerDestinationId;
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DestinationProviderMapping mapping = (DestinationProviderMapping) o;
+    return id.equals(mapping.id) && providerDestinationId.equals(mapping.providerDestinationId);
+  }
+
+  @Override
+  public int hashCode() {
+    return providerDestinationId.hashCode();
+  }
 }

@@ -10,6 +10,7 @@ import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorDestinationMappingException;
 import com.asialocalguide.gateway.viator.service.ViatorDestinationService;
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public class DestinationService {
     List<ViatorDestinationDTO> newDestinationDTOs =
         destinations.stream()
             .filter(d -> isNewViatorDestinationDto(d, viatorDestinationIds))
-            .toList();
+            .collect(Collectors.toCollection(ArrayList::new));
 
     destinationPersistenceService.buildAndSaveDestinationsFromViatorDtos(newDestinationDTOs);
   }

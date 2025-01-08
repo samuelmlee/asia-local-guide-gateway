@@ -34,6 +34,9 @@ public class DestinationPersistenceService {
   @Transactional
   public void buildAndSaveDestinationsFromViatorDtos(List<ViatorDestinationDTO> dtosToSave) {
     Map<Long, Destination> createdDestinations = new HashMap<>();
+    // Sort DTOs by length of lookupIds to ensure parent destinations are created first
+    dtosToSave.sort(
+        (dto1, dto2) -> Integer.compare(dto1.getLookupIds().size(), dto2.getLookupIds().size()));
 
     BookingProvider viatorProvider =
         bookingProviderRepository

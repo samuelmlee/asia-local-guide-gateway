@@ -5,13 +5,11 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Destination {
@@ -39,7 +37,7 @@ public class Destination {
       fetch = FetchType.EAGER,
       cascade = CascadeType.ALL,
       orphanRemoval = true)
-  private Set<DestinationProviderMapping> bookingProviderMappings = new HashSet<>();
+  private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
   public void addTranslation(DestinationTranslation translation) {
     translation.setDestination(this);
@@ -55,29 +53,21 @@ public class Destination {
 
   public void addProviderMapping(DestinationProviderMapping mapping) {
     mapping.setDestination(this);
-    bookingProviderMappings.add(mapping);
+    destinationProviderMappings.add(mapping);
   }
 
   public void removeProviderMapping(DestinationProviderMapping mapping) {
     if (mapping != null) {
       mapping.setDestination(null);
-      bookingProviderMappings.remove(mapping);
+      destinationProviderMappings.remove(mapping);
     }
   }
 
   public DestinationProviderMapping getBookingProviderMapping(Long providerId) {
-    return bookingProviderMappings.stream()
+    return destinationProviderMappings.stream()
         .filter(mapping -> mapping.getProvider().getId().equals(providerId))
         .findFirst()
         .orElse(null);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Objects.hashCode(id);
-    result = 31 * result + Objects.hashCode(type);
-    result = 31 * result + Objects.hashCode(bookingProviderMappings);
-    return result;
   }
 
   @Override
@@ -85,18 +75,18 @@ public class Destination {
     if (o == null || getClass() != o.getClass()) return false;
 
     Destination that = (Destination) o;
-    return id.equals(that.id) && type == that.type;
+    return Objects.equals(id, that.id)
+        && Objects.equals(parentDestination, that.parentDestination)
+        && type == that.type;
+  }
+
+  @Override
+  public int hashCode() {
+    return type.hashCode();
   }
 
   @Override
   public String toString() {
-    return "Destination{"
-        + "id="
-        + id
-        + ", type="
-        + type
-        + ", bookingProviderMappings="
-        + bookingProviderMappings
-        + '}';
+    return "Destination{" + "id=" + id + ", type=" + type + '}';
   }
 }

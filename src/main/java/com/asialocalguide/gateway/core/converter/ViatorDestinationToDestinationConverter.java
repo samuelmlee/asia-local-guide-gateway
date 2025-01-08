@@ -12,8 +12,10 @@ public class ViatorDestinationToDestinationConverter
 
   @Override
   public Destination convert(ViatorDestinationDTO dto) {
+    Destination destination = new Destination();
+    destination.setType(mapToDestinationType(dto.getType()));
 
-    return Destination.builder().type(mapToDestinationType(dto.getType())).build();
+    return destination;
   }
 
   private DestinationType mapToDestinationType(String viatorType) {
