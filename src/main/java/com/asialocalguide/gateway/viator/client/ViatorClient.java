@@ -1,11 +1,7 @@
 package com.asialocalguide.gateway.viator.client;
 
-import com.asialocalguide.gateway.viator.dto.ViatorActivityTagDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorActivityTagResponseDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorDestinationResponseDTO;
-import com.asialocalguide.gateway.viator.exception.ViatorActivityTagApiException;
-import com.asialocalguide.gateway.viator.exception.ViatorDestinationApiException;
+import com.asialocalguide.gateway.viator.dto.*;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -38,14 +34,13 @@ public class ViatorClient {
           .map(ViatorDestinationResponseDTO::destinations)
           .orElseGet(List::of);
 
-    } catch (ViatorDestinationApiException e) {
+    } catch (ViatorApiException e) {
 
       throw e;
 
     } catch (Exception e) {
 
-      throw new ViatorDestinationApiException(
-          "Failed to call Destination API: " + e.getMessage(), e);
+      throw new ViatorApiException("Failed to call Destination API: " + e.getMessage(), e);
     }
   }
 
@@ -63,13 +58,38 @@ public class ViatorClient {
           .map(ViatorActivityTagResponseDTO::tags)
           .orElseGet(List::of);
 
-    } catch (ViatorActivityTagApiException e) {
+    } catch (ViatorApiException e) {
 
       throw e;
 
     } catch (Exception e) {
 
-      throw new ViatorActivityTagApiException("Failed to call Tags API: " + e.getMessage(), e);
+      throw new ViatorApiException("Failed to call Tags API: " + e.getMessage(), e);
+    }
+  }
+
+  public List<ViatorActivityDTO> getActivitiesByRequestAndLocale(String localeString) {
+    try {
+      ViatorActivityResponseDTO activityResponse =
+          viatorRestClient
+              .post()
+              .uri("/products/search")
+              .headers(httpHeaders -> httpHeaders.set("Accept-Language", localeString))
+              .retrieve()
+              .onStatus(viatorResponseErrorHandler)
+              .body(ViatorActivityResponseDTO.class);
+
+      return Optional.ofNullable(activityResponse)
+          .map(ViatorActivityResponseDTO::products)
+          .orElseGet(List::of);
+
+    } catch (ViatorApiException e) {
+
+      throw e;
+
+    } catch (Exception e) {
+
+      throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
     }
   }
 }

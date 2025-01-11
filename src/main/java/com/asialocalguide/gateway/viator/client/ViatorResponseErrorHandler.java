@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.viator.client;
 
-import com.asialocalguide.gateway.viator.exception.ViatorDestinationApiException;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,11 +29,11 @@ public class ViatorResponseErrorHandler implements ResponseErrorHandler {
             .lines()
             .collect(Collectors.joining("\n"));
 
-    throw new ViatorDestinationApiException(
+    throw new ViatorApiException(
         String.format(
-            "%s status code while calling Destination API: %s - %s - %s",
+            "%s status code while calling Viator API: %s - %s - %s",
             response.getStatusCode(),
-            response.getStatusCode(),
+            response.getStatusText(),
             response.getHeaders(),
             responseBody));
   }
