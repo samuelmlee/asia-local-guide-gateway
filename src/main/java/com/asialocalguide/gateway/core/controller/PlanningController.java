@@ -20,6 +20,6 @@ public class PlanningController {
 
   @PostMapping("/generate")
   public ActivityPlanningDTO generateActivityPlan(@RequestBody ActivityPlanningRequestDTO request) {
-    return planningService.generateActivityPlan(request);
+    return planningService.generateActivityPlanning(request);
   }
 }

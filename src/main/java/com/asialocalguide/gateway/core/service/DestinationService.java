@@ -7,7 +7,6 @@ import com.asialocalguide.gateway.core.repository.BookingProviderMappingReposito
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
-import com.asialocalguide.gateway.viator.exception.ViatorDestinationMappingException;
 import com.asialocalguide.gateway.viator.service.ViatorDestinationService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,7 +46,7 @@ public class DestinationService {
 
   public void syncViatorDestinations() {
 
-    SupportedLocale defaultLocale = getDefaultLocale();
+    SupportedLocale defaultLocale = SupportedLocale.getDefaultLocale();
 
     List<ViatorDestinationDTO> destinations =
         viatorDestinationService.getDestinationDTOs(defaultLocale);
@@ -67,13 +66,6 @@ public class DestinationService {
             .collect(Collectors.toCollection(ArrayList::new));
 
     destinationPersistenceService.buildAndSaveDestinationsFromViatorDtos(newDestinationDTOs);
-  }
-
-  private static SupportedLocale getDefaultLocale() {
-    return SupportedLocale.stream()
-        .filter(SupportedLocale::isDefault)
-        .findFirst()
-        .orElseThrow(() -> new ViatorDestinationMappingException("No default locale found"));
   }
 
   private static boolean isNewViatorDestinationDto(

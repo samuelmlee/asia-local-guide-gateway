@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.config;
 
+import com.asialocalguide.gateway.viator.exception.ViatorDestinationMappingException;
 import java.util.stream.Stream;
 import lombok.Getter;
 
@@ -19,5 +20,12 @@ public enum SupportedLocale {
 
   public static Stream<SupportedLocale> stream() {
     return Stream.of(SupportedLocale.values());
+  }
+
+  public static SupportedLocale getDefaultLocale() {
+    return SupportedLocale.stream()
+        .filter(SupportedLocale::isDefault)
+        .findFirst()
+        .orElseThrow(() -> new ViatorDestinationMappingException("No default locale found"));
   }
 }

@@ -68,13 +68,15 @@ public class ViatorClient {
     }
   }
 
-  public List<ViatorActivityDTO> getActivitiesByRequestAndLocale(String localeString) {
+  public List<ViatorActivityDTO> getActivitiesByRequestAndLocale(
+      String localeString, ViatorActivitySearchDTO searchDTO) {
     try {
       ViatorActivityResponseDTO activityResponse =
           viatorRestClient
               .post()
               .uri("/products/search")
               .headers(httpHeaders -> httpHeaders.set("Accept-Language", localeString))
+              .body(searchDTO)
               .retrieve()
               .onStatus(viatorResponseErrorHandler)
               .body(ViatorActivityResponseDTO.class);

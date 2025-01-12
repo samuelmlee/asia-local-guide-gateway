@@ -6,7 +6,7 @@ public record ViatorActivitySearchDTO(
     Filtering filtering, Sorting sorting, Pagination pagination, String currency) {
 
   public record Filtering(
-      String destination, List<Integer> tags, String startDate, String endDate, Range rating) {}
+      Long destination, List<Long> tags, String startDate, String endDate, Range rating) {}
 
   public record Range(Integer from, Integer to) {}
 

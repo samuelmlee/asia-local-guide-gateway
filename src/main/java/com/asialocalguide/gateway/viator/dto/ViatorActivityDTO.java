@@ -28,7 +28,10 @@ public record ViatorActivityDTO(
     public record SourceDTO(String provider, Integer totalCount, Double averageRating) {}
   }
 
-  public record DurationDTO(Integer fixedDurationInMinutes) {}
+  public record DurationDTO(DurationRangeDTO durationRangeDTO) {
+    public record DurationRangeDTO(
+        Integer variableDurationFromMinutes, Integer variableDurationToMinutes) {}
+  }
 
   public record PricingDTO(SummaryDTO summary, String currency) {
     public record SummaryDTO(Double fromPrice, Double fromPriceBeforeDiscount) {}
