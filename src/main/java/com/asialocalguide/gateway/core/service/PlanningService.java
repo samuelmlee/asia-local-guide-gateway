@@ -7,7 +7,6 @@ import com.asialocalguide.gateway.core.dto.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.DayScheduleDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -46,9 +45,6 @@ public class PlanningService {
       // Convert Instant to ZonedDateTime in UTC
       ZonedDateTime zonedDateTime = currentDay.atZone(ZoneId.of("UTC"));
 
-      // Convert ZonedDateTime to LocalDateTime
-      LocalDateTime localDateTime = zonedDateTime.toLocalDateTime();
-
       List<DayActivityDTO> dayActivities = new ArrayList<>();
 
       // Assign morning and afternoon activities for the day if available
@@ -62,7 +58,7 @@ public class PlanningService {
       }
 
       daySchedules.add(
-          DayScheduleDTO.builder().date(localDateTime).activities(dayActivities).build());
+          DayScheduleDTO.builder().date(zonedDateTime).activities(dayActivities).build());
     }
 
     return new ActivityPlanningDTO(daySchedules);
@@ -75,17 +71,13 @@ public class PlanningService {
         day.atZone(ZoneId.of("UTC")).withHour(startHour).withMinute(0).withSecond(0).withNano(0);
     ZonedDateTime endZoned = startZoned.withHour(endHour);
 
-    // Convert ZonedDateTime to LocalDateTime
-    LocalDateTime startLocal = startZoned.toLocalDateTime();
-    LocalDateTime endLocal = endZoned.toLocalDateTime();
-
     // Build and return DayActivityDTO
     return DayActivityDTO.builder()
         .productCode(activity.productCode())
         .title(activity.title())
         .description(activity.description())
-        .startTime(startLocal)
-        .endTime(endLocal)
+        .startTime(startZoned)
+        .endTime(endZoned)
         .build();
   }
 }
