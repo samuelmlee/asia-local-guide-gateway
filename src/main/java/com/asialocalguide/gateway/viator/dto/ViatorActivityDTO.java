@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.viator.dto;
 
+import com.asialocalguide.gateway.core.dto.ImageDTO;
 import java.util.List;
 
 public record ViatorActivityDTO(
@@ -18,20 +19,15 @@ public record ViatorActivityDTO(
     List<String> flags,
     TranslationInfoDTO translationInfo) {
 
-  public record ImageDTO(
-      String imageSource, String caption, boolean isCover, List<VariantDTO> variants) {
-    public record VariantDTO(Integer height, Integer width, String url) {}
-  }
-
   public record ReviewsDTO(
       List<SourceDTO> sources, Integer totalReviews, Double combinedAverageRating) {
     public record SourceDTO(String provider, Integer totalCount, Double averageRating) {}
   }
 
-  public record DurationDTO(DurationRangeDTO durationRangeDTO) {
-    public record DurationRangeDTO(
-        Integer variableDurationFromMinutes, Integer variableDurationToMinutes) {}
-  }
+  public record DurationDTO(
+      Integer variableDurationFromMinutes,
+      Integer variableDurationToMinutes,
+      Integer fixedDurationInMinutes) {}
 
   public record PricingDTO(SummaryDTO summary, String currency) {
     public record SummaryDTO(Double fromPrice, Double fromPriceBeforeDiscount) {}

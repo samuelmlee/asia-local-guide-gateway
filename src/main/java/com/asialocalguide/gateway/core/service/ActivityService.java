@@ -57,12 +57,12 @@ public class ActivityService {
     String startDate =
         DateTimeFormatter.ofPattern("yyyy-MM-dd")
             .withZone(ZoneId.of("Europe/Paris"))
-            .format(request.startDateISO());
+            .format(request.startDate());
 
     String endDate =
         DateTimeFormatter.ofPattern("yyyy-MM-dd")
             .withZone(ZoneId.of("Europe/Paris"))
-            .format(request.endDateISO());
+            .format(request.endDate());
 
     ViatorActivitySearchDTO.Filtering filteringDTO =
         new ViatorActivitySearchDTO.Filtering(

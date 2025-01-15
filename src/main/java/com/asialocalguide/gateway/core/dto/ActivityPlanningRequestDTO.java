@@ -4,4 +4,4 @@ import java.time.Instant;
 import java.util.List;
 
 public record ActivityPlanningRequestDTO(
-    Instant startDateISO, Instant endDateISO, Long destinationId, List<Long> activityTagIds) {}
+    Instant startDate, Instant endDate, Long destinationId, List<Long> activityTagIds) {}

@@ -1,10 +1,9 @@
 package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
-import com.asialocalguide.gateway.core.dto.ActivityPlanningDTO;
 import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.DayActivityDTO;
-import com.asialocalguide.gateway.core.dto.DayScheduleDTO;
+import com.asialocalguide.gateway.core.dto.DayPlanDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -23,14 +22,14 @@ public class PlanningService {
     this.activityService = activityService;
   }
 
-  public ActivityPlanningDTO generateActivityPlanning(ActivityPlanningRequestDTO request) {
+  public List<DayPlanDTO> generateActivityPlanning(ActivityPlanningRequestDTO request) {
     SupportedLocale locale = SupportedLocale.getDefaultLocale();
     List<ViatorActivityDTO> activities = activityService.getActivities(locale, request);
 
-    Instant startDate = request.startDateISO();
-    Instant endDate = request.endDateISO();
+    Instant startDate = request.startDate();
+    Instant endDate = request.endDate();
 
-    List<DayScheduleDTO> daySchedules = new ArrayList<>();
+    List<DayPlanDTO> dayPlanDTOS = new ArrayList<>();
 
     // Calculate the number of days between startDate and endDate (inclusive)
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
@@ -57,11 +56,10 @@ public class PlanningService {
         activityIndex++;
       }
 
-      daySchedules.add(
-          DayScheduleDTO.builder().date(zonedDateTime).activities(dayActivities).build());
+      dayPlanDTOS.add(DayPlanDTO.builder().date(zonedDateTime).activities(dayActivities).build());
     }
 
-    return new ActivityPlanningDTO(daySchedules);
+    return dayPlanDTOS;
   }
 
   private DayActivityDTO createDayActivity(
@@ -78,6 +76,21 @@ public class PlanningService {
         .description(activity.description())
         .startTime(startZoned)
         .endTime(endZoned)
+        .combinedAverageRating(activity.reviews().combinedAverageRating())
+        .reviewCount(activity.reviews().totalReviews())
+        .fromPrice(activity.pricing().summary().fromPrice())
+        .durationMinutes(getDurationMinutes(activity))
+        .images(activity.images())
         .build();
+  }
+
+  private static Integer getDurationMinutes(ViatorActivityDTO activity) {
+    if (activity.duration() == null) {
+      return null;
+    }
+
+    return activity.duration().fixedDurationInMinutes() != null
+        ? activity.duration().fixedDurationInMinutes()
+        : activity.duration().variableDurationToMinutes();
   }
 }

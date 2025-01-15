@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class DayScheduleDTO {
+public class DayPlanDTO {
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private ZonedDateTime date;
