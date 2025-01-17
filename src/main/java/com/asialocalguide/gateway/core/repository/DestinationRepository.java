@@ -14,7 +14,7 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
           + "JOIN d.destinationTranslations dt "
           + "WHERE dt.locale = :locale "
           + "AND LOWER(dt.destinationName) LIKE LOWER(CONCAT('%', :destinationName, '%')) "
-          + "AND d.type = 'CITY'")
-  List<Destination> findCityByTranslationsForLocaleAndDestinationName(
+          + "AND d.type IN ('CITY', 'REGION')")
+  List<Destination> findCityOrRegionByTranslationsForLocaleAndDestinationName(
       String locale, String destinationName);
 }
