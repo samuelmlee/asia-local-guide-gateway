@@ -1,7 +1,11 @@
 package com.asialocalguide.gateway.core.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
 
 public record ActivityPlanningRequestDTO(
-    Instant startDate, Instant endDate, Long destinationId, List<Long> activityTagIds) {}
+    @NotNull Instant startDate,
+    @NotNull Instant endDate,
+    @NotNull Long destinationId,
+    List<Long> activityTagIds) {}

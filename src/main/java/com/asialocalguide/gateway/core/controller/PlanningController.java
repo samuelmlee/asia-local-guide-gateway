@@ -3,6 +3,7 @@ package com.asialocalguide.gateway.core.controller;
 import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.DayPlanDTO;
 import com.asialocalguide.gateway.core.service.PlanningService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +21,8 @@ public class PlanningController {
   }
 
   @PostMapping("/generate")
-  public List<DayPlanDTO> generateActivityPlan(@RequestBody ActivityPlanningRequestDTO request) {
+  public List<DayPlanDTO> generateActivityPlan(
+      @Valid @RequestBody ActivityPlanningRequestDTO request) {
     return planningService.generateActivityPlanning(request);
   }
 }
