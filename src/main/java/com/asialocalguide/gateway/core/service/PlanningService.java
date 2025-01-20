@@ -29,59 +29,64 @@ public class PlanningService {
     Instant startDate = request.startDate();
     Instant endDate = request.endDate();
 
-    List<DayPlanDTO> dayPlanDTOS = new ArrayList<>();
-
-    // Calculate the number of days between startDate and endDate (inclusive)
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+    return createDayPlans(startDate, totalDays, activities);
+  }
 
-    // Index to track the current activity from the list
+  private List<DayPlanDTO> createDayPlans(
+      Instant startDate, long totalDays, List<ViatorActivityDTO> activities) {
+    List<DayPlanDTO> dayPlans = new ArrayList<>();
     int activityIndex = 0;
 
-    // Loop through each day in the date range
-    for (long i = 0; i < totalDays; i++) {
-      Instant currentDay = startDate.plus(i, ChronoUnit.DAYS);
-
-      // Convert Instant to ZonedDateTime in UTC
+    for (int dayOffset = 0; dayOffset < totalDays; dayOffset++) {
+      Instant currentDay = startDate.plus(dayOffset, ChronoUnit.DAYS);
       ZonedDateTime zonedDateTime = currentDay.atZone(ZoneId.of("UTC"));
 
-      List<DayActivityDTO> dayActivities = new ArrayList<>();
+      List<DayActivityDTO> dayActivities =
+          assignActivitiesForDay(activities, activityIndex, currentDay);
+      activityIndex += dayActivities.size();
 
-      // Assign morning and afternoon activities for the day if available
-      if (activityIndex < activities.size()) {
-        dayActivities.add(createDayActivity(activities.get(activityIndex), currentDay, 9, 12));
-        activityIndex++;
-      }
-      if (activityIndex < activities.size()) {
-        dayActivities.add(createDayActivity(activities.get(activityIndex), currentDay, 14, 17));
-        activityIndex++;
-      }
-
-      dayPlanDTOS.add(DayPlanDTO.builder().date(zonedDateTime).activities(dayActivities).build());
+      dayPlans.add(DayPlanDTO.builder().date(zonedDateTime).activities(dayActivities).build());
     }
 
-    return dayPlanDTOS;
+    return dayPlans;
+  }
+
+  private List<DayActivityDTO> assignActivitiesForDay(
+      List<ViatorActivityDTO> activities, int startIndex, Instant day) {
+    List<DayActivityDTO> dayActivities = new ArrayList<>();
+
+    if (startIndex < activities.size()) {
+      dayActivities.add(createDayActivity(activities.get(startIndex), day, 9, 12));
+    }
+    if (startIndex + 1 < activities.size()) {
+      dayActivities.add(createDayActivity(activities.get(startIndex + 1), day, 14, 17));
+    }
+
+    return dayActivities;
   }
 
   private DayActivityDTO createDayActivity(
       ViatorActivityDTO activity, Instant day, int startHour, int endHour) {
-    // Convert Instant to ZonedDateTime in UTC
-    ZonedDateTime startZoned =
-        day.atZone(ZoneId.of("UTC")).withHour(startHour).withMinute(0).withSecond(0).withNano(0);
-    ZonedDateTime endZoned = startZoned.withHour(endHour);
+    ZonedDateTime startTime = toZonedDateTime(day, startHour);
+    ZonedDateTime endTime = startTime.withHour(endHour);
 
-    // Build and return DayActivityDTO
     return DayActivityDTO.builder()
         .productCode(activity.productCode())
         .title(activity.title())
         .description(activity.description())
-        .startTime(startZoned)
-        .endTime(endZoned)
+        .startTime(startTime)
+        .endTime(endTime)
         .combinedAverageRating(activity.reviews().combinedAverageRating())
         .reviewCount(activity.reviews().totalReviews())
         .fromPrice(activity.pricing().summary().fromPrice())
         .durationMinutes(getDurationMinutes(activity))
         .images(activity.images())
         .build();
+  }
+
+  private ZonedDateTime toZonedDateTime(Instant day, int hour) {
+    return day.atZone(ZoneId.of("UTC")).withHour(hour).withMinute(0).withSecond(0).withNano(0);
   }
 
   private static Integer getDurationMinutes(ViatorActivityDTO activity) {
