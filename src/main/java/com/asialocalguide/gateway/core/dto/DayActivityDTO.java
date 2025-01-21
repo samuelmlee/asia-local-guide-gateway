@@ -23,6 +23,8 @@ public class DayActivityDTO {
 
   private List<ImageDTO> images;
 
+  private String providerUrl;
+
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private ZonedDateTime startTime;
 

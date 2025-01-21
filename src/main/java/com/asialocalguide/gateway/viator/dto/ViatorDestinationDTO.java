@@ -1,5 +1,7 @@
 package com.asialocalguide.gateway.viator.dto;
 
+import com.asialocalguide.gateway.core.domain.Coordinates;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +20,9 @@ public class ViatorDestinationDTO {
   private List<Long> lookupIds;
 
   private String localeCode;
+
+  @JsonProperty("center")
+  private Coordinates coordinates;
 
   @JsonSetter("lookupId")
   public void setLookupIds(String lookupIdString) {

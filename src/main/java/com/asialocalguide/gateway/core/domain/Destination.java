@@ -39,6 +39,8 @@ public class Destination {
       orphanRemoval = true)
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
+  @Embedded Coordinates coordinates;
+
   public void addTranslation(DestinationTranslation translation) {
     translation.setDestination(this);
     destinationTranslations.add(translation);

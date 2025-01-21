@@ -14,6 +14,7 @@ public class ViatorDestinationToDestinationConverter
   public Destination convert(ViatorDestinationDTO dto) {
     Destination destination = new Destination();
     destination.setType(mapToDestinationType(dto.getType()));
+    destination.setCoordinates(dto.getCoordinates());
 
     return destination;
   }

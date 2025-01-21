@@ -81,6 +81,7 @@ public class PlanningService {
         .reviewCount(activity.reviews().totalReviews())
         .fromPrice(activity.pricing().summary().fromPrice())
         .durationMinutes(getDurationMinutes(activity))
+        .providerUrl(activity.productUrl())
         .images(activity.images())
         .build();
   }
