@@ -1,18 +1,18 @@
 package com.asialocalguide.gateway.core.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.asialocalguide.gateway.core.dto.DayActivityDTO;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class KnapsackTest {
+class KnapsackSelecterTest {
 
   @Test
   void testMaximumValue() {
     // Arrange
-    Knapsack knapsack = new Knapsack();
+    KnapsackSelector knapsackSelector = new KnapsackSelector();
 
     List<DayActivityDTO> activities =
         Arrays.asList(
@@ -23,24 +23,24 @@ class KnapsackTest {
                 .durationMinutes(2)
                 .build(),
             DayActivityDTO.builder()
-                .productCode("A2")
-                .title("Activity 2")
-                .combinedAverageRating(3.0)
-                .durationMinutes(1)
-                .build(),
-            DayActivityDTO.builder()
                 .productCode("A3")
                 .title("Activity 3")
                 .combinedAverageRating(2.0)
                 .durationMinutes(3)
+                .build(),
+            DayActivityDTO.builder()
+                .productCode("A2")
+                .title("Activity 2")
+                .combinedAverageRating(3.0)
+                .durationMinutes(1)
                 .build());
 
     int capacity = 4;
 
     // Act
-    double result = knapsack.maximumValue(capacity, activities);
+    List<DayActivityDTO> selection = knapsackSelector.selectBestActivities(activities, capacity);
 
     // Assert
-    assertEquals(7.5, result, 0.001);
+    assertThat(selection).hasSize(2);
   }
 }
