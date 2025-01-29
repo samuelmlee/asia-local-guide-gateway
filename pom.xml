@@ -49,6 +49,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.google.ortools/ortools-java -->
+        <dependency>
+            <groupId>com.google.ortools</groupId>
+            <artifactId>ortools-java</artifactId>
+            <version>9.11.4210</version>
+        </dependency>
+
         <!-- JSR 303 - Bean Validation API -->
         <dependency>
             <groupId>jakarta.validation</groupId>
