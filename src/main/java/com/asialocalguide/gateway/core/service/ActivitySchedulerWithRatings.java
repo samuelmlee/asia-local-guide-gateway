@@ -11,30 +11,27 @@ public class ActivitySchedulerWithRatings {
     Loader.loadNativeLibraries();
 
     // Problem parameters
-    final int numActivities = 5; // Number of activities
-    final int numDays = 1; // Number of vacation days
-    final int numTimeSlots = 3; // Three time slots per day (morning, afternoon, evening)
+    final int numActivities = 5;
+    final int numDays = 2;
+    final int numTimeSlots = 3;
 
     final int[] allActivities = IntStream.range(0, numActivities).toArray();
     final int[] allDays = IntStream.range(0, numDays).toArray();
     final int[] allTimeSlots = IntStream.range(0, numTimeSlots).toArray();
 
-    // Review ratings for each activity (higher = better)
+    // Review ratings for each activity
     final int[] activityRatings = {5, 3, 4, 2, 5};
 
-    // Duration of each activity in time slots (e.g., activity 0 might span 2 time slots)
-    final int[] activityDurations = {
-      1, 2, 3, 1, 2
-    }; // Duration in number of time slots per activity
+    // Duration of each activity in time slots
+    final int[] activityDurations = {1, 2, 3, 1, 2};
 
-    // Availability of each activity in each time slot (e.g., true means available, false means not
-    // available)
+    // Activity availability per time slot
     boolean[][] activityAvailability = {
-      {true, true, false}, // Activity 0 is available in morning and afternoon, but not in evening
-      {false, true, true}, // Activity 1 is available in afternoon and evening, but not in morning
-      {true, true, true}, // Activity 2 is available in all time slots
-      {false, true, false}, // Activity 3 is available only in the afternoon
-      {true, false, false} // Activity 4 is available only in the morning
+      {true, true, false}, // Activity 0: Morning, Afternoon
+      {false, true, false}, // Activity 1: Afternoon only
+      {true, false, false}, // Activity 2: Morning only
+      {false, true, true}, // Activity 3: Afternoon, Evening
+      {true, true, false} // Activity 4: Morning, Afternoon
     };
 
     // Create the model
@@ -52,57 +49,88 @@ public class ActivitySchedulerWithRatings {
       }
     }
 
-    // Constraint: Each activity can only be scheduled in available time slots
+    // Binary decision variable: Whether an activity is scheduled at all
+    BoolVar[] isScheduled = new BoolVar[numActivities];
     for (int a : allActivities) {
+      isScheduled[a] = model.newBoolVar("isScheduled_" + a);
+    }
+
+    // Constraint: Each activity can be assigned only once across all days
+    for (int a : allActivities) {
+      List<Literal> allScheduledTimes = new ArrayList<>();
+
       for (int d : allDays) {
         for (int t : allTimeSlots) {
-          if (!activityAvailability[a][t]) {
-            // If the activity is not available in this time slot, it cannot be scheduled here
-            model.addEquality(activityScheduled[a][d][t], 0); // 0 means "false"
-          }
+          allScheduledTimes.add(activityScheduled[a][d][t]);
         }
       }
+
+      // Ensure the activity is scheduled at most once in the entire schedule
+      model.addAtMostOne(allScheduledTimes);
     }
 
-    // Constraint: Activity must span the required number of time slots
+    // **Activity Scheduling Constraint (Span Multiple Slots If Started)**
     for (int a : allActivities) {
       for (int d : allDays) {
-        for (int t = 0; t <= numTimeSlots - activityDurations[a]; t++) { // Ensure activity fits
-          List<Literal> slots = new ArrayList<>();
-          for (int k = 0; k < activityDurations[a]; k++) {
-            if (activityAvailability[a][
-                t + k]) { // Check if the activity is available in this time slot
-              slots.add(activityScheduled[a][d][t + k]);
+        List<Literal> validStartTimes = new ArrayList<>();
+
+        for (int t = 0; t <= numTimeSlots - activityDurations[a]; t++) {
+          if (activityAvailability[a][t]) {
+            validStartTimes.add(activityScheduled[a][d][t]);
+
+            // If activity starts here, it must span its required duration
+            for (int k = 0; k < activityDurations[a]; k++) {
+              if (t + k < numTimeSlots) {
+                model.addImplication(activityScheduled[a][d][t], activityScheduled[a][d][t + k]);
+              }
             }
           }
-          if (!slots.isEmpty()) {
-            model.addExactlyOne(slots); // Ensure activity spans the given slots
-          }
+        }
+
+        // Ensure the activity is scheduled at most once in a valid start time
+        model.addAtMostOne(validStartTimes);
+
+        // If an activity is scheduled at least once, mark it as scheduled
+        if (!validStartTimes.isEmpty()) {
+          model.addEquality(
+              LinearExpr.sum(validStartTimes.toArray(new Literal[0])), isScheduled[a]);
         }
       }
     }
 
-    // Constraint: No overlapping activities in the same time slot on the same day
+    // **No Overlapping Activities in the Same Time Slot on the Same Day**
     for (int d : allDays) {
       for (int t : allTimeSlots) {
         List<Literal> concurrentActivities = new ArrayList<>();
         for (int a : allActivities) {
           concurrentActivities.add(activityScheduled[a][d][t]);
         }
-        model.addAtMostOne(concurrentActivities); // Ensures only one activity per slot
+        model.addAtMostOne(concurrentActivities);
       }
     }
 
-    // **Objective: Maximize total review ratings**
+    // **Objective: Maximize the Sum of Average Ratings for Unique Activities**
     LinearExprBuilder totalRating = LinearExpr.newBuilder();
+    LinearExprBuilder totalScheduledActivities = LinearExpr.newBuilder();
+
     for (int a : allActivities) {
+      totalScheduledActivities.addTerm(isScheduled[a], 1);
       for (int d : allDays) {
         for (int t : allTimeSlots) {
           totalRating.addTerm(activityScheduled[a][d][t], activityRatings[a]);
         }
       }
     }
-    model.maximize(totalRating);
+
+    // Lambda controls the trade-off between total rating and number of unique scheduled activities
+    double lambda = 0.8; // Adjust this to prioritize high ratings vs. scheduling more activities
+
+    LinearExprBuilder totalWeightedObjective = LinearExpr.newBuilder();
+    totalWeightedObjective.addTerm(totalRating.build(), (int) (lambda * 100));
+    totalWeightedObjective.addTerm(totalScheduledActivities.build(), (int) ((1 - lambda) * 100));
+
+    // Maximize weighted objective
+    model.maximize(totalWeightedObjective.build());
 
     // Solver
     CpSolver solver = new CpSolver();
@@ -110,8 +138,10 @@ public class ActivitySchedulerWithRatings {
 
     // Print solution
     if (status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE) {
-      System.out.println("Optimal Schedule with Maximum Ratings:");
+      System.out.println("Optimal Schedule with Maximum Average Ratings:");
       int totalScore = 0;
+      int scheduledActivitiesCount = 0;
+
       for (int d : allDays) {
         System.out.printf("Day %d:%n", d);
         for (int t : allTimeSlots) {
@@ -121,13 +151,18 @@ public class ActivitySchedulerWithRatings {
                   "  Activity %d (Rating: %d) scheduled at time slot %d%n",
                   a, activityRatings[a], t);
               totalScore += activityRatings[a];
+              scheduledActivitiesCount++;
             }
           }
         }
       }
+
+      double avgRating =
+          scheduledActivitiesCount > 0 ? (double) totalScore / scheduledActivitiesCount : 0;
       System.out.println("Total Review Rating: " + totalScore);
+      System.out.println("Average Rating per Scheduled Activity: " + avgRating);
     } else {
-      System.out.println("No feasible solution found.");
+      System.out.println("No feasible solution found. Solver status: " + status);
     }
   }
 }
