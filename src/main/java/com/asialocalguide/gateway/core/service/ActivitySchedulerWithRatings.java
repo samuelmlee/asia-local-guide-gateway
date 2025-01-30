@@ -3,6 +3,7 @@ package com.asialocalguide.gateway.core.service;
 import com.google.ortools.Loader;
 import com.google.ortools.sat.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -20,18 +21,18 @@ public class ActivitySchedulerWithRatings {
     final int[] allTimeSlots = IntStream.range(0, numTimeSlots).toArray();
 
     // Review ratings for each activity
-    final int[] activityRatings = {5, 3, 4, 2, 5};
+    final int[] activityRatings = {5, 5, 4, 3, 2};
 
     // Duration of each activity in time slots
-    final int[] activityDurations = {1, 2, 3, 1, 2};
+    final int[] activityDurations = {1, 1, 2, 1, 2};
 
-    // Activity availability per time slot
+    // Activity availability per time slot (start times only)
     boolean[][] activityAvailability = {
-      {true, true, false}, // Activity 0: Morning, Afternoon
-      {false, true, false}, // Activity 1: Afternoon only
-      {true, false, false}, // Activity 2: Morning only
-      {false, true, true}, // Activity 3: Afternoon, Evening
-      {true, true, false} // Activity 4: Morning, Afternoon
+      {true, true, false}, // Activity 0: Can start in morning, afternoon
+      {false, false, true}, // Activity 1: Can start in afternoon only
+      {true, false, false}, // Activity 2: Can start in morning only
+      {false, true, true}, // Activity 3: Can start in afternoon, evening
+      {false, true, false} // Activity 4: Can start in morning, afternoon
     };
 
     // Create the model
@@ -39,7 +40,6 @@ public class ActivitySchedulerWithRatings {
 
     // Decision variables: Activity assignment per time slot on each day
     Literal[][][] activityScheduled = new Literal[numActivities][numDays][numTimeSlots];
-
     for (int a : allActivities) {
       for (int d : allDays) {
         for (int t : allTimeSlots) {
@@ -49,95 +49,61 @@ public class ActivitySchedulerWithRatings {
       }
     }
 
-    // Binary decision variable: Whether an activity is scheduled at all
-    BoolVar[] isScheduled = new BoolVar[numActivities];
-    for (int a : allActivities) {
-      isScheduled[a] = model.newBoolVar("isScheduled_" + a);
-    }
-
-    // **Activity Scheduling Constraint (Span Multiple Slots If Started)**
+    // Correctly enforce activity availability and duration
     for (int a : allActivities) {
       for (int d : allDays) {
-        List<Literal> validStartTimes = new ArrayList<>();
-
-        for (int t = 0; t <= numTimeSlots - activityDurations[a]; t++) {
-          if (activityAvailability[a][t]) { // Issue: Only filtering valid starts, not enforcing it
-            validStartTimes.add(activityScheduled[a][d][t]);
-
-            // If activity starts here, it must span its required duration
+        for (int t : allTimeSlots) {
+          // If the activity cannot start at this time slot OR if the duration
+          // of the activity would exceed the number of timeslots, then the activity
+          // cannot be scheduled at this timeslot
+          if (!activityAvailability[a][t] || t + activityDurations[a] > numTimeSlots) {
+            model.addEquality(activityScheduled[a][d][t], 0);
+          } else {
+            // If the activity *can* start here, then enforce duration using implications
             for (int k = 0; k < activityDurations[a]; k++) {
-              if (t + k < numTimeSlots) {
-                model.addImplication(activityScheduled[a][d][t], activityScheduled[a][d][t + k]);
-              }
+              model.addImplication(activityScheduled[a][d][t], activityScheduled[a][d][t + k]);
             }
           }
-        }
-
-        // Ensure the activity is scheduled at most once in a valid start time
-        model.addAtMostOne(validStartTimes);
-
-        // If an activity is scheduled at least once, mark it as scheduled
-        if (!validStartTimes.isEmpty()) {
-          model.addEquality(
-              LinearExpr.sum(validStartTimes.toArray(new Literal[0])), isScheduled[a]);
         }
       }
     }
 
-    // Constraint: Each activity can be assigned only once across all days
+    // **Ensure only one activity per time slot per day**
+    for (int d : allDays) {
+      for (int t : allTimeSlots) {
+        List<Literal> concurrentActivities = new ArrayList<>();
+        for (int a : allActivities) {
+          concurrentActivities.add(activityScheduled[a][d][t]);
+        }
+        model.addAtMostOne(concurrentActivities);
+      }
+    }
+
+    // **Each Activity Can Be Assigned Only Once Across All Days**
     for (int a : allActivities) {
       List<Literal> allScheduledTimes = new ArrayList<>();
-
       for (int d : allDays) {
-        for (int t : allTimeSlots) {
-          allScheduledTimes.add(activityScheduled[a][d][t]);
-        }
+        allScheduledTimes.addAll(Arrays.asList(activityScheduled[a][d]).subList(0, numTimeSlots));
       }
 
       // Ensure the activity is scheduled at most once in the entire schedule
       model.addAtMostOne(allScheduledTimes);
     }
 
-    // **No Overlapping Activities, Considering Duration**
+    // Objective: Maximize the number of assigned activities with higher ratings prioritized
+    LinearExprBuilder objectiveBuilder = LinearExpr.newBuilder();
     for (int d : allDays) {
-      for (int t = 0; t < numTimeSlots; t++) {
-        List<Literal> overlappingActivities = new ArrayList<>();
-
+      for (int t : allTimeSlots) {
         for (int a : allActivities) {
-          for (int k = 0; k < activityDurations[a]; k++) {
-            if (t - k >= 0) {
-              overlappingActivities.add(activityScheduled[a][d][t - k]);
-            }
-          }
-        }
-
-        // Ensure only one activity can occupy a given time slot considering durations
-        model.addAtMostOne(overlappingActivities);
-      }
-    }
-
-    // **Objective: Maximize the Sum of Average Ratings for Unique Activities**
-    LinearExprBuilder totalRating = LinearExpr.newBuilder();
-    LinearExprBuilder totalScheduledActivities = LinearExpr.newBuilder();
-
-    for (int a : allActivities) {
-      totalScheduledActivities.addTerm(isScheduled[a], 1);
-      for (int d : allDays) {
-        for (int t : allTimeSlots) {
-          totalRating.addTerm(activityScheduled[a][d][t], activityRatings[a]);
+          // Add a weighted term for each activity, prioritizing higher ratings
+          objectiveBuilder.addTerm(
+              activityScheduled[a][d][t],
+              activityRatings[a] * 10 + 1); // Example weights: rating * 10 + 1
         }
       }
     }
-
-    // Lambda controls the trade-off between total rating and number of unique scheduled activities
-    double lambda = 0.8; // Adjust this to prioritize high ratings vs. scheduling more activities
-
-    LinearExprBuilder totalWeightedObjective = LinearExpr.newBuilder();
-    totalWeightedObjective.addTerm(totalRating.build(), (int) (lambda * 100));
-    totalWeightedObjective.addTerm(totalScheduledActivities.build(), (int) ((1 - lambda) * 100));
-
-    // Maximize weighted objective
-    model.maximize(totalWeightedObjective.build());
+    LinearExpr objective = objectiveBuilder.build();
+    model.maximize(objective);
 
     // Solver
     CpSolver solver = new CpSolver();
@@ -151,17 +117,26 @@ public class ActivitySchedulerWithRatings {
 
       for (int d : allDays) {
         System.out.printf("Day %d:%n", d);
+
         for (int t : allTimeSlots) {
+          boolean slotFilled = false;
+
           for (int a : allActivities) {
-            if (solver.booleanValue(activityScheduled[a][d][t])) {
+            if (Boolean.TRUE.equals(solver.booleanValue(activityScheduled[a][d][t]))) {
               System.out.printf(
-                  "  Activity %d (Rating: %d) scheduled at time slot %d%n",
-                  a, activityRatings[a], t);
+                  "  Time Slot %d: Activity %d (Rating: %d)%n", t, a, activityRatings[a]);
               totalScore += activityRatings[a];
               scheduledActivitiesCount++;
+              slotFilled = true;
             }
           }
+
+          // If no activity was assigned to this time slot, indicate it's empty
+          if (!slotFilled) {
+            System.out.printf("  Time Slot %d: No activity assigned%n", t);
+          }
         }
+        System.out.println(); // Add spacing between days for clarity
       }
 
       double avgRating =
