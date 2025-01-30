@@ -55,27 +55,13 @@ public class ActivitySchedulerWithRatings {
       isScheduled[a] = model.newBoolVar("isScheduled_" + a);
     }
 
-    // Constraint: Each activity can be assigned only once across all days
-    for (int a : allActivities) {
-      List<Literal> allScheduledTimes = new ArrayList<>();
-
-      for (int d : allDays) {
-        for (int t : allTimeSlots) {
-          allScheduledTimes.add(activityScheduled[a][d][t]);
-        }
-      }
-
-      // Ensure the activity is scheduled at most once in the entire schedule
-      model.addAtMostOne(allScheduledTimes);
-    }
-
     // **Activity Scheduling Constraint (Span Multiple Slots If Started)**
     for (int a : allActivities) {
       for (int d : allDays) {
         List<Literal> validStartTimes = new ArrayList<>();
 
         for (int t = 0; t <= numTimeSlots - activityDurations[a]; t++) {
-          if (activityAvailability[a][t]) {
+          if (activityAvailability[a][t]) { // Issue: Only filtering valid starts, not enforcing it
             validStartTimes.add(activityScheduled[a][d][t]);
 
             // If activity starts here, it must span its required duration
@@ -98,14 +84,35 @@ public class ActivitySchedulerWithRatings {
       }
     }
 
-    // **No Overlapping Activities in the Same Time Slot on the Same Day**
-    for (int d : allDays) {
-      for (int t : allTimeSlots) {
-        List<Literal> concurrentActivities = new ArrayList<>();
-        for (int a : allActivities) {
-          concurrentActivities.add(activityScheduled[a][d][t]);
+    // Constraint: Each activity can be assigned only once across all days
+    for (int a : allActivities) {
+      List<Literal> allScheduledTimes = new ArrayList<>();
+
+      for (int d : allDays) {
+        for (int t : allTimeSlots) {
+          allScheduledTimes.add(activityScheduled[a][d][t]);
         }
-        model.addAtMostOne(concurrentActivities);
+      }
+
+      // Ensure the activity is scheduled at most once in the entire schedule
+      model.addAtMostOne(allScheduledTimes);
+    }
+
+    // **No Overlapping Activities, Considering Duration**
+    for (int d : allDays) {
+      for (int t = 0; t < numTimeSlots; t++) {
+        List<Literal> overlappingActivities = new ArrayList<>();
+
+        for (int a : allActivities) {
+          for (int k = 0; k < activityDurations[a]; k++) {
+            if (t - k >= 0) {
+              overlappingActivities.add(activityScheduled[a][d][t - k]);
+            }
+          }
+        }
+
+        // Ensure only one activity can occupy a given time slot considering durations
+        model.addAtMostOne(overlappingActivities);
       }
     }
 
