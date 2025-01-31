@@ -77,6 +77,6 @@ public class ActivityService {
         new ViatorActivitySearchDTO(
             filteringDTO, sorting, new ViatorActivitySearchDTO.Pagination(1, 30), "EUR");
 
-    return viatorActivityService.getActivityDTOs(locale, searchDTO);
+    return viatorActivityService.getActivityDetails(locale, searchDTO);
   }
 }

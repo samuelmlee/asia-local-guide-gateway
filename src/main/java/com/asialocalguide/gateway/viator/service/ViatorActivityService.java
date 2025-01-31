@@ -7,11 +7,14 @@ import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class ViatorActivityService {
 
   private final ViatorClient viatorClient;
@@ -20,7 +23,7 @@ public class ViatorActivityService {
     this.viatorClient = viatorClient;
   }
 
-  public List<ViatorActivityDetailDTO> getActivityDTOs(
+  public List<ViatorActivityDetailDTO> getActivityDetails(
       SupportedLocale defaultLocale, ViatorActivitySearchDTO searchDTO) {
 
     List<ViatorActivityDTO> activities =
@@ -31,18 +34,30 @@ public class ViatorActivityService {
             .map(
                 activity ->
                     CompletableFuture.supplyAsync(
-                        () -> {
-                          Optional<ViatorActivityAvailabilityDTO> availabilityOpt =
-                              viatorClient.getAvailabilityByProductCode(activity.productCode());
+                            () -> {
+                              Optional<ViatorActivityAvailabilityDTO> availabilityOpt =
+                                  viatorClient.getAvailabilityByProductCode(activity.productCode());
 
-                          return new ViatorActivityDetailDTO(
-                              activity, availabilityOpt.orElse(null));
-                        }))
+                              if (availabilityOpt.isEmpty()) {
+                                throw new IllegalStateException(
+                                    "No availability returned for product code: "
+                                        + activity.productCode());
+                              }
+
+                              return new ViatorActivityDetailDTO(activity, availabilityOpt.get());
+                            })
+                        .exceptionally(
+                            ex -> {
+                              log.error(
+                                  "Error fetching Viator activity availability for product code: {}",
+                                  activity.productCode(),
+                                  ex);
+                              return null;
+                            }))
             .toList();
 
     CompletableFuture.allOf(futureDetails.toArray(new CompletableFuture[0])).join();
 
-    // 4. Gather results into a List<ViatorActivityDetailDTO>
-    return futureDetails.stream().map(CompletableFuture::join).toList();
+    return futureDetails.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList();
   }
 }
