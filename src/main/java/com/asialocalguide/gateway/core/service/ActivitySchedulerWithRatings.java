@@ -27,6 +27,7 @@ public class ActivitySchedulerWithRatings {
     final int[] activityDurations = {1, 1, 2, 1, 2};
 
     // Activity availability per time slot (start times only)
+    // TODO: To update to have availability for each day
     boolean[][] activityAvailability = {
       {true, true, false}, // Activity 0: Can start in morning, afternoon
       {false, false, true}, // Activity 1: Can start in afternoon only
@@ -68,7 +69,7 @@ public class ActivitySchedulerWithRatings {
       }
     }
 
-    // **Ensure only one activity per time slot per day**
+    // Ensure only one activity per time slot per day
     for (int d : allDays) {
       for (int t : allTimeSlots) {
         List<Literal> concurrentActivities = new ArrayList<>();
@@ -79,7 +80,7 @@ public class ActivitySchedulerWithRatings {
       }
     }
 
-    // **Each Activity Can Be Assigned Only Once Across All Days**
+    // Each Activity Can Be Assigned Only Once Across All Days
     for (int a : allActivities) {
       List<Literal> allScheduledTimes = new ArrayList<>();
       for (int d : allDays) {

@@ -94,4 +94,27 @@ public class ViatorClient {
       throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
     }
   }
+
+  public Optional<ViatorActivityAvailabilityDTO> getAvailabilityByProductCode(String productCode) {
+    try {
+      ViatorActivityAvailabilityDTO availability =
+          viatorRestClient
+              .post()
+              .uri("/availability/schedules/{productCode}", productCode)
+              .retrieve()
+              .onStatus(viatorResponseErrorHandler)
+              .body(ViatorActivityAvailabilityDTO.class);
+
+      return Optional.ofNullable(availability);
+
+    } catch (ViatorApiException e) {
+
+      throw e;
+
+    } catch (Exception e) {
+
+      throw new ViatorApiException(
+          "Failed to call Availability Schedules API: " + e.getMessage(), e);
+    }
+  }
 }

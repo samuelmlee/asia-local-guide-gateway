@@ -6,10 +6,7 @@ import com.asialocalguide.gateway.core.domain.Destination;
 import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorActivitySortingOrder;
-import com.asialocalguide.gateway.viator.dto.ViatorActivitySortingType;
+import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +31,7 @@ public class ActivityService {
     this.viatorActivityService = viatorActivityService;
   }
 
-  public List<ViatorActivityDTO> getActivities(
+  public List<ViatorActivityDetailDTO> getActivities(
       SupportedLocale locale, ActivityPlanningRequestDTO request) {
 
     // TODO: ActivityService should return a list of activities that is independent of the provider

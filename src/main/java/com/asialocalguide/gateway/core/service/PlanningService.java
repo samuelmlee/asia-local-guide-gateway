@@ -5,6 +5,7 @@ import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.DayPlanDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -24,7 +25,12 @@ public class PlanningService {
 
   public List<DayPlanDTO> generateActivityPlanning(ActivityPlanningRequestDTO request) {
     SupportedLocale locale = SupportedLocale.getDefaultLocale();
-    List<ViatorActivityDTO> activities = activityService.getActivities(locale, request);
+    List<ViatorActivityDetailDTO> activityDetails = activityService.getActivities(locale, request);
+
+    // TODO: redo all implementation logic for generating day plans
+
+    List<ViatorActivityDTO> activities =
+        activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
 
     Instant startDate = request.startDate();
     Instant endDate = request.endDate();
