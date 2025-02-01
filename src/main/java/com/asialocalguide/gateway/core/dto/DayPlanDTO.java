@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +11,7 @@ import lombok.Data;
 public class DayPlanDTO {
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-  private ZonedDateTime date;
+  private LocalDate date;
 
   private List<DayActivityDTO> activities;
 }

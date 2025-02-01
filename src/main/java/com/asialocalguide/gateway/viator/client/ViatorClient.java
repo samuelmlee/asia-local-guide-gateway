@@ -99,7 +99,7 @@ public class ViatorClient {
     try {
       ViatorActivityAvailabilityDTO availability =
           viatorRestClient
-              .post()
+              .get()
               .uri("/availability/schedules/{productCode}", productCode)
               .retrieve()
               .onStatus(viatorResponseErrorHandler)

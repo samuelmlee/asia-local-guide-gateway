@@ -6,9 +6,7 @@ import com.asialocalguide.gateway.core.dto.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.DayPlanDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,34 +30,33 @@ public class PlanningService {
     List<ViatorActivityDTO> activities =
         activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
 
-    Instant startDate = request.startDate();
-    Instant endDate = request.endDate();
+    LocalDate startDate = request.startDate();
+    LocalDate endDate = request.endDate();
 
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
     return createDayPlans(startDate, totalDays, activities);
   }
 
   private List<DayPlanDTO> createDayPlans(
-      Instant startDate, long totalDays, List<ViatorActivityDTO> activities) {
+      LocalDate startDate, long totalDays, List<ViatorActivityDTO> activities) {
     List<DayPlanDTO> dayPlans = new ArrayList<>();
     int activityIndex = 0;
 
     for (int dayOffset = 0; dayOffset < totalDays; dayOffset++) {
-      Instant currentDay = startDate.plus(dayOffset, ChronoUnit.DAYS);
-      ZonedDateTime zonedDateTime = currentDay.atZone(ZoneId.of("UTC"));
+      LocalDate currentDay = startDate.plusDays(dayOffset);
 
       List<DayActivityDTO> dayActivities =
           assignActivitiesForDay(activities, activityIndex, currentDay);
       activityIndex += dayActivities.size();
 
-      dayPlans.add(DayPlanDTO.builder().date(zonedDateTime).activities(dayActivities).build());
+      dayPlans.add(DayPlanDTO.builder().date(currentDay).activities(dayActivities).build());
     }
 
     return dayPlans;
   }
 
   private List<DayActivityDTO> assignActivitiesForDay(
-      List<ViatorActivityDTO> activities, int startIndex, Instant day) {
+      List<ViatorActivityDTO> activities, int startIndex, LocalDate day) {
     List<DayActivityDTO> dayActivities = new ArrayList<>();
 
     if (startIndex < activities.size()) {
@@ -73,9 +70,9 @@ public class PlanningService {
   }
 
   private DayActivityDTO createDayActivity(
-      ViatorActivityDTO activity, Instant day, int startHour, int endHour) {
-    ZonedDateTime startTime = toZonedDateTime(day, startHour);
-    ZonedDateTime endTime = startTime.withHour(endHour);
+      ViatorActivityDTO activity, LocalDate day, int startHour, int endHour) {
+    LocalDateTime startTime = toLocalDateTime(day, startHour);
+    LocalDateTime endTime = startTime.withHour(endHour);
 
     return DayActivityDTO.builder()
         .productCode(activity.productCode())
@@ -92,8 +89,12 @@ public class PlanningService {
         .build();
   }
 
-  private ZonedDateTime toZonedDateTime(Instant day, int hour) {
-    return day.atZone(ZoneId.of("UTC")).withHour(hour).withMinute(0).withSecond(0).withNano(0);
+  private LocalDateTime toLocalDateTime(LocalDate date, int hour) {
+    if (hour < 0 || hour > 23) {
+      throw new IllegalArgumentException("Hour must be between 0 and 23");
+    }
+
+    return date.atTime(hour, 0);
   }
 
   private static Integer getDurationMinutes(ViatorActivityDTO activity) {
