@@ -26,14 +26,35 @@ public class ActivitySchedulerWithRatings {
     // Duration of each activity in time slots
     final int[] activityDurations = {1, 1, 2, 1, 2};
 
-    // Activity availability per time slot (start times only)
-    // TODO: To update to have availability for each day
-    boolean[][] activityAvailability = {
-      {true, true, false}, // Activity 0: Can start in morning, afternoon
-      {false, false, true}, // Activity 1: Can start in afternoon only
-      {true, false, false}, // Activity 2: Can start in morning only
-      {false, true, true}, // Activity 3: Can start in afternoon, evening
-      {false, true, false} // Activity 4: Can start in morning, afternoon
+    // Activity availability for each activity, day, and time slot.
+    // Dimensions: [activity][day][timeSlot]
+    //
+    // Here, for example:
+    //   activityAvailability[a][d][t] == true means:
+    //       "Activity a is available to start on day d at time slot t".
+    //
+    // Adjust the true/false values as needed for your scenario.
+    boolean[][][] activityAvailability = {
+            { // Activity 0
+                    {true,  true,  false},  // Day 0
+                    {true,  false, false}   // Day 1
+            },
+            { // Activity 1
+                    {false, false, true},   // Day 0
+                    {false, true,  true}    // Day 1
+            },
+            { // Activity 2
+                    {true,  false, false},  // Day 0
+                    {false, false, true}    // Day 1
+            },
+            { // Activity 3
+                    {false, true,  true},   // Day 0
+                    {true,  true,  false}   // Day 1
+            },
+            { // Activity 4
+                    {false, true,  false},  // Day 0
+                    {false, true,  true}    // Day 1
+            }
     };
 
     // Create the model
@@ -45,22 +66,22 @@ public class ActivitySchedulerWithRatings {
       for (int d : allDays) {
         for (int t : allTimeSlots) {
           activityScheduled[a][d][t] =
-              model.newBoolVar("activity_" + a + "_day_" + d + "_time_" + t);
+                  model.newBoolVar("activity_" + a + "_day_" + d + "_time_" + t);
         }
       }
     }
 
-    // Correctly enforce activity availability and duration
+    // Enforce activity availability and duration
     for (int a : allActivities) {
       for (int d : allDays) {
         for (int t : allTimeSlots) {
-          // If the activity cannot start at this time slot OR if the duration
-          // of the activity would exceed the number of timeslots, then the activity
-          // cannot be scheduled at this timeslot
-          if (!activityAvailability[a][t] || t + activityDurations[a] > numTimeSlots) {
+          // If the activity cannot start at this time slot OR
+          // if the duration of the activity would exceed the number of timeslots,
+          // then the activity cannot be scheduled at this timeslot.
+          if (!activityAvailability[a][d][t] || t + activityDurations[a] > numTimeSlots) {
             model.addEquality(activityScheduled[a][d][t], 0);
           } else {
-            // If the activity *can* start here, then enforce duration using implications
+            // If the activity *can* start here, enforce the duration using implications
             for (int k = 0; k < activityDurations[a]; k++) {
               model.addImplication(activityScheduled[a][d][t], activityScheduled[a][d][t + k]);
             }
@@ -80,26 +101,25 @@ public class ActivitySchedulerWithRatings {
       }
     }
 
-    // Each Activity Can Be Assigned Only Once Across All Days
+    // Each Activity can be assigned only once across all days
     for (int a : allActivities) {
       List<Literal> allScheduledTimes = new ArrayList<>();
       for (int d : allDays) {
         allScheduledTimes.addAll(Arrays.asList(activityScheduled[a][d]).subList(0, numTimeSlots));
       }
-
       // Ensure the activity is scheduled at most once in the entire schedule
       model.addAtMostOne(allScheduledTimes);
     }
 
-    // Objective: Maximize the number of assigned activities with higher ratings prioritized
+    // Objective: Maximize the sum of the (rating-based) weights of scheduled activities
     LinearExprBuilder objectiveBuilder = LinearExpr.newBuilder();
     for (int d : allDays) {
       for (int t : allTimeSlots) {
         for (int a : allActivities) {
           // Add a weighted term for each activity, prioritizing higher ratings
           objectiveBuilder.addTerm(
-              activityScheduled[a][d][t],
-              activityRatings[a] * 10 + 1); // Example weights: rating * 10 + 1
+                  activityScheduled[a][d][t],
+                  activityRatings[a] * 10 + 1); // rating * 10 + 1 as an example weighting
         }
       }
     }
@@ -125,23 +145,22 @@ public class ActivitySchedulerWithRatings {
           for (int a : allActivities) {
             if (Boolean.TRUE.equals(solver.booleanValue(activityScheduled[a][d][t]))) {
               System.out.printf(
-                  "  Time Slot %d: Activity %d (Rating: %d)%n", t, a, activityRatings[a]);
+                      "  Time Slot %d: Activity %d (Rating: %d)%n", t, a, activityRatings[a]);
               totalScore += activityRatings[a];
               scheduledActivitiesCount++;
               slotFilled = true;
             }
           }
 
-          // If no activity was assigned to this time slot, indicate it's empty
           if (!slotFilled) {
             System.out.printf("  Time Slot %d: No activity assigned%n", t);
           }
         }
-        System.out.println(); // Add spacing between days for clarity
+        System.out.println();
       }
 
       double avgRating =
-          scheduledActivitiesCount > 0 ? (double) totalScore / scheduledActivitiesCount : 0;
+              scheduledActivitiesCount > 0 ? (double) totalScore / scheduledActivitiesCount : 0;
       System.out.println("Total Review Rating: " + totalScore);
       System.out.println("Average Rating per Scheduled Activity: " + avgRating);
     } else {
