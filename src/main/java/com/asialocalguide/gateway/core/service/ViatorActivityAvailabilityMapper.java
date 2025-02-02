@@ -95,12 +95,12 @@ public class ViatorActivityAvailabilityMapper {
                 : LocalDate.parse(season.endDate(), dateFormatter);
 
         // For each PricingRecord
-        for (ViatorActivityAvailabilityDTO.PricingRecord pricingRecord : season.pricingRecords()) {
+        for (ViatorActivityAvailabilityDTO.PricingRecord record : season.pricingRecords()) {
           // Convert daysOfWeek to DayOfWeek enums
-          List<DayOfWeek> allowedDaysOfWeek = parseDaysOfWeek(pricingRecord.daysOfWeek());
+          List<DayOfWeek> allowedDaysOfWeek = parseDaysOfWeek(record.daysOfWeek());
 
           // For each TimedEntry => get the timeSlot index
-          for (ViatorActivityAvailabilityDTO.TimedEntry entry : pricingRecord.timedEntries()) {
+          for (ViatorActivityAvailabilityDTO.TimedEntry entry : record.timedEntries()) {
             int tIndex = mapTimeToTimeslot(entry.startTime());
 
             // Gather all unavailableDates as strings for quick checking
