@@ -38,49 +38,34 @@ public class ViatorActivityAvailabilityMapper {
   public boolean[][][] mapMultipleDtosToAvailability(
       List<ViatorActivityAvailabilityDTO> dtos, LocalDate minDate, LocalDate maxDate) {
 
-    if (minDate == null || maxDate == null) {
-      // No valid date range => empty array
-      return new boolean[dtos.size()][0][0];
-    }
-
-    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    // 1) Flatten all BookableItems from all DTOs into a list of MappedActivity
-    //    so each "activity" is one (productCode, productOptionCode) pair.
-    List<MappedActivity> allActivities = new ArrayList<>();
-
-    for (ViatorActivityAvailabilityDTO dto : dtos) {
-      String productCode = dto.productCode();
-
-      // Only considering first default bookable item to not pollute the calendar with multiple
-      // activities of the same type
-      ViatorActivityAvailabilityDTO.BookableItem item = dto.bookableItems().getFirst();
-      allActivities.add(new MappedActivity(productCode, item.seasons()));
-    }
-
-    int numActivities = allActivities.size();
-    if (numActivities == 0) {
-      // No data => empty array
+    if (dtos.isEmpty() || minDate == null || maxDate == null) {
+      // Input data invalid => empty array
       return new boolean[0][0][0];
     }
 
-    // 2) Create a list of all the days from minDate to maxDate
-    List<LocalDate> allDates = new ArrayList<>();
-    LocalDate cursor = minDate;
-    while (!cursor.isAfter(maxDate)) {
-      allDates.add(cursor);
-      cursor = cursor.plusDays(1);
-    }
-    int numDays = allDates.size();
+    // 1) Flatten all BookableItems
+    List<MappedActivity> allActivities = flattenDtos(dtos);
 
-    // 3 Timeslots: morning, afternoon, evening
+    // 2) Build day list
+    List<LocalDate> allDates = buildDateList(minDate, maxDate);
+
+    // 3) Initialize array: # of activities × # of days × # of timeslots
+    // Timeslots: morning, afternoon, evening
     int numTimeSlots = 3;
 
     // Initialize the 3D array: [activityIndex][dayIndex][timeSlotIndex]
-    boolean[][][] availability = new boolean[numActivities][numDays][numTimeSlots];
+    boolean[][][] availability = new boolean[allActivities.size()][allDates.size()][numTimeSlots];
+
+    // Return the filled 3D array
+    return fillAvailability(allActivities, allDates, availability);
+  }
+
+  private boolean[][][] fillAvailability(
+      List<MappedActivity> allActivities, List<LocalDate> allDates, boolean[][][] availability) {
+    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     // 4) Fill availability
-    for (int a = 0; a < numActivities; a++) {
+    for (int a = 0; a < allActivities.size(); a++) {
       MappedActivity activity = allActivities.get(a);
 
       // For each season in this activity
@@ -91,16 +76,16 @@ public class ViatorActivityAvailabilityMapper {
         // here assume endDate is always present for simplicity:
         LocalDate seasonEnd =
             (season.endDate() == null || season.endDate().isBlank())
-                ? seasonStart
+                ? LocalDate.MAX
                 : LocalDate.parse(season.endDate(), dateFormatter);
 
         // For each PricingRecord
-        for (ViatorActivityAvailabilityDTO.PricingRecord record : season.pricingRecords()) {
+        for (ViatorActivityAvailabilityDTO.PricingRecord pricingRecord : season.pricingRecords()) {
           // Convert daysOfWeek to DayOfWeek enums
-          List<DayOfWeek> allowedDaysOfWeek = parseDaysOfWeek(record.daysOfWeek());
+          List<DayOfWeek> allowedDaysOfWeek = parseDaysOfWeek(pricingRecord.daysOfWeek());
 
           // For each TimedEntry => get the timeSlot index
-          for (ViatorActivityAvailabilityDTO.TimedEntry entry : record.timedEntries()) {
+          for (ViatorActivityAvailabilityDTO.TimedEntry entry : pricingRecord.timedEntries()) {
             int tIndex = mapTimeToTimeslot(entry.startTime());
 
             // Gather all unavailableDates as strings for quick checking
@@ -128,6 +113,8 @@ public class ViatorActivityAvailabilityMapper {
               }
 
               // Otherwise => available
+              // If only one startTime of an activity fora time slot is available, then the activity
+              // is available
               availability[a][d][tIndex] = true;
             }
           }
@@ -135,8 +122,29 @@ public class ViatorActivityAvailabilityMapper {
       }
     }
 
-    // Return the combined 3D array
     return availability;
+  }
+
+  private List<MappedActivity> flattenDtos(List<ViatorActivityAvailabilityDTO> dtos) {
+    List<MappedActivity> activities = new ArrayList<>();
+    for (ViatorActivityAvailabilityDTO dto : dtos) {
+      String productCode = dto.productCode();
+      // Only considering first default bookable item to not pollute the calendar with multiple
+      // entries of the same activity
+      ViatorActivityAvailabilityDTO.BookableItem item = dto.bookableItems().getFirst();
+      activities.add(new MappedActivity(productCode, item.seasons()));
+    }
+    return activities;
+  }
+
+  private List<LocalDate> buildDateList(LocalDate minDate, LocalDate maxDate) {
+    List<LocalDate> dates = new ArrayList<>();
+    LocalDate cursor = minDate;
+    while (!cursor.isAfter(maxDate)) {
+      dates.add(cursor);
+      cursor = cursor.plusDays(1);
+    }
+    return dates;
   }
 
   /** Helper to parse the "daysOfWeek" strings (e.g. "MONDAY", "TUESDAY") to DayOfWeek enums. */
@@ -156,7 +164,7 @@ public class ViatorActivityAvailabilityMapper {
     return result;
   }
 
-  public static int mapTimeToTimeslot(String time) {
+  private int mapTimeToTimeslot(String time) {
     // Parse time string into hour and minute
     String[] parts = time.split(":");
     int hour = Integer.parseInt(parts[0]);
