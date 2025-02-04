@@ -12,7 +12,7 @@
     <artifactId>asia-local-guide-gateway</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>asia-local-guide-gateway</name>
-    <description>Demo project for Spring Boot</description>
+    <description>Activity calendar generation app</description>
     <url/>
     <licenses>
         <license/>
@@ -69,6 +69,13 @@
             <version>8.0.1.Final</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+        </dependency>
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -88,6 +95,26 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-maven-plugin</artifactId>
+                <version>1.17.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>transform</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <transformations>
+                        <transformation>
+                            <plugin>com.asialocalguide.gateway.core.validation.RecordValidationPlugin</plugin>
+                        </transformation>
+                    </transformations>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 

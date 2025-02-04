@@ -26,6 +26,14 @@ public class DestinationTranslation {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DestinationTranslation that = (DestinationTranslation) o;
+    return locale.equals(that.locale) && destinationName.equals(that.destinationName);
+  }
+
+  @Override
   public int hashCode() {
     int result = 31 * Objects.hashCode(locale);
     result = 31 * result + Objects.hashCode(destinationName);

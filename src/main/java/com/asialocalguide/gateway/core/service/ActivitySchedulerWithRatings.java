@@ -10,7 +10,9 @@ import java.util.stream.IntStream;
 
 public class ActivitySchedulerWithRatings {
 
-  public boolean[][][] scheduleActivities(
+  private ActivitySchedulerWithRatings() {}
+
+  public static boolean[][][] scheduleActivities(
       boolean[][][] activityAvailability, List<ViatorActivityDTO> activities) {
 
     Loader.loadNativeLibraries();
@@ -212,7 +214,7 @@ public class ActivitySchedulerWithRatings {
     }
   }
 
-  private boolean isActivityStartingInEvening(boolean[][] availabilityForActivity) {
+  private static boolean isActivityStartingInEvening(boolean[][] availabilityForActivity) {
     for (boolean[] dayAvailability : availabilityForActivity) {
       if (dayAvailability[2]) { // Index 2 = Evening slot
         return true;

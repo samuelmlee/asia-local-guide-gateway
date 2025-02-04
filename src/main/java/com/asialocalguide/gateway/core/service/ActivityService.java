@@ -8,8 +8,6 @@ import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -51,22 +49,12 @@ public class ActivityService {
 
     ViatorActivitySearchDTO.Range ratingRange = new ViatorActivitySearchDTO.Range(4, 5);
 
-    String startDate =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd")
-            .withZone(ZoneId.of("Europe/Paris"))
-            .format(request.startDate());
-
-    String endDate =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd")
-            .withZone(ZoneId.of("Europe/Paris"))
-            .format(request.endDate());
-
     ViatorActivitySearchDTO.Filtering filteringDTO =
         new ViatorActivitySearchDTO.Filtering(
             Long.valueOf(viatorDestinationId),
             request.activityTagIds(),
-            startDate,
-            endDate,
+            request.startDate(),
+            request.endDate(),
             ratingRange);
 
     ViatorActivitySearchDTO.Sorting sorting =

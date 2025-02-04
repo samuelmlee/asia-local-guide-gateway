@@ -10,13 +10,10 @@ import org.junit.jupiter.api.Test;
 
 class ActivitySchedulerWithRatingsTest {
 
-  private static ActivitySchedulerWithRatings scheduler;
-
   @BeforeAll
   static void setUp() {
     // Initialize the OR-Tools Native Library
     Loader.loadNativeLibraries();
-    scheduler = new ActivitySchedulerWithRatings();
   }
 
   /** Test Case 1: Basic Valid Schedule */
@@ -32,7 +29,8 @@ class ActivitySchedulerWithRatingsTest {
 
     List<ViatorActivityDTO> activities = mockViatorActivities();
 
-    boolean[][][] schedule = scheduler.scheduleActivities(availability, activities);
+    boolean[][][] schedule =
+        ActivitySchedulerWithRatings.scheduleActivities(availability, activities);
 
     assertNotNull(schedule, "Schedule should not be null.");
     assertTrue(
@@ -52,7 +50,8 @@ class ActivitySchedulerWithRatingsTest {
 
     List<ViatorActivityDTO> activities = mockViatorActivities();
 
-    boolean[][][] schedule = scheduler.scheduleActivities(availability, activities);
+    boolean[][][] schedule =
+        ActivitySchedulerWithRatings.scheduleActivities(availability, activities);
 
     assertTrue(
         checkUniqueActivityPerSlot(schedule), "Each activity should be scheduled at most once.");
@@ -65,7 +64,8 @@ class ActivitySchedulerWithRatingsTest {
 
     List<ViatorActivityDTO> activities = mockViatorActivities();
 
-    boolean[][][] schedule = scheduler.scheduleActivities(availability, activities);
+    boolean[][][] schedule =
+        ActivitySchedulerWithRatings.scheduleActivities(availability, activities);
 
     assertTrue(
         checkNoActivityScheduled(schedule),
@@ -85,7 +85,8 @@ class ActivitySchedulerWithRatingsTest {
 
     List<ViatorActivityDTO> activities = mockViatorActivities();
 
-    boolean[][][] schedule = scheduler.scheduleActivities(availability, activities);
+    boolean[][][] schedule =
+        ActivitySchedulerWithRatings.scheduleActivities(availability, activities);
 
     assertTrue(
         checkObeysAvailability(schedule, availability),
@@ -105,7 +106,8 @@ class ActivitySchedulerWithRatingsTest {
 
     List<ViatorActivityDTO> activities = mockViatorActivities();
 
-    boolean[][][] schedule = scheduler.scheduleActivities(availability, activities);
+    boolean[][][] schedule =
+        ActivitySchedulerWithRatings.scheduleActivities(availability, activities);
 
     assertTrue(
         checkHigherRatingsScheduled(schedule, activities),

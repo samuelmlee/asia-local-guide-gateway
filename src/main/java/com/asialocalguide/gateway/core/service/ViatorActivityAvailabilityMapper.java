@@ -95,8 +95,11 @@ public class ViatorActivityAvailabilityMapper {
             // than 18:00
             int tIndex = mapTimeToTimeslot(entry.startTime());
             Set<String> unavailable = new HashSet<>();
-            for (ViatorActivityAvailabilityDTO.UnavailableDate ud : entry.unavailableDates()) {
-              unavailable.add(ud.date());
+
+            if (entry.unavailableDates() != null) {
+              for (ViatorActivityAvailabilityDTO.UnavailableDate ud : entry.unavailableDates()) {
+                unavailable.add(ud.date());
+              }
             }
 
             for (int d = 0; d < allDates.size(); d++) {

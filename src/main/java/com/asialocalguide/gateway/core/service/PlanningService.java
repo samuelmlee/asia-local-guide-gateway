@@ -19,11 +19,9 @@ import org.springframework.stereotype.Service;
 public class PlanningService {
 
   private final ActivityService activityService;
-  private final ActivitySchedulerWithRatings scheduler;
 
-  public PlanningService(ActivityService activityService, ActivitySchedulerWithRatings scheduler) {
+  public PlanningService(ActivityService activityService) {
     this.activityService = activityService;
-    this.scheduler = scheduler;
   }
 
   public List<DayPlanDTO> generateActivityPlanning(ActivityPlanningRequestDTO request) {
@@ -48,7 +46,8 @@ public class PlanningService {
 
     // Generate availability 3d array using scheduler
     boolean[][][] schedule =
-        scheduler.scheduleActivities(availabilityResult.availability(), activities);
+        ActivitySchedulerWithRatings.scheduleActivities(
+            availabilityResult.availability(), activities);
 
     return createDayPlans(
         startDate, totalDays, activities, schedule, availabilityResult.startTimes());
