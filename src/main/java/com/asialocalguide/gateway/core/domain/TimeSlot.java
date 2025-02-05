@@ -1,45 +1,28 @@
 package com.asialocalguide.gateway.core.domain;
 
-import lombok.Getter;
+public interface TimeSlot {
+  int getIndex();
 
-public enum TimeSlot {
-  MORNING(0, 0, 11), // 00:00 - 11:59
-  AFTERNOON(1, 12, 17), // 12:00 - 17:59
-  EVENING(2, 18, 23); // 18:00 - 23:59
-
-  @Getter private final int index;
-  private final int startHour;
-  private final int endHour;
-
-  TimeSlot(int index, int startHour, int endHour) {
-    this.index = index;
-    this.startHour = startHour;
-    this.endHour = endHour;
-  }
+  boolean matches(int hour, int minute);
 
   /**
-   * Determines the time slot for a given hour.
-   *
-   * @param hour The hour of the day (0-23).
-   * @return The corresponding TimeSlot.
-   */
-  public static TimeSlot fromHour(int hour) {
-    for (TimeSlot slot : values()) {
-      if (hour >= slot.startHour && hour <= slot.endHour) {
-        return slot;
-      }
-    }
-    throw new IllegalArgumentException("Invalid hour: " + hour);
-  }
-
-  /**
-   * Determines the time slot index for a given string time (HH:mm).
+   * Retrieves the index from a time string dynamically for any TimeSlot enum. Supports both
+   * hour-based and 30-minute slot-based implementations.
    *
    * @param time The time in "HH:mm" format.
-   * @return The corresponding time slot index (0, 1, or 2).
+   * @param timeSlotEnum The enum class implementing TimeSlot.
+   * @return The corresponding time slot index.
    */
-  public static int getIndexFromTime(String time) {
-    int hour = Integer.parseInt(time.split(":")[0]);
-    return fromHour(hour).getIndex();
+  static int getIndexFromTimeString(String time, Class<? extends TimeSlot> timeSlotEnum) {
+    String[] parts = time.split(":");
+    int hour = Integer.parseInt(parts[0]);
+    int minute = Integer.parseInt(parts[1]);
+
+    for (TimeSlot slot : timeSlotEnum.getEnumConstants()) {
+      if (slot.matches(hour, minute)) {
+        return slot.getIndex();
+      }
+    }
+    throw new IllegalArgumentException("Invalid time: " + time);
   }
 }

@@ -6,9 +6,7 @@ import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,35 +27,43 @@ public class ViatorActivityService {
     List<ViatorActivityDTO> activities =
         viatorClient.getActivitiesByRequestAndLocale(defaultLocale.getCode(), searchDTO);
 
-    List<CompletableFuture<ViatorActivityDetailDTO>> futureDetails =
-        activities.stream()
-            .map(
-                activity ->
-                    CompletableFuture.supplyAsync(
-                            () -> {
-                              Optional<ViatorActivityAvailabilityDTO> availabilityOpt =
-                                  viatorClient.getAvailabilityByProductCode(activity.productCode());
+    Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> availabilityFutures =
+        getStringCompletableFutureMap(activities);
 
-                              if (availabilityOpt.isEmpty()) {
-                                throw new IllegalStateException(
-                                    "No availability returned for product code: "
-                                        + activity.productCode());
-                              }
+    CompletableFuture.allOf(availabilityFutures.values().toArray(new CompletableFuture[0])).join();
 
-                              return new ViatorActivityDetailDTO(activity, availabilityOpt.get());
-                            })
-                        .exceptionally(
-                            ex -> {
-                              log.error(
-                                  "Error fetching Viator activity availability for product code: {}",
-                                  activity.productCode(),
-                                  ex);
-                              return null;
-                            }))
-            .toList();
+    return activities.stream()
+        .map(
+            activity -> {
+              Optional<ViatorActivityAvailabilityDTO> availabilityOpt =
+                  availabilityFutures.get(activity.productCode()).join();
 
-    CompletableFuture.allOf(futureDetails.toArray(new CompletableFuture[0])).join();
+              return availabilityOpt
+                  .map(availabilityDTO -> new ViatorActivityDetailDTO(activity, availabilityDTO))
+                  .orElse(null);
+            })
+        .filter(Objects::nonNull)
+        .toList();
+  }
 
-    return futureDetails.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList();
+  private Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>>
+      getStringCompletableFutureMap(List<ViatorActivityDTO> activities) {
+    Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> availabilityFutures =
+        new HashMap<>();
+    for (ViatorActivityDTO activity : activities) {
+      availabilityFutures.computeIfAbsent(
+          activity.productCode(),
+          productCode ->
+              CompletableFuture.supplyAsync(
+                      () -> viatorClient.getAvailabilityByProductCode(productCode))
+                  .exceptionally(
+                      ex -> {
+                        log.error(
+                            "Error fetching activity availability for productCode: {}",
+                            productCode);
+                        return Optional.empty();
+                      }));
+    }
+    return availabilityFutures;
   }
 }

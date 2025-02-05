@@ -8,6 +8,7 @@ import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -61,9 +62,14 @@ public class ActivityService {
         new ViatorActivitySearchDTO.Sorting(
             ViatorActivitySortingType.TRAVELER_RATING, ViatorActivitySortingOrder.DESCENDING);
 
+    int durationDays = (int) ChronoUnit.DAYS.between(request.startDate(), request.endDate());
+
     ViatorActivitySearchDTO searchDTO =
         new ViatorActivitySearchDTO(
-            filteringDTO, sorting, new ViatorActivitySearchDTO.Pagination(1, 30), "EUR");
+            filteringDTO,
+            sorting,
+            new ViatorActivitySearchDTO.Pagination(1, Math.max(durationDays, 1) * 4),
+            "EUR");
 
     return viatorActivityService.getActivityDetails(locale, searchDTO);
   }

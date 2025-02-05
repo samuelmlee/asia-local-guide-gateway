@@ -1,30 +1,34 @@
 package com.asialocalguide.gateway.core.service;
 
-import com.asialocalguide.gateway.core.domain.ActivityData;
 import com.google.ortools.Loader;
 import com.google.ortools.sat.*;
 import com.google.ortools.util.Domain;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-public class ActivitySchedulerWithRatings {
-
-  private ActivitySchedulerWithRatings() {}
-
-  public static boolean[][][] scheduleActivities(ActivityData activityData) {
-
+public class ActivitySchedulerOptimized {
+  public static void main(String[] args) {
     Loader.loadNativeLibraries();
 
-    // Map activities into availability, ratings, and durations
-    boolean[][][] availabilityMatrix = activityData.getAvailabilityMatrix();
-    int[] activityRatings = activityData.getRatings();
-    int[] activityDurations = activityData.getDurations();
+    int numActivities = 50; // Increased number of activities
+    int numDays = 5; // Increased to 5-day schedule
+    int numTimeSlotsPerDay = 18; // 1-hour slots from 6 AM to 12 AM
 
-    int numTimeSlotsPerDay = availabilityMatrix[0][0].length;
+    Random random = new Random();
+    int[] activityRatings = new int[numActivities];
+    int[] activityDurations = new int[numActivities];
+    boolean[][][] availabilityMatrix = new boolean[numActivities][numDays][numTimeSlotsPerDay];
 
-    int numActivities = availabilityMatrix.length;
-    int numDays = availabilityMatrix[0].length;
-    int numTimeSlots = availabilityMatrix[0][0].length; // 23 slots per day
+    // Generating random ratings, durations, and availability
+    for (int a = 0; a < numActivities; a++) {
+      activityRatings[a] = random.nextInt(10) + 1; // Ratings from 1-10
+      activityDurations[a] = random.nextInt(3) + 1; // Durations between 1-3 slots
+
+      for (int d = 0; d < numDays; d++) {
+        for (int t = 0; t < numTimeSlotsPerDay; t++) {
+          availabilityMatrix[a][d][t] = random.nextBoolean(); // Random availability
+        }
+      }
+    }
 
     CpModel model = new CpModel();
     IntVar[] startTimes = new IntVar[numActivities];
@@ -51,7 +55,7 @@ public class ActivitySchedulerWithRatings {
               Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()),
               "start_activity_" + a);
       int duration = activityDurations[a];
-      endTimes[a] = model.newIntVar(0, (long) numDays * numTimeSlotsPerDay, "end_activity_" + a);
+      endTimes[a] = model.newIntVar(0, numDays * numTimeSlotsPerDay, "end_activity_" + a);
       isAssigned[a] = model.newBoolVar("is_assigned_" + a);
       activityIntervals[a] =
           model.newOptionalIntervalVar(
@@ -85,19 +89,32 @@ public class ActivitySchedulerWithRatings {
     CpSolver solver = new CpSolver();
     CpSolverStatus status = solver.solve(model);
 
-    boolean[][][] finalSchedule = new boolean[numActivities][numDays][numTimeSlots];
     if (status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE) {
+      System.out.println("Scheduled Activities:");
       for (int a = 0; a < numActivities; a++) {
         if (startTimes[a] != null && solver.value(isAssigned[a]) == 1) {
           int scheduledTime = (int) solver.value(startTimes[a]);
-          int scheduledDay = scheduledTime / numTimeSlots;
-          int scheduledSlot = scheduledTime % numTimeSlots;
-          finalSchedule[a][scheduledDay][scheduledSlot] = true;
+          int scheduledDay = scheduledTime / numTimeSlotsPerDay;
+          int scheduledSlot = scheduledTime % numTimeSlotsPerDay;
+
+          System.out.printf(
+              "Activity %d scheduled on Day %d at Time Slot %d (%s) (Rating: %d)%n",
+              a, scheduledDay, scheduledSlot, getTimeSlotLabel(scheduledSlot), activityRatings[a]);
         }
       }
+      System.out.println("Solving in time: " + solver.wallTime());
     } else {
-      System.out.println("No feasible solution found. Solver status: " + status);
+      System.out.println("No feasible schedule found within time limit.");
     }
-    return finalSchedule;
+  }
+
+  // Helper method to map slot numbers to actual times (for readability)
+  private static String getTimeSlotLabel(int slot) {
+    String[] timeSlots = {
+      "6AM-7AM", "7AM-8AM", "8AM-9AM", "9AM-10AM", "10AM-11AM", "11AM-12PM",
+      "12PM-1PM", "1PM-2PM", "2PM-3PM", "3PM-4PM", "4PM-5PM", "5PM-6PM",
+      "6PM-7PM", "7PM-8PM", "8PM-9PM", "9PM-10PM", "10PM-11PM", "11PM-12AM"
+    };
+    return timeSlots[slot];
   }
 }

@@ -1,11 +1,12 @@
 package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
-import com.asialocalguide.gateway.core.domain.AvailabilityResult;
+import com.asialocalguide.gateway.core.domain.ActivityData;
+import com.asialocalguide.gateway.core.domain.OneHourTimeSlot;
+import com.asialocalguide.gateway.core.domain.TimeSlot;
 import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.DayPlanDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import java.time.*;
@@ -20,6 +21,8 @@ public class PlanningService {
 
   private final ActivityService activityService;
 
+  private final Class<? extends TimeSlot> timeSlotClass = OneHourTimeSlot.class;
+
   public PlanningService(ActivityService activityService) {
     this.activityService = activityService;
   }
@@ -31,26 +34,21 @@ public class PlanningService {
     // Extract the list of ViatorActivityDTO
     List<ViatorActivityDTO> activities =
         activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
-    // Extract the list of ViatorActivityAvailabilityDTO
-    List<ViatorActivityAvailabilityDTO> availabilities =
-        activityDetails.stream().map(ViatorActivityDetailDTO::availability).toList();
 
     // Convert request date range to local dates
     LocalDate startDate = request.startDate();
     LocalDate endDate = request.endDate();
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
-    AvailabilityResult availabilityResult =
-        ViatorActivityAvailabilityMapper.mapMultipleDtosToAvailability(
-            availabilities, startDate, endDate);
+    ActivityData activityData =
+        ViatorActivityAvailabilityMapper.mapToActivityData(
+            activityDetails, startDate, endDate, timeSlotClass);
 
     // Generate availability 3d array using scheduler
-    boolean[][][] schedule =
-        ActivitySchedulerWithRatings.scheduleActivities(
-            availabilityResult.availability(), activities);
+    boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(activityData);
 
     return createDayPlans(
-        startDate, totalDays, activities, schedule, availabilityResult.startTimes());
+        startDate, totalDays, activities, schedule, activityData.getValidStartTimes());
   }
 
   private List<DayPlanDTO> createDayPlans(
