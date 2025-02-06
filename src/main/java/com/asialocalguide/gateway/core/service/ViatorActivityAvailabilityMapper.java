@@ -68,7 +68,6 @@ public class ViatorActivityAvailabilityMapper {
     // 2) Build day list
     List<LocalDate> allDates = buildDateList(minDate, maxDate);
 
-    // 3) Initialize array: # of activities × # of days × # of timeslots
     // Timeslots: number of enum values in TimeSlot class
     int numTimeSlots = timeSlotClass.getEnumConstants().length;
 
@@ -203,11 +202,12 @@ public class ViatorActivityAvailabilityMapper {
               ViatorActivityDTO activity = activities.get(a);
               int durationMinutes = 0; // Default if unknown
 
+              // Using variable TO minutes if available
               if (activity.duration() != null) {
                 if (activity.duration().fixedDurationInMinutes() != null) {
                   durationMinutes = activity.duration().fixedDurationInMinutes();
-                } else if (activity.duration().variableDurationFromMinutes() != null) {
-                  durationMinutes = activity.duration().variableDurationFromMinutes();
+                } else if (activity.duration().variableDurationToMinutes() != null) {
+                  durationMinutes = activity.duration().variableDurationToMinutes();
                 }
               }
 
