@@ -25,10 +25,13 @@ public class ViatorActivityService {
       SupportedLocale defaultLocale, ViatorActivitySearchDTO searchDTO) {
 
     List<ViatorActivityDTO> activities =
-        viatorClient.getActivitiesByRequestAndLocale(defaultLocale.getCode(), searchDTO);
+        viatorClient.getActivitiesByRequestAndLocale(defaultLocale.getCode(), searchDTO).stream()
+            // No activities with zero duration should be returned
+            .filter(dto -> dto.getDurationMinutes() > 0)
+            .toList();
 
     Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> availabilityFutures =
-        getStringCompletableFutureMap(activities);
+        getIdCompletableFutureMap(activities);
 
     CompletableFuture.allOf(availabilityFutures.values().toArray(new CompletableFuture[0])).join();
 
@@ -47,7 +50,7 @@ public class ViatorActivityService {
   }
 
   private Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>>
-      getStringCompletableFutureMap(List<ViatorActivityDTO> activities) {
+      getIdCompletableFutureMap(List<ViatorActivityDTO> activities) {
     Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> availabilityFutures =
         new HashMap<>();
     for (ViatorActivityDTO activity : activities) {

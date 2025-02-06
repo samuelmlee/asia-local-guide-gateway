@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.domain.ActivityData;
-import com.asialocalguide.gateway.core.domain.TimeSlot;
+import com.asialocalguide.gateway.core.domain.OneHourTimeSlot;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
@@ -9,7 +9,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.IntStream;
 
 /**
  * A helper class to flatten a single "bookable item" into an object we can treat as a single
@@ -45,10 +44,7 @@ public class ViatorActivityAvailabilityMapper {
    * otherwise.
    */
   public static ActivityData mapToActivityData(
-      List<ViatorActivityDetailDTO> detailDTOS,
-      LocalDate minDate,
-      LocalDate maxDate,
-      Class<? extends TimeSlot> timeSlotClass) {
+      List<ViatorActivityDetailDTO> detailDTOS, LocalDate minDate, LocalDate maxDate) {
 
     if (detailDTOS.isEmpty() || minDate == null || maxDate == null) {
       // Input data invalid => empty array
@@ -69,14 +65,14 @@ public class ViatorActivityAvailabilityMapper {
     List<LocalDate> allDates = buildDateList(minDate, maxDate);
 
     // Timeslots: number of enum values in TimeSlot class
-    int numTimeSlots = timeSlotClass.getEnumConstants().length;
+    int numTimeSlots = OneHourTimeSlot.values().length;
 
     // Initialize the 3D array: [activityIndex][dayIndex][timeSlotIndex]
     boolean[][][] availability = new boolean[allActivities.size()][allDates.size()][numTimeSlots];
     String[][][] startTimes = new String[allActivities.size()][allDates.size()][numTimeSlots];
 
     // Return the filled 3D arrays for availability and startTimes
-    fillAvailability(allActivities, allDates, availability, startTimes, timeSlotClass);
+    fillAvailability(allActivities, allDates, availability, startTimes);
 
     return new ActivityData(
         availability, startTimes, mapActivityRating(activities), mapActivityDuration(activities));
@@ -86,8 +82,7 @@ public class ViatorActivityAvailabilityMapper {
       List<MappedActivity> allActivities,
       List<LocalDate> allDates,
       boolean[][][] availability,
-      String[][][] startTimes,
-      Class<? extends TimeSlot> timeSlotClass) {
+      String[][][] startTimes) {
 
     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -106,8 +101,8 @@ public class ViatorActivityAvailabilityMapper {
           List<DayOfWeek> allowedDaysOfWeek = parseDaysOfWeek(pricingRecord.daysOfWeek());
 
           for (ViatorActivityAvailabilityDTO.TimedEntry entry : pricingRecord.timedEntries()) {
-            // Resolve index from startTime, find match from TimeSlot enum
-            int tIndex = TimeSlot.getIndexFromTimeString(entry.startTime(), timeSlotClass);
+            // Resolve index from startTime, find match from OneHourTimeSlot enum
+            int tIndex = OneHourTimeSlot.getIndexFromTimeString(entry.startTime());
             Set<String> unavailable = new HashSet<>();
 
             if (entry.unavailableDates() != null) {
@@ -180,42 +175,31 @@ public class ViatorActivityAvailabilityMapper {
   }
 
   private static int[] mapActivityRating(List<ViatorActivityDTO> activities) {
-    // Convert to integer weight
+    final int SMOOTHING_FACTOR = 100; // Adjust based on data distribution
+
     return activities.stream()
         .mapToInt(
-            activity ->
-                (int)
-                    Math.round(
-                        activity.reviews() != null
-                                && activity.reviews().combinedAverageRating() != null
-                            ? activity.reviews().combinedAverageRating()
-                                * 10 // Convert to integer weight
-                            : 0)) // Default low rating if missing
+            activity -> {
+              double averageRating = activity.reviews().combinedAverageRating(); // e.g., 4.5
+              int totalReviews = activity.reviews().totalReviews(); // e.g., 50
+
+              // Apply reasonable weight: Logarithmic scaling + smoothing factor
+              double weightFactor = Math.log1p(totalReviews) / Math.log1p(SMOOTHING_FACTOR);
+
+              double weightedScore = averageRating * (1 + weightFactor) * 10; // Scale appropriately
+              return (int) Math.round(weightedScore);
+            })
         .toArray();
   }
 
   private static int[] mapActivityDuration(List<ViatorActivityDTO> activities) {
     // Extract durations from ViatorActivityDTO
-    return IntStream.range(0, activities.size())
-        .map(
-            a -> {
-              ViatorActivityDTO activity = activities.get(a);
-              int durationMinutes = 0; // Default if unknown
+    return activities.stream()
+        .mapToInt(
+            viatorActivityDTO -> {
+              int durationMinutes = viatorActivityDTO.getDurationMinutes();
 
-              // Using variable TO minutes if available
-              if (activity.duration() != null) {
-                if (activity.duration().fixedDurationInMinutes() != null) {
-                  durationMinutes = activity.duration().fixedDurationInMinutes();
-                } else if (activity.duration().variableDurationToMinutes() != null) {
-                  durationMinutes = activity.duration().variableDurationToMinutes();
-                }
-              }
-
-              // TODO: Make Timeslot enum return duration slot count from minutes
-
-              // Apply mapping rules
-              // Occupies one slot per hour, rounded up
-              return Math.max(1, (int) Math.ceil((double) durationMinutes / 60));
+              return OneHourTimeSlot.getDurationInSlots(durationMinutes);
             })
         .toArray();
   }

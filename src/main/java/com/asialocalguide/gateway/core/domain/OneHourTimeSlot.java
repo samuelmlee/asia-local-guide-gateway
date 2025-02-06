@@ -2,7 +2,8 @@ package com.asialocalguide.gateway.core.domain;
 
 import lombok.Getter;
 
-public enum OneHourTimeSlot implements TimeSlot {
+@Getter
+public enum OneHourTimeSlot {
   SLOT_6AM(0, 6, 0, 6, 59),
   SLOT_7AM(1, 7, 0, 7, 59),
   SLOT_8AM(2, 8, 0, 8, 59),
@@ -28,7 +29,7 @@ public enum OneHourTimeSlot implements TimeSlot {
   SLOT_4AM(22, 4, 0, 4, 59),
   SLOT_5AM(23, 5, 0, 5, 59);
 
-  @Getter private final int index;
+  private final int index;
   private final int startHour;
   private final int startMinute;
   private final int endHour;
@@ -42,9 +43,23 @@ public enum OneHourTimeSlot implements TimeSlot {
     this.endMinute = endMinute;
   }
 
-  @Override
-  public boolean matches(int hour, int minute) {
-    return (hour > startHour || (hour == startHour && minute >= startMinute))
-        && (hour < endHour || (hour == endHour && minute <= endMinute));
+  public static int getIndexFromTimeString(String time) {
+    String[] parts = time.split(":");
+    int hour = Integer.parseInt(parts[0]);
+    int minute = Integer.parseInt(parts[1]);
+
+    for (OneHourTimeSlot slot : OneHourTimeSlot.values()) {
+      if ((hour > slot.startHour || (hour == slot.startHour && minute >= slot.startMinute))
+          && (hour < slot.endHour || (hour == slot.endHour && minute <= slot.endMinute))) {
+        return slot.getIndex();
+      }
+    }
+    throw new IllegalArgumentException("Invalid time: " + time);
+  }
+
+  public static int getDurationInSlots(int durationInMinutes) {
+    // Apply mapping rules
+    // Occupies one slot per hour, rounded up
+    return Math.max(1, (int) Math.ceil((double) durationInMinutes / 60));
   }
 }

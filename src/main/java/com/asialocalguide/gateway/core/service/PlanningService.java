@@ -2,8 +2,6 @@ package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.ActivityData;
-import com.asialocalguide.gateway.core.domain.OneHourTimeSlot;
-import com.asialocalguide.gateway.core.domain.TimeSlot;
 import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.DayPlanDTO;
@@ -21,8 +19,6 @@ public class PlanningService {
 
   private final ActivityService activityService;
 
-  private final Class<? extends TimeSlot> timeSlotClass = OneHourTimeSlot.class;
-
   public PlanningService(ActivityService activityService) {
     this.activityService = activityService;
   }
@@ -35,14 +31,12 @@ public class PlanningService {
     List<ViatorActivityDTO> activities =
         activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
 
-    // Convert request date range to local dates
     LocalDate startDate = request.startDate();
     LocalDate endDate = request.endDate();
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
     ActivityData activityData =
-        ViatorActivityAvailabilityMapper.mapToActivityData(
-            activityDetails, startDate, endDate, timeSlotClass);
+        ViatorActivityAvailabilityMapper.mapToActivityData(activityDetails, startDate, endDate);
 
     // Generate availability 3d array using scheduler
     boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(activityData);
@@ -108,7 +102,7 @@ public class PlanningService {
         .combinedAverageRating(activity.reviews().combinedAverageRating())
         .reviewCount(activity.reviews().totalReviews())
         .fromPrice(activity.pricing().summary().fromPrice())
-        .durationMinutes(getDurationMinutes(activity))
+        .durationMinutes(activity.getDurationMinutes())
         .providerUrl(activity.productUrl())
         .images(activity.images())
         .build();
@@ -121,20 +115,8 @@ public class PlanningService {
   }
 
   private Duration getDuration(ViatorActivityDTO activity) {
-    Integer durationMinutes = getDurationMinutes(activity);
-    if (durationMinutes == null) {
-      return Duration.ZERO;
-    }
-    return Duration.ofMinutes(durationMinutes);
-  }
-
-  private static Integer getDurationMinutes(ViatorActivityDTO activity) {
-    if (activity.duration() == null) {
-      return null;
-    }
-
-    return activity.duration().fixedDurationInMinutes() != null
-        ? activity.duration().fixedDurationInMinutes()
-        : activity.duration().variableDurationToMinutes();
+    return activity.getDurationMinutes() == 0
+        ? Duration.ZERO
+        : Duration.ofMinutes(activity.getDurationMinutes());
   }
 }
