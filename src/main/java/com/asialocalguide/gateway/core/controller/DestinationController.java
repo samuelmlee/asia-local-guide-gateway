@@ -20,8 +20,8 @@ public class DestinationController {
     return destinationService.getAutocompleteSuggestions(query);
   }
 
-  @PostMapping("/sync/viator")
-  public void syncViatorDestinations() {
-    destinationService.syncViatorDestinations();
+  @PostMapping("/sync")
+  public void syncDestinations() {
+    destinationService.syncDestinations();
   }
 }

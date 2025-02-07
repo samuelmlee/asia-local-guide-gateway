@@ -44,7 +44,7 @@ public class DestinationService {
     this.bookingProviderMappingRepository = bookingProviderMappingRepository;
   }
 
-  public void syncViatorDestinations() {
+  public void syncDestinations() {
 
     SupportedLocale defaultLocale = SupportedLocale.getDefaultLocale();
 
