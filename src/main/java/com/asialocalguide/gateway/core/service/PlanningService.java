@@ -60,7 +60,7 @@ public class PlanningService {
       List<DayActivityDTO> dayActivities =
           assignActivitiesForDay(activities, schedule, startTimes, dayIndex, currentDay);
 
-      dayPlans.add(DayPlanDTO.builder().date(currentDay).activities(dayActivities).build());
+      dayPlans.add(new DayPlanDTO(currentDay, dayActivities));
     }
 
     return dayPlans;
@@ -93,19 +93,18 @@ public class PlanningService {
     LocalDateTime startTime = toLocalDateTime(day, startHour);
     LocalDateTime endTime = startTime.plus(getDuration(activity));
 
-    return DayActivityDTO.builder()
-        .productCode(activity.productCode())
-        .title(activity.title())
-        .description(activity.description())
-        .startTime(startTime)
-        .endTime(endTime)
-        .combinedAverageRating(activity.reviews().combinedAverageRating())
-        .reviewCount(activity.reviews().totalReviews())
-        .fromPrice(activity.pricing().summary().fromPrice())
-        .durationMinutes(activity.getDurationMinutes())
-        .providerUrl(activity.productUrl())
-        .images(activity.images())
-        .build();
+    return new DayActivityDTO(
+        activity.productCode(),
+        activity.title(),
+        activity.description(),
+        activity.reviews().combinedAverageRating(),
+        activity.reviews().totalReviews(),
+        activity.getDurationMinutes(),
+        activity.pricing().summary().fromPrice(),
+        activity.images(),
+        activity.productUrl(),
+        startTime,
+        endTime);
   }
 
   private LocalDateTime toLocalDateTime(LocalDate date, String timeStr) {

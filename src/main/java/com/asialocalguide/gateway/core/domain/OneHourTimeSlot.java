@@ -58,7 +58,6 @@ public enum OneHourTimeSlot {
   }
 
   public static int getDurationInSlots(int durationInMinutes) {
-    // Apply mapping rules
     // Occupies one slot per hour, rounded up
     return Math.max(1, (int) Math.ceil((double) durationInMinutes / 60));
   }

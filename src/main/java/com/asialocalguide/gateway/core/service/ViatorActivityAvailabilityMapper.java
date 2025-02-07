@@ -46,7 +46,7 @@ public class ViatorActivityAvailabilityMapper {
   public static ActivityData mapToActivityData(
       List<ViatorActivityDetailDTO> detailDTOS, LocalDate minDate, LocalDate maxDate) {
 
-    if (detailDTOS.isEmpty() || minDate == null || maxDate == null) {
+    if (detailDTOS == null || detailDTOS.isEmpty() || minDate == null || maxDate == null) {
       // Input data invalid => empty array
       return new ActivityData(new boolean[0][0][0], new String[0][0][0], new int[0], new int[0]);
     }

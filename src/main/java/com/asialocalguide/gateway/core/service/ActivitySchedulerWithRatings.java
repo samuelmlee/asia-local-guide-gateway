@@ -50,7 +50,8 @@ public class ActivitySchedulerWithRatings {
           model.newIntVarFromDomain(
               Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()),
               "start_activity_" + a);
-      int duration = activityDurations[a];
+      // Add a buffer of 3 time slots to the duration between activities
+      int duration = activityDurations[a] + 3;
       endTimes[a] = model.newIntVar(0, (long) numDays * numTimeSlotsPerDay, "end_activity_" + a);
       isAssigned[a] = model.newBoolVar("is_assigned_" + a);
       activityIntervals[a] =
