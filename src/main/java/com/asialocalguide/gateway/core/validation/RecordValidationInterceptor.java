@@ -4,17 +4,24 @@ import jakarta.validation.*;
 import java.lang.reflect.Constructor;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 
+@Slf4j
 public class RecordValidationInterceptor {
 
-  private static final Validator VALIDATOR;
+  private static Validator VALIDATOR = null;
 
   static {
-    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-    VALIDATOR = factory.getValidator();
+    try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+      VALIDATOR = factory.getValidator();
+    } catch (ValidationException e) {
+      log.error("Failed to create validator", e);
+    }
   }
+
+  private RecordValidationInterceptor() {}
 
   public static <T> void validate(@Origin Constructor<T> constructor, @AllArguments Object[] args) {
     Set<ConstraintViolation<T>> violations =
