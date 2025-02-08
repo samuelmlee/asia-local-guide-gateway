@@ -2,8 +2,8 @@ package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
-import com.asialocalguide.gateway.core.domain.Destination;
-import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
+import com.asialocalguide.gateway.core.domain.destination.Destination;
+import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.*;

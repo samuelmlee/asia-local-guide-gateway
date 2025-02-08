@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.core.repository;
 
-import com.asialocalguide.gateway.core.domain.DestinationProviderMapping;
+import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
 import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

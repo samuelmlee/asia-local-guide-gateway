@@ -115,7 +115,6 @@
                     </transformations>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 

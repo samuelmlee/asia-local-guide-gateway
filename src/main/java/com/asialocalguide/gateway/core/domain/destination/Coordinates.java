@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.Embeddable;
 import lombok.Data;

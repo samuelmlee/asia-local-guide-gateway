@@ -1,10 +1,10 @@
 package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
-import com.asialocalguide.gateway.core.domain.ActivityData;
-import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
-import com.asialocalguide.gateway.core.dto.DayActivityDTO;
-import com.asialocalguide.gateway.core.dto.DayPlanDTO;
+import com.asialocalguide.gateway.core.domain.planning.ActivityData;
+import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
+import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
+import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import java.time.*;

@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.core.controller;
 
-import com.asialocalguide.gateway.core.dto.DestinationDTO;
+import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.service.DestinationService;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;

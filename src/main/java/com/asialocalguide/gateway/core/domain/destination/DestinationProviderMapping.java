@@ -1,5 +1,6 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.destination;
 
+import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

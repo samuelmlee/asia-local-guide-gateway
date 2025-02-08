@@ -1,9 +1,7 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,15 +10,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Destination {
+public class Destination implements Translatable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "parent_destination_id")
-  private Destination parentDestination;
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "country_id")
+  private Country country;
 
   @OneToMany(
       mappedBy = "destination",
@@ -40,6 +38,14 @@ public class Destination {
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
   @Embedded Coordinates coordinates;
+
+  @Override
+  public Optional<String> getTranslation(LanguageCode languageCode) {
+    return destinationTranslations.stream()
+        .filter(t -> t.getLanguageCode().equals(languageCode.getCode()))
+        .findFirst()
+        .map(DestinationTranslation::getDestinationName);
+  }
 
   public void addTranslation(DestinationTranslation translation) {
     translation.setDestination(this);
@@ -78,7 +84,7 @@ public class Destination {
 
     Destination that = (Destination) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(parentDestination, that.parentDestination)
+        && Objects.equals(coordinates, that.coordinates)
         && type == that.type;
   }
 

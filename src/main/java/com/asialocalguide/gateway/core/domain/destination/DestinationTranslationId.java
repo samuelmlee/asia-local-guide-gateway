@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.destination;
 
 import java.io.Serializable;
 import lombok.Data;
@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 public class DestinationTranslationId implements Serializable {
   private Long destination;
 
-  private String locale;
+  private String languageCode;
 }

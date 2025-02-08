@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -16,12 +16,12 @@ public class DestinationTranslation {
 
   @Id @ManyToOne private Destination destination;
 
-  @Id private String locale;
+  @Id private String languageCode;
 
   private String destinationName;
 
-  public DestinationTranslation(String locale, String destinationName) {
-    this.locale = locale;
+  public DestinationTranslation(String languageCode, String destinationName) {
+    this.languageCode = languageCode;
     this.destinationName = destinationName;
   }
 
@@ -30,12 +30,12 @@ public class DestinationTranslation {
     if (o == null || getClass() != o.getClass()) return false;
 
     DestinationTranslation that = (DestinationTranslation) o;
-    return locale.equals(that.locale) && destinationName.equals(that.destinationName);
+    return languageCode.equals(that.languageCode) && destinationName.equals(that.destinationName);
   }
 
   @Override
   public int hashCode() {
-    int result = 31 * Objects.hashCode(locale);
+    int result = 31 * Objects.hashCode(languageCode);
     result = 31 * result + Objects.hashCode(destinationName);
     return result;
   }
@@ -43,8 +43,8 @@ public class DestinationTranslation {
   @Override
   public String toString() {
     return "DestinationTranslation{"
-        + ", locale='"
-        + locale
+        + ", languageCode='"
+        + languageCode
         + '\''
         + ", destinationName='"
         + destinationName
