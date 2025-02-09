@@ -100,7 +100,7 @@ public class DestinationService {
     LanguageCode languageCode = LanguageCode.fromLocale(locale).orElse(LanguageCode.EN);
 
     List<Destination> destinations =
-        destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndDestinationName(
+        destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(
             locale.getLanguage(), query);
 
     return destinations.stream()

@@ -22,15 +22,11 @@ public class Country implements Translatable {
       orphanRemoval = true)
   private Set<CountryTranslation> countryTranslations = new HashSet<>();
 
-  @NotEmpty private String countryCallingCode;
+  @NotEmpty private String callingCode;
 
-  @Override
-  public Optional<String> getTranslation(LanguageCode languageCode) {
-    return countryTranslations.stream()
-        .filter(t -> t.getLanguageCode().equals(languageCode.getCode()))
-        .findFirst()
-        .map(CountryTranslation::getCountryName);
-  }
+  @Column(name = "iso_2_code")
+  @NotEmpty
+  private String iso2Code;
 
   public void addTranslation(CountryTranslation translation) {
     if (translation == null) {
@@ -46,5 +42,13 @@ public class Country implements Translatable {
     }
     translation.setCountry(null);
     countryTranslations.remove(translation);
+  }
+
+  @Override
+  public Optional<String> getTranslation(LanguageCode languageCode) {
+    return countryTranslations.stream()
+        .filter(t -> t.getLanguageCode().equals(languageCode.getCode()))
+        .findFirst()
+        .map(CountryTranslation::getName);
   }
 }

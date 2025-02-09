@@ -44,7 +44,7 @@ public class Destination implements Translatable {
     return destinationTranslations.stream()
         .filter(t -> t.getLanguageCode().equals(languageCode.getCode()))
         .findFirst()
-        .map(DestinationTranslation::getDestinationName);
+        .map(DestinationTranslation::getName);
   }
 
   public void addTranslation(DestinationTranslation translation) {

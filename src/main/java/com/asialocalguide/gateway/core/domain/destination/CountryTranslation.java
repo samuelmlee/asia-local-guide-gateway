@@ -18,25 +18,20 @@ public class CountryTranslation {
 
   @Id private String languageCode;
 
-  private String countryName;
-
-  public CountryTranslation(String languageCode, String countryName) {
-    this.languageCode = languageCode;
-    this.countryName = countryName;
-  }
+  private String name;
 
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
 
     CountryTranslation that = (CountryTranslation) o;
-    return languageCode.equals(that.languageCode) && countryName.equals(that.countryName);
+    return languageCode.equals(that.languageCode) && name.equals(that.name);
   }
 
   @Override
   public int hashCode() {
     int result = 31 * Objects.hashCode(languageCode);
-    result = 31 * result + Objects.hashCode(countryName);
+    result = 31 * result + Objects.hashCode(name);
     return result;
   }
 
@@ -46,8 +41,8 @@ public class CountryTranslation {
         + ", languageCode='"
         + languageCode
         + '\''
-        + ", countryName='"
-        + countryName
+        + ", name='"
+        + name
         + '\''
         + '}';
   }

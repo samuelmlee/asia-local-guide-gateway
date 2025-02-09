@@ -13,8 +13,8 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
       "SELECT d FROM Destination d "
           + "JOIN d.destinationTranslations dt "
           + "WHERE dt.languageCode = :languageCode "
-          + "AND LOWER(dt.destinationName) LIKE LOWER(CONCAT('%', :destinationName, '%')) "
+          + "AND LOWER(dt.name) LIKE LOWER(CONCAT('%', :name, '%')) "
           + "AND d.type IN ('CITY', 'REGION')")
-  List<Destination> findCityOrRegionByTranslationsForLanguageCodeAndDestinationName(
-      String languageCode, String destinationName);
+  List<Destination> findCityOrRegionByTranslationsForLanguageCodeAndName(
+      String languageCode, String name);
 }
