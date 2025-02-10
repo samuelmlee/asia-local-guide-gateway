@@ -13,4 +13,5 @@ public record ViatorDestinationDTO(
     @NotNull @JsonDeserialize(using = LookupIdDeserializer.class) @JsonProperty("lookupId")
         List<Long> lookupIds,
     String localeCode,
-    @NotNull @JsonProperty("center") Coordinates coordinates) {}
+    @NotNull @JsonProperty("center") Coordinates coordinates,
+    String countryCallingCode) {}

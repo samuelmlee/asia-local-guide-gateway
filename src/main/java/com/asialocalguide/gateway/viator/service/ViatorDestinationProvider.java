@@ -1,14 +1,16 @@
 package com.asialocalguide.gateway.viator.service;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.DestinationType;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Component;
 public class ViatorDestinationProvider implements DestinationProvider {
 
   private static final BookingProviderName PROVIDER_TYPE = BookingProviderName.VIATOR;
-
   private final ViatorClient viatorClient;
 
   public ViatorDestinationProvider(ViatorClient viatorClient) {
@@ -30,37 +31,79 @@ public class ViatorDestinationProvider implements DestinationProvider {
   }
 
   @Override
-  public List<RawDestinationDTO> getDestinations(SupportedLocale locale)
-      throws IllegalArgumentException, ViatorApiException {
+  public List<RawDestinationDTO> getDestinations() throws ViatorApiException {
+    log.info(
+        "Fetching Viator destinations for languages: {}", Arrays.toString(LanguageCode.values()));
 
-    if (locale == null) {
-      throw new IllegalArgumentException("Locale cannot be null");
+    Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations =
+        new EnumMap<>(LanguageCode.class);
+
+    for (LanguageCode language : LanguageCode.values()) {
+      List<ViatorDestinationDTO> destinations =
+          viatorClient.getAllDestinationsForLanguage(language.toString());
+
+      if (destinations == null || destinations.isEmpty()) {
+        throw new ViatorApiException(
+            String.format("No destinations found for language: %s aborting ingestion.", language));
+      }
+
+      languageToDestinations.put(
+          language,
+          destinations.stream()
+              .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
     }
 
-    log.info("Fetching Viator destinations for locale: {}", locale.getCode());
+    Map<Long, ViatorDestinationDTO> idToDestinationEnDTOs =
+        languageToDestinations.get(LanguageCode.EN);
 
-    List<ViatorDestinationDTO> destinationDTOs =
-        viatorClient.getAllDestinationsForLocale(locale.getCode());
+    return idToDestinationEnDTOs.values().stream()
+        // The app does not support scheduling activities within a whole country
+        .filter(d -> d != null && !"COUNTRY".equals(d.type()) && d.lookupIds() != null)
+        .map(dto -> createRawDestinationDTO(dto, languageToDestinations))
+        .flatMap(Optional::stream)
+        .toList();
+  }
 
-    if (destinationDTOs == null || destinationDTOs.isEmpty()) {
-      throw new ViatorApiException("No destinations found for locale: " + locale.getCode());
+  private Optional<RawDestinationDTO> createRawDestinationDTO(
+      ViatorDestinationDTO dto,
+      Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations) {
+
+    ViatorDestinationDTO country =
+        resolveDestinationCountry(dto, languageToDestinations.get(LanguageCode.EN)).orElse(null);
+
+    if (country == null) {
+      log.warn("Skipping destination {} due to missing country.", dto.destinationId());
+      return Optional.empty();
     }
 
-    return destinationDTOs.stream()
+    return Optional.of(
+        new RawDestinationDTO(
+            String.valueOf(dto.destinationId()),
+            resolveTranslations(dto.destinationId(), languageToDestinations),
+            mapToDestinationType(dto.type()),
+            dto.coordinates(),
+            PROVIDER_TYPE,
+            country.name(),
+            country.countryCallingCode(),
+            null));
+  }
+
+  private List<RawDestinationDTO.Translation> resolveTranslations(
+      Long destinationId,
+      Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations) {
+
+    return languageToDestinations.entrySet().stream()
         .map(
-            dto -> {
+            entry -> {
+              ViatorDestinationDTO dto = entry.getValue().get(destinationId);
               if (dto == null) {
-                log.warn("Encountered a null ViatorDestinationDTO, skipping.");
+                log.debug(
+                    "No translation found for destinationId: {} in language: {}",
+                    destinationId,
+                    entry.getKey());
                 return null;
               }
-
-              return new RawDestinationDTO(
-                  String.valueOf(dto.destinationId()),
-                  dto.name(),
-                  mapToDestinationType(dto.type()),
-                  dto.coordinates(),
-                  PROVIDER_TYPE,
-                  locale.getCode());
+              return new RawDestinationDTO.Translation(entry.getKey().toString(), dto.name());
             })
         .filter(Objects::nonNull)
         .toList();
@@ -73,22 +116,28 @@ public class ViatorDestinationProvider implements DestinationProvider {
 
     return switch (viatorType) {
       case "CITY", "TOWN", "VILLAGE" -> DestinationType.CITY;
-      case "COUNTRY" -> DestinationType.COUNTRY;
       case "REGION",
           "AREA",
           "STATE",
           "PROVINCE",
           "COUNTY",
-          "DISTRICT",
           "HAMLET",
           "ISLAND",
           "NATIONAL_PARK",
-          "NEIGHBORHOOD",
           "PENINSULA",
-          "UNION_TERRITORY",
-          "WARD" ->
+          "UNION_TERRITORY" ->
           DestinationType.REGION;
+      case "DISTRICT", "NEIGHBORHOOD", "WARD" -> DestinationType.DISTRICT;
       default -> DestinationType.OTHER;
     };
+  }
+
+  private Optional<ViatorDestinationDTO> resolveDestinationCountry(
+      ViatorDestinationDTO dto, Map<Long, ViatorDestinationDTO> idToDestination) {
+
+    return dto.lookupIds().stream()
+        .map(idToDestination::get)
+        .filter(d -> d != null && "COUNTRY".equals(d.type()))
+        .findFirst();
   }
 }

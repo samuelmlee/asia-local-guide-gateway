@@ -47,7 +47,7 @@ public class Country implements Translatable {
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
     return countryTranslations.stream()
-        .filter(t -> t.getLanguageCode().equals(languageCode.getCode()))
+        .filter(ct -> ct.getLanguageCode().equals(languageCode))
         .findFirst()
         .map(CountryTranslation::getName);
   }

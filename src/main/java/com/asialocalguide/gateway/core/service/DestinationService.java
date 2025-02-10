@@ -1,5 +1,7 @@
 package com.asialocalguide.gateway.core.service;
 
+import com.asialocalguide.gateway.core.domain.BookingProvider;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
@@ -8,8 +10,8 @@ import com.asialocalguide.gateway.core.repository.BookingProviderMappingReposito
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
-import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,8 +30,6 @@ public class DestinationService {
 
   private final BookingProviderMappingRepository bookingProviderMappingRepository;
 
-  private static final String DEFAULT_LANGUAGE_CODE = "en";
-
   public DestinationService(
       List<DestinationProvider> destinationProviders,
       DestinationPersistenceService destinationPersistenceService,
@@ -45,77 +45,76 @@ public class DestinationService {
   }
 
   public void syncDestinations() {
-    //    List<RawDestinationDTO> rawDestinationDTOS =
-    //        destinationProviders.stream()
-    //            .flatMap(this::syncDestinationsFromProvider)
-    //            .collect(Collectors.toList());
+    Map<BookingProviderName, List<RawDestinationDTO>> providerToRawDestinationDTOs =
+        destinationProviders.stream()
+            .collect(
+                Collectors.toMap(
+                    DestinationProvider::getProviderType,
+                    provider -> {
+                      try {
+                        List<RawDestinationDTO> destinations = provider.getDestinations();
+
+                        return filterExistingDestinationByProvider(
+                            destinations, provider.getProviderType());
+
+                      } catch (Exception e) {
+                        log.error(
+                            "Failed to fetch destinations from provider: {}",
+                            provider.getProviderType(),
+                            e);
+                        return List.of();
+                      }
+                    }));
   }
 
-  public List<RawDestinationDTO> syncDestinationsFromProvider(
-      DestinationProvider destinationProvider) {
-    return List.of();
-    //    BookingProviderName providerName = destinationProvider.getProviderType();
-    //    SupportedLocale defaultLocale = SupportedLocale.getDefaultLocale();
-    //
-    //    List<RawDestinationDTO> rawDestinations;
-    //    try {
-    //
-    //      rawDestinations = destinationProvider.getDestinations(defaultLocale);
-    //    } catch (Exception e) {
-    //      log.error("Failed to fetch destinations from provider: {}", providerName, e);
-    //      return List.of();
-    //    }
-    //
-    //    BookingProvider viatorProvider =
-    //        bookingProviderRepository
-    //            .findByName("VIATOR")
-    //            .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
-    //
-    //    Set<String> viatorDestinationIds =
-    //        bookingProviderMappingRepository.findProviderDestinationIdsByProviderId(
-    //            viatorProvider.getId());
-    //
-    //    List<ViatorDestinationDTO> newDestinationDTOs =
-    //        rawDestinations.stream()
-    //            .filter(d -> isNewViatorDestinationDto(d, viatorDestinationIds))
-    //            .collect(Collectors.toCollection(ArrayList::new));
-    //
-    //    destinationPersistenceService.buildAndSaveDestinationsFromViatorDtos(newDestinationDTOs);
-  }
+  public List<RawDestinationDTO> filterExistingDestinationByProvider(
+      List<RawDestinationDTO> destinationDTOs, BookingProviderName providerName) {
 
-  private static boolean isNewViatorDestinationDto(
-      ViatorDestinationDTO d, Set<String> viatorDestinationIds) {
-    return false;
-    //
-    //    // Update method when Destination can be added by other providers to check for name and
-    //    // coordinates
-    //
-    //    return !viatorDestinationIds.contains(d.getDestinationId().toString());
+    BookingProvider viatorProvider =
+        bookingProviderRepository
+            .findByName(providerName)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        String.format("BookingProvider not found for names: %s", providerName)));
+
+    Set<String> existingProviderDestinationIds =
+        bookingProviderMappingRepository.findProviderDestinationIdsByProviderId(
+            viatorProvider.getId());
+
+    return destinationDTOs.stream()
+        .filter(d -> existingProviderDestinationIds.contains(d.destinationId()))
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   public List<DestinationDTO> getAutocompleteSuggestions(String query) {
 
     Locale locale = LocaleContextHolder.getLocale();
 
-    LanguageCode languageCode = LanguageCode.fromLocale(locale).orElse(LanguageCode.EN);
+    LanguageCode languageCode;
+    try {
+      languageCode = LanguageCode.from(locale.getLanguage());
+    } catch (Exception e) {
+      languageCode = LanguageCode.EN;
+    }
+    final LanguageCode finalLanguageCode = languageCode;
 
     List<Destination> destinations =
         destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(
-            locale.getLanguage(), query);
+            finalLanguageCode, query);
 
     return destinations.stream()
         .map(
             destination -> {
-              String translationName = destination.getTranslation(languageCode).orElse("");
+              String translationName = destination.getTranslation(finalLanguageCode).orElse("");
 
               if (translationName.isEmpty()) {
                 return null;
               }
 
-              // Countries fo not have an additional country name
               String countryName =
                   destination.getCountry() != null
-                      ? destination.getCountry().getTranslation(languageCode).orElse("")
+                      ? destination.getCountry().getTranslation(finalLanguageCode).orElse("")
                       : "";
 
               return DestinationDTO.of(

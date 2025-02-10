@@ -1,24 +1,28 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Optional;
 import lombok.Getter;
 
 @Getter
 public enum LanguageCode {
-  EN("en"),
-  FR("fr");
+  EN,
+  FR;
 
-  private final String code;
-
-  LanguageCode(String code) {
-    this.code = code;
+  public String toDbValue() {
+    return this.name().toLowerCase();
   }
 
-  public static Optional<LanguageCode> fromLocale(Locale locale) {
-    return Arrays.stream(LanguageCode.values())
-        .filter(languageCode -> languageCode.getCode().equals(locale.getLanguage()))
-        .findFirst();
+  public static LanguageCode from(String languageCode) {
+    if (languageCode == null || languageCode.isEmpty()) {
+      throw new IllegalArgumentException("Language code cannot be null or empty");
+    }
+    if (!"EN".equals(languageCode) && !"FR".equals(languageCode)) {
+      throw new IllegalArgumentException("Language code must be either EN or FR");
+    }
+    return LanguageCode.valueOf(languageCode.toUpperCase());
+  }
+
+  @Override
+  public String toString() {
+    return this.name().toLowerCase();
   }
 }

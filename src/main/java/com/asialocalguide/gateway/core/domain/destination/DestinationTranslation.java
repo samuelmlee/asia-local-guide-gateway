@@ -1,9 +1,6 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import java.util.Objects;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +13,9 @@ public class DestinationTranslation {
 
   @Id @ManyToOne private Destination destination;
 
-  @Id private String languageCode;
+  @Id
+  @Convert(converter = LanguageCodeConverter.class)
+  private LanguageCode languageCode;
 
   private String name;
 
@@ -41,7 +40,7 @@ public class DestinationTranslation {
         + ", languageCode='"
         + languageCode
         + '\''
-        + ", name='"
+        + ", names='"
         + name
         + '\''
         + '}';

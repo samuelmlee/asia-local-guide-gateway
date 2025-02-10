@@ -1,6 +1,7 @@
 package com.asialocalguide.gateway.core.repository;
 
 import com.asialocalguide.gateway.core.domain.destination.Destination;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,5 +17,5 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
           + "AND LOWER(dt.name) LIKE LOWER(CONCAT('%', :name, '%')) "
           + "AND d.type IN ('CITY', 'REGION')")
   List<Destination> findCityOrRegionByTranslationsForLanguageCodeAndName(
-      String languageCode, String name);
+      LanguageCode languageCode, String name);
 }

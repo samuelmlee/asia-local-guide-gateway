@@ -2,6 +2,7 @@ package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
@@ -37,7 +38,7 @@ public class ActivityService {
 
     BookingProvider viatorProvider =
         bookingProviderRepository
-            .findByName("VIATOR")
+            .findByName(BookingProviderName.VIATOR)
             .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
 
     Destination destination =

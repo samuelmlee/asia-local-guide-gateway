@@ -19,13 +19,13 @@ public class ViatorClient {
     this.viatorRestClient = viatorRestClient;
   }
 
-  public List<ViatorDestinationDTO> getAllDestinationsForLocale(String localeString) {
+  public List<ViatorDestinationDTO> getAllDestinationsForLanguage(String languageCode) {
     try {
       ViatorDestinationResponseDTO destinationResponse =
           viatorRestClient
               .get()
               .uri("/destinations")
-              .headers(httpHeaders -> httpHeaders.set("Accept-Language", localeString))
+              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageCode))
               .retrieve()
               .onStatus(viatorResponseErrorHandler)
               .body(ViatorDestinationResponseDTO.class);
@@ -44,38 +44,14 @@ public class ViatorClient {
     }
   }
 
-  public List<ViatorActivityTagDTO> getAllActivityTags() {
-    try {
-      ViatorActivityTagResponseDTO tagResponse =
-          viatorRestClient
-              .get()
-              .uri("/products/tags")
-              .retrieve()
-              .onStatus(viatorResponseErrorHandler)
-              .body(ViatorActivityTagResponseDTO.class);
-
-      return Optional.ofNullable(tagResponse)
-          .map(ViatorActivityTagResponseDTO::tags)
-          .orElseGet(List::of);
-
-    } catch (ViatorApiException e) {
-
-      throw e;
-
-    } catch (Exception e) {
-
-      throw new ViatorApiException("Failed to call Tags API: " + e.getMessage(), e);
-    }
-  }
-
-  public List<ViatorActivityDTO> getActivitiesByRequestAndLocale(
-      String localeString, ViatorActivitySearchDTO searchDTO) {
+  public List<ViatorActivityDTO> getActivitiesByRequestAndLanguage(
+      String languageCode, ViatorActivitySearchDTO searchDTO) {
     try {
       ViatorActivityResponseDTO activityResponse =
           viatorRestClient
               .post()
               .uri("/products/search")
-              .headers(httpHeaders -> httpHeaders.set("Accept-Language", localeString))
+              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageCode))
               .body(searchDTO)
               .retrieve()
               .onStatus(viatorResponseErrorHandler)

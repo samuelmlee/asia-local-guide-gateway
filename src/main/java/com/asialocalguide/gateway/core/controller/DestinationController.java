@@ -2,6 +2,7 @@ package com.asialocalguide.gateway.core.controller;
 
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.service.DestinationService;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,8 @@ public class DestinationController {
   }
 
   @GetMapping("/autocomplete")
-  public List<DestinationDTO> getAutocompleteSuggestions(@RequestParam String query) {
+  public List<DestinationDTO> getAutocompleteSuggestions(
+      @RequestParam(required = true) @Size(min = 1) String query) {
     return destinationService.getAutocompleteSuggestions(query);
   }
 

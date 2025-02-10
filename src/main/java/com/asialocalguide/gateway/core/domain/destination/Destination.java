@@ -42,7 +42,7 @@ public class Destination implements Translatable {
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
     return destinationTranslations.stream()
-        .filter(t -> t.getLanguageCode().equals(languageCode.getCode()))
+        .filter(t -> t.getLanguageCode().equals(languageCode))
         .findFirst()
         .map(DestinationTranslation::getName);
   }

@@ -78,20 +78,4 @@ public class DestinationPersistenceService {
     //    return destination;
     return null;
   }
-
-  private Destination resolveParentDestination(
-      ViatorDestinationDTO dto, Map<Long, Destination> createdDestinations) {
-
-    //    List<Long> lookupIds = dto.getLookupIds();
-    //
-    //    for (Long parentId : lookupIds) {
-    //      Destination parent = createdDestinations.get(parentId);
-    //      if (parent != null && parent.getType() == DestinationType.COUNTRY) {
-    //        return parent;
-    //      }
-    //    }
-    //    return null;
-    //  }
-    return null;
-  }
 }

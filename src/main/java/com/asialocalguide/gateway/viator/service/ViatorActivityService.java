@@ -25,7 +25,7 @@ public class ViatorActivityService {
       SupportedLocale defaultLocale, ViatorActivitySearchDTO searchDTO) {
 
     List<ViatorActivityDTO> activities =
-        viatorClient.getActivitiesByRequestAndLocale(defaultLocale.getCode(), searchDTO).stream()
+        viatorClient.getActivitiesByRequestAndLanguage(defaultLocale.getCode(), searchDTO).stream()
             // No activities with zero duration should be returned
             .filter(dto -> dto.getDurationMinutes() > 0)
             .toList();
