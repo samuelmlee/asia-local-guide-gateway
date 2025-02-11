@@ -22,7 +22,7 @@ public class DestinationService {
 
   private final List<DestinationProvider> destinationProviders;
 
-  private final DestinationPersistenceService destinationPersistenceService;
+  private final DestinationSortingService destinationSortingService;
 
   private final DestinationRepository destinationRepository;
 
@@ -32,39 +32,46 @@ public class DestinationService {
 
   public DestinationService(
       List<DestinationProvider> destinationProviders,
-      DestinationPersistenceService destinationPersistenceService,
+      DestinationSortingService destinationSortingService,
       DestinationRepository destinationRepository,
       BookingProviderRepository bookingProviderRepository,
       BookingProviderMappingRepository bookingProviderMappingRepository) {
 
     this.destinationProviders = destinationProviders;
-    this.destinationPersistenceService = destinationPersistenceService;
+    this.destinationSortingService = destinationSortingService;
     this.destinationRepository = destinationRepository;
     this.bookingProviderRepository = bookingProviderRepository;
     this.bookingProviderMappingRepository = bookingProviderMappingRepository;
   }
 
   public void syncDestinations() {
-    Map<BookingProviderName, List<RawDestinationDTO>> providerToRawDestinationDTOs =
+
+    Map<BookingProviderName, Map<String, RawDestinationDTO>> providerToIsoToRawDestinationDTOs =
         destinationProviders.stream()
             .collect(
                 Collectors.toMap(
-                    DestinationProvider::getProviderType,
+                    DestinationProvider::getProviderName,
                     provider -> {
                       try {
                         List<RawDestinationDTO> destinations = provider.getDestinations();
 
-                        return filterExistingDestinationByProvider(
-                            destinations, provider.getProviderType());
+                        List<RawDestinationDTO> filtered =
+                            filterExistingDestinationByProvider(
+                                destinations, provider.getProviderName());
+
+                        return filtered.stream()
+                            .collect(Collectors.toMap(RawDestinationDTO::countryIsoCode, d -> d));
 
                       } catch (Exception e) {
                         log.error(
                             "Failed to fetch destinations from provider: {}",
-                            provider.getProviderType(),
+                            provider.getProviderName(),
                             e);
-                        return List.of();
+                        return Map.of();
                       }
                     }));
+
+    destinationSortingService.triageRawDestinations(providerToIsoToRawDestinationDTOs);
   }
 
   public List<RawDestinationDTO> filterExistingDestinationByProvider(
@@ -83,7 +90,7 @@ public class DestinationService {
             viatorProvider.getId());
 
     return destinationDTOs.stream()
-        .filter(d -> existingProviderDestinationIds.contains(d.destinationId()))
+        .filter(d -> !existingProviderDestinationIds.contains(d.destinationId()))
         .collect(Collectors.toCollection(ArrayList::new));
   }
 

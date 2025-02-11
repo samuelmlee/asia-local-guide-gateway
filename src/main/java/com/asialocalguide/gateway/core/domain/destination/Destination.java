@@ -37,7 +37,7 @@ public class Destination implements Translatable {
       orphanRemoval = true)
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
-  @Embedded Coordinates coordinates;
+  @Embedded Coordinates centerCoordinates;
 
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
@@ -84,7 +84,7 @@ public class Destination implements Translatable {
 
     Destination that = (Destination) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(coordinates, that.coordinates)
+        && Objects.equals(centerCoordinates, that.centerCoordinates)
         && type == that.type;
   }
 

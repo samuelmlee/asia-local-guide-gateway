@@ -9,10 +9,8 @@ public record RawDestinationDTO(
     String destinationId,
     List<Translation> names,
     DestinationType type,
-    Coordinates coordinates,
+    Coordinates centerCoordinates,
     BookingProviderName providerType,
-    String countryNameEn,
-    String countryCallingCode,
     String countryIsoCode) {
 
   public record Translation(String languageCode, String name) {}

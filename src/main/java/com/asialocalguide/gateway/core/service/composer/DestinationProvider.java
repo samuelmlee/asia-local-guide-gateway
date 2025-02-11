@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface DestinationProvider {
 
-  BookingProviderName getProviderType();
+  BookingProviderName getProviderName();
 
   List<RawDestinationDTO> getDestinations();
 }

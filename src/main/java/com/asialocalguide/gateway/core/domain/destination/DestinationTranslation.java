@@ -19,6 +19,11 @@ public class DestinationTranslation {
 
   private String name;
 
+  public DestinationTranslation(LanguageCode code, String name) {
+    this.languageCode = code;
+    this.name = name;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;

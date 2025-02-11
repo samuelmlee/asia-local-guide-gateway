@@ -26,7 +26,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
   }
 
   @Override
-  public BookingProviderName getProviderType() {
+  public BookingProviderName getProviderName() {
     return PROVIDER_TYPE;
   }
 
@@ -83,8 +83,6 @@ public class ViatorDestinationProvider implements DestinationProvider {
             mapToDestinationType(dto.type()),
             dto.coordinates(),
             PROVIDER_TYPE,
-            country.name(),
-            country.countryCallingCode(),
             null));
   }
 
