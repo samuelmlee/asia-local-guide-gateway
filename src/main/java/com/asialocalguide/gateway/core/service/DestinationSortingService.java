@@ -28,7 +28,8 @@ public class DestinationSortingService {
   }
 
   public void triageRawDestinations(
-      Map<BookingProviderName, Map<String, RawDestinationDTO>> providerToIsoCodeToRawDestinations) {
+      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>>
+          providerToIsoCodeToRawDestinations) {
     if (providerToIsoCodeToRawDestinations == null
         || providerToIsoCodeToRawDestinations.isEmpty()) {
       log.warn("No raw destinations provided for processing.");
@@ -39,65 +40,108 @@ public class DestinationSortingService {
         "Processing raw destinations from providers: {}",
         providerToIsoCodeToRawDestinations.keySet());
 
-    // Extract all country ISO codes
-    Set<String> countryIsoCodes =
-        providerToIsoCodeToRawDestinations.values().stream()
-            .flatMap(providerMap -> providerMap.values().stream())
-            .map(RawDestinationDTO::countryIsoCode)
-            .collect(Collectors.toSet());
+    // Fetch country data
+    Map<String, Country> countryMap = buildCountryMap(providerToIsoCodeToRawDestinations);
 
-    // Fetch all relevant countries
-    Map<String, Country> countryMap =
-        countryRepository.findByIso2CodeIn(countryIsoCodes).stream()
-            .collect(Collectors.toMap(Country::getIso2Code, country -> country));
-
-    // Fetch all existing destinations grouped by country iso code
+    // Fetch existing destinations grouped by country
     Map<String, List<Destination>> existingDestinationsByCountry =
-        destinationRepository.findByCountryIsoCodes(countryIsoCodes).stream()
-            .collect(Collectors.groupingBy(dest -> dest.getCountry().getIso2Code()));
+        fetchDestinationsByIsoCode(countryMap.keySet());
 
-    // Prepare data for persistence
-    Map<BookingProviderName, Map<String, RawDestinationDTO>> newDestinationsMap =
+    // Maps to store new and existing destinations
+    Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> newDestinationsMap =
         new EnumMap<>(BookingProviderName.class);
     Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap =
         new EnumMap<>(BookingProviderName.class);
 
-    providerToIsoCodeToRawDestinations.forEach(
-        (providerName, isoCodeToRawDestinations) ->
-            isoCodeToRawDestinations
-                .values()
-                .forEach(
-                    rawDto -> {
-                      if (rawDto.destinationId() == null
-                          || rawDto.providerType() == null
-                          || rawDto.countryIsoCode() == null) {
-                        log.warn("Invalid RawDestinationDTO: {}", rawDto);
-                        return;
-                      }
+    // Process each provider
+    for (var providerEntry : providerToIsoCodeToRawDestinations.entrySet()) {
+      BookingProviderName providerName = providerEntry.getKey();
+      Map<String, List<RawDestinationDTO>> isoCodeToRawDestinations = providerEntry.getValue();
 
-                      Country country = countryMap.get(rawDto.countryIsoCode());
-                      if (country == null) {
-                        log.warn("Country not found for ISO Code: {}", rawDto.countryIsoCode());
-                        return;
-                      }
+      // Process each ISO Code
+      for (var isoEntry : isoCodeToRawDestinations.entrySet()) {
+        String isoCode = isoEntry.getKey();
+        List<RawDestinationDTO> rawDestinations = isoEntry.getValue();
 
-                      List<Destination> possibleExistingDestinations =
-                          existingDestinationsByCountry.getOrDefault(
-                              rawDto.countryIsoCode(), new ArrayList<>());
+        // Get country
+        Country country = countryMap.get(isoCode);
+        if (country == null) {
+          log.warn("Country not found for ISO Code: {}", isoCode);
+          continue;
+        }
 
-                      findMatchingDestination(possibleExistingDestinations, rawDto)
-                          .ifPresentOrElse(
-                              existingDestination ->
-                                  existingDestinationsMap
-                                      .computeIfAbsent(providerName, k -> new HashMap<>())
-                                      .put(existingDestination.getId(), rawDto),
-                              () ->
-                                  newDestinationsMap
-                                      .computeIfAbsent(providerName, k -> new HashMap<>())
-                                      .put(rawDto.countryIsoCode(), rawDto));
-                    }));
+        // Get possible existing destinations for this country
+        List<Destination> possibleExistingDestinations =
+            existingDestinationsByCountry.getOrDefault(isoCode, new ArrayList<>());
+
+        // Process destinations
+        processRawDestinations(
+            providerName,
+            isoCode,
+            rawDestinations,
+            possibleExistingDestinations,
+            newDestinationsMap,
+            existingDestinationsMap);
+      }
+    }
 
     // Save new and updated destinations
+    persistDestinations(newDestinationsMap, existingDestinationsMap);
+  }
+
+  private Map<String, Country> buildCountryMap(
+      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>>
+          providerToIsoCodeToRawDestinations) {
+    Set<String> countryIsoCodes =
+        providerToIsoCodeToRawDestinations.values().stream()
+            .flatMap(map -> map.keySet().stream())
+            .collect(Collectors.toSet());
+
+    return countryRepository.findByIso2CodeIn(countryIsoCodes).stream()
+        .collect(Collectors.toMap(Country::getIso2Code, country -> country));
+  }
+
+  private Map<String, List<Destination>> fetchDestinationsByIsoCode(Set<String> countryIsoCodes) {
+    return destinationRepository.findByCountryIsoCodes(countryIsoCodes).stream()
+        .collect(Collectors.groupingBy(dest -> dest.getCountry().getIso2Code()));
+  }
+
+  private void processRawDestinations(
+      BookingProviderName providerName,
+      String isoCode,
+      List<RawDestinationDTO> rawDestinations,
+      List<Destination> possibleExistingDestinations,
+      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> newDestinationsMap,
+      Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap) {
+
+    for (RawDestinationDTO rawDto : rawDestinations) {
+      if (rawDto.destinationId() == null
+          || rawDto.providerType() == null
+          || rawDto.countryIsoCode() == null) {
+        log.warn("Invalid RawDestinationDTO: {}", rawDto);
+        continue;
+      }
+
+      Optional<Destination> existingDestination =
+          findMatchingDestination(possibleExistingDestinations, rawDto);
+
+      if (existingDestination.isPresent()) {
+        existingDestinationsMap
+            .getOrDefault(providerName, new HashMap<>())
+            .put(existingDestination.get().getId(), rawDto);
+      } else {
+        newDestinationsMap
+            .getOrDefault(providerName, new HashMap<>())
+            .getOrDefault(isoCode, new ArrayList<>())
+            .add(rawDto);
+      }
+    }
+  }
+
+  private void persistDestinations(
+      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> newDestinationsMap,
+      Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap) {
+
     if (!newDestinationsMap.isEmpty()) {
       destinationPersistenceService.persistNewDestinations(newDestinationsMap);
     }

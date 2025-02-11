@@ -8,6 +8,7 @@ import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
+import com.asialocalguide.gateway.viator.util.Iso2CodeLookupMap;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,6 +54,8 @@ public class ViatorDestinationProvider implements DestinationProvider {
               .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
     }
 
+    // Use English destinations as base for creating RawDestinationDTOs, other languages only used
+    // for translations
     Map<Long, ViatorDestinationDTO> idToDestinationEnDTOs =
         languageToDestinations.get(LanguageCode.EN);
 
@@ -76,6 +79,13 @@ public class ViatorDestinationProvider implements DestinationProvider {
       return Optional.empty();
     }
 
+    String countryIsoCode = Iso2CodeLookupMap.getIso2Code(country.name());
+
+    if (countryIsoCode == null) {
+      log.warn("Skipping destination {} due to missing country iso code.", country.name());
+      return Optional.empty();
+    }
+
     return Optional.of(
         new RawDestinationDTO(
             String.valueOf(dto.destinationId()),
@@ -83,7 +93,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
             mapToDestinationType(dto.type()),
             dto.coordinates(),
             PROVIDER_TYPE,
-            null));
+            countryIsoCode));
   }
 
   private List<RawDestinationDTO.Translation> resolveTranslations(

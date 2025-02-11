@@ -33,7 +33,7 @@ public class DestinationPersistenceService {
   /**
    * Persists existing Destinations by adding a new DestinationProviderMapping for each provider.
    *
-   * @param rawDestinations Map<ProviderName, Map<Id, RawDestinationDTO>>
+   * @param rawDestinations Map<ProviderName, Map<DestinationId, List<RawDestinationDTO>>>
    */
   @Transactional
   public void persistExistingDestinations(
@@ -43,11 +43,11 @@ public class DestinationPersistenceService {
       return;
     }
 
-    log.info("Processing existing destinations for providers : {}", rawDestinations.keySet());
+    log.info("Processing existing destinations for providers: {}", rawDestinations.keySet());
 
-    for (var entry : rawDestinations.entrySet()) {
-      BookingProviderName providerName = entry.getKey();
-      Map<Long, RawDestinationDTO> idToRawDestinations = entry.getValue();
+    for (var providerEntry : rawDestinations.entrySet()) {
+      BookingProviderName providerName = providerEntry.getKey();
+      Map<Long, RawDestinationDTO> idToRawDestination = providerEntry.getValue();
 
       BookingProvider provider =
           bookingProviderRepository
@@ -55,22 +55,23 @@ public class DestinationPersistenceService {
               .orElseThrow(
                   () -> new IllegalStateException("BookingProvider not found: " + providerName));
 
-      // Fetch all existing Destinations to update
+      // Fetch all existing Destinations in batch
       List<Destination> existingDestinations =
-          destinationRepository.findAllById(new ArrayList<>(idToRawDestinations.keySet()));
+          destinationRepository.findAllById(idToRawDestination.keySet());
 
       for (Destination destination : existingDestinations) {
-        RawDestinationDTO rawDto = idToRawDestinations.get(destination.getId());
 
-        if (rawDto != null && destination.getBookingProviderMapping(provider.getId()) == null) {
-          DestinationProviderMapping mapping = new DestinationProviderMapping();
-          mapping.setProvider(provider);
-          mapping.setProviderDestinationId(rawDto.destinationId());
-          destination.addProviderMapping(mapping);
-          log.info(
-              "Added provider mapping for Destination {} from {}",
-              destination.getId(),
-              providerName);
+        for (RawDestinationDTO rawDto : idToRawDestination.values()) {
+          if (destination.getBookingProviderMapping(provider.getId()) == null) {
+            DestinationProviderMapping mapping = new DestinationProviderMapping();
+            mapping.setProvider(provider);
+            mapping.setProviderDestinationId(rawDto.destinationId());
+            destination.addProviderMapping(mapping);
+            log.info(
+                "Added provider mapping for Destination {} from {}",
+                destination.getId(),
+                providerName);
+          }
         }
       }
 
@@ -80,13 +81,15 @@ public class DestinationPersistenceService {
   }
 
   /**
-   * Persists new Destinations and saves them in batch
+   * Persists new Destinations and saves them in batch.
    *
-   * @param providerToIsoCodeToRawDestinations Map<ProviderName, Map<IsoCode, RawDestinationDTO>>
+   * @param providerToIsoCodeToRawDestinations Map<ProviderName, Map<IsoCode,
+   *     List<RawDestinationDTO>>>
    */
   @Transactional
   public void persistNewDestinations(
-      Map<BookingProviderName, Map<String, RawDestinationDTO>> providerToIsoCodeToRawDestinations) {
+      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>>
+          providerToIsoCodeToRawDestinations) {
     if (providerToIsoCodeToRawDestinations == null
         || providerToIsoCodeToRawDestinations.isEmpty()) {
       log.warn("No new destinations to persist.");
@@ -97,21 +100,22 @@ public class DestinationPersistenceService {
         "Processing new destinations for {} providers", providerToIsoCodeToRawDestinations.size());
 
     // Extract all country ISO codes
-    Set<String> countryIsoCodes =
-        providerToIsoCodeToRawDestinations.values().stream()
-            .flatMap(providerMap -> providerMap.keySet().stream())
-            .collect(Collectors.toSet());
+    Set<String> countryIsoCodes = new HashSet<>();
+    for (Map<String, List<RawDestinationDTO>> providerMap :
+        providerToIsoCodeToRawDestinations.values()) {
+      countryIsoCodes.addAll(providerMap.keySet());
+    }
 
-    // Fetch all Countries in one go
+    // Fetch all Countries in batch
     Map<String, Country> countryMap =
         countryRepository.findByIso2CodeIn(countryIsoCodes).stream()
             .collect(Collectors.toMap(Country::getIso2Code, country -> country));
 
     List<Destination> newDestinations = new ArrayList<>();
 
-    for (var entry : providerToIsoCodeToRawDestinations.entrySet()) {
-      BookingProviderName providerName = entry.getKey();
-      Map<String, RawDestinationDTO> providerDestinations = entry.getValue();
+    for (var providerEntry : providerToIsoCodeToRawDestinations.entrySet()) {
+      BookingProviderName providerName = providerEntry.getKey();
+      Map<String, List<RawDestinationDTO>> providerDestinations = providerEntry.getValue();
 
       BookingProvider provider =
           bookingProviderRepository
@@ -119,32 +123,37 @@ public class DestinationPersistenceService {
               .orElseThrow(
                   () -> new IllegalStateException("BookingProvider not found: " + providerName));
 
-      for (RawDestinationDTO rawDto : providerDestinations.values()) {
-        Country country = countryMap.get(rawDto.countryIsoCode());
+      for (var isoEntry : providerDestinations.entrySet()) {
+        String isoCode = isoEntry.getKey();
+        List<RawDestinationDTO> rawDestinationDTOs = isoEntry.getValue();
+
+        Country country = countryMap.get(isoCode);
         if (country == null) {
-          log.warn("Country not found for ISO Code: {}", rawDto.countryIsoCode());
+          log.warn("Country not found for ISO Code: {}", isoCode);
           continue;
         }
 
-        Destination newDestination = new Destination();
-        newDestination.setType(rawDto.type());
-        newDestination.setCenterCoordinates(rawDto.centerCoordinates());
-        newDestination.setCountry(country);
+        for (RawDestinationDTO rawDto : rawDestinationDTOs) {
+          Destination newDestination = new Destination();
+          newDestination.setType(rawDto.type());
+          newDestination.setCenterCoordinates(rawDto.centerCoordinates());
+          newDestination.setCountry(country);
 
-        rawDto
-            .names()
-            .forEach(
-                name ->
-                    newDestination.addTranslation(
-                        new DestinationTranslation(
-                            LanguageCode.from(name.languageCode()), name.name())));
+          rawDto
+              .names()
+              .forEach(
+                  name ->
+                      newDestination.addTranslation(
+                          new DestinationTranslation(
+                              LanguageCode.from(name.languageCode()), name.name())));
 
-        DestinationProviderMapping mapping = new DestinationProviderMapping();
-        mapping.setProvider(provider);
-        mapping.setProviderDestinationId(rawDto.destinationId());
-        newDestination.addProviderMapping(mapping);
+          DestinationProviderMapping mapping = new DestinationProviderMapping();
+          mapping.setProvider(provider);
+          mapping.setProviderDestinationId(rawDto.destinationId());
+          newDestination.addProviderMapping(mapping);
 
-        newDestinations.add(newDestination);
+          newDestinations.add(newDestination);
+        }
       }
     }
 

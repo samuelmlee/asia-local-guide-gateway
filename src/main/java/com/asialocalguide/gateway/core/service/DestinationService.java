@@ -46,30 +46,32 @@ public class DestinationService {
 
   public void syncDestinations() {
 
-    Map<BookingProviderName, Map<String, RawDestinationDTO>> providerToIsoToRawDestinationDTOs =
-        destinationProviders.stream()
-            .collect(
-                Collectors.toMap(
-                    DestinationProvider::getProviderName,
-                    provider -> {
-                      try {
-                        List<RawDestinationDTO> destinations = provider.getDestinations();
+    Map<BookingProviderName, Map<String, List<RawDestinationDTO>>>
+        providerToIsoToRawDestinationDTOs =
+            destinationProviders.stream()
+                .collect(
+                    Collectors.toMap(
+                        DestinationProvider::getProviderName,
+                        provider -> {
+                          try {
+                            List<RawDestinationDTO> destinations = provider.getDestinations();
 
-                        List<RawDestinationDTO> filtered =
-                            filterExistingDestinationByProvider(
-                                destinations, provider.getProviderName());
+                            List<RawDestinationDTO> filtered =
+                                filterExistingDestinationByProvider(
+                                    destinations, provider.getProviderName());
 
-                        return filtered.stream()
-                            .collect(Collectors.toMap(RawDestinationDTO::countryIsoCode, d -> d));
+                            // Group by country iso code
+                            return filtered.stream()
+                                .collect(Collectors.groupingBy(RawDestinationDTO::countryIsoCode));
 
-                      } catch (Exception e) {
-                        log.error(
-                            "Failed to fetch destinations from provider: {}",
-                            provider.getProviderName(),
-                            e);
-                        return Map.of();
-                      }
-                    }));
+                          } catch (Exception e) {
+                            log.error(
+                                "Failed to fetch destinations from provider: {}",
+                                provider.getProviderName(),
+                                e);
+                            return Map.of();
+                          }
+                        }));
 
     destinationSortingService.triageRawDestinations(providerToIsoToRawDestinationDTOs);
   }
