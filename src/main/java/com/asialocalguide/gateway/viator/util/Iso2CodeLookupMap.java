@@ -1,22 +1,24 @@
 package com.asialocalguide.gateway.viator.util;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Iso2CodeLookupMap {
 
-  private static final Map<String, String> map = new HashMap<>();
+  private static final Map<String, String> finalMap;
 
   public static String getIso2Code(String country) {
     if (country == null || country.isEmpty()) {
       return null;
     }
-    return map.get(country);
+    return finalMap.get(country);
   }
 
   private Iso2CodeLookupMap() {}
 
   static {
+    Map<String, String> map = new HashMap<>();
     map.put("Afghanistan", "af");
     map.put("Albania", "al");
     map.put("Algeria", "dz");
@@ -265,5 +267,7 @@ public class Iso2CodeLookupMap {
     map.put("Wales", "gb");
     map.put("Scotland", "gb");
     map.put("Northern Ireland", "gb");
+
+    finalMap = Collections.unmodifiableMap(map);
   }
 }
