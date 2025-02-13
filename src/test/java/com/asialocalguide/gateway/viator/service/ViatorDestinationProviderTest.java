@@ -9,8 +9,10 @@ import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ViatorDestinationProviderTest {
 
     @Mock
@@ -26,14 +29,23 @@ class ViatorDestinationProviderTest {
     @InjectMocks
     private ViatorDestinationProvider viatorDestinationProvider;
 
-    private ViatorDestinationDTO sampleDestination;
+    private ViatorDestinationDTO sampleDestinationFR;
 
     @BeforeEach
     void setUp() {
-        sampleDestination = new ViatorDestinationDTO(
+        sampleDestinationFR = new ViatorDestinationDTO(
                 1L, // destinationId
                 "CITY", // type
-                "New York", // name
+                "London", // name
+                List.of(100L), // lookupIds (e.g., country reference)
+                "en",
+                new Coordinates(40.7128, -74.0060)// center
+        );
+
+        sampleDestinationFR = new ViatorDestinationDTO(
+                1L, // destinationId
+                "CITY", // type
+                "Londres", // name
                 List.of(100L), // lookupIds (e.g., country reference)
                 "en",
                 new Coordinates(40.7128, -74.0060)// center
@@ -49,10 +61,10 @@ class ViatorDestinationProviderTest {
     @Test
     void testGetDestinations_SuccessfulFetch() {
         when(viatorClient.getAllDestinationsForLanguage(LanguageCode.EN.toString()))
-                .thenReturn(List.of(sampleDestination));
+                .thenReturn(List.of(sampleDestinationFR));
 
         when(viatorClient.getAllDestinationsForLanguage(LanguageCode.FR.toString()))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(List.of(sampleDestinationFR));
 
         List<RawDestinationDTO> result = viatorDestinationProvider.getDestinations();
 
