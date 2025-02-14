@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -59,14 +60,24 @@ public class ViatorDestinationProvider implements DestinationProvider {
                                                 })
                                         .exceptionally(ex -> {
                                             throw new ViatorApiException(
-                                                    String.format("Error during Get Destinations API call for language: %s.", language), ex);
+                                                    String.format("API failure for getAllDestinationsForLanguage call for language: %s.", language), ex);
                                         })
                 ).toList();
 
-        List<List<ViatorDestinationDTO>> results = futures.stream()
-                .map(CompletableFuture::join)
-                .toList();
+        List<List<ViatorDestinationDTO>> results = new ArrayList<>();
+        for (CompletableFuture<List<ViatorDestinationDTO>> future : futures) {
+            try {
+                results.add(future.join());
+            } catch (CompletionException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof ViatorApiException viatorApiException) {
+                    throw viatorApiException;
+                }
+                throw new ViatorApiException("Error processing destinations", cause);
+            }
+        }
 
+        // Construct the map of destinations by language
         for (int i = 0; i < LanguageCode.values().length; i++) {
             languageToDestinations.put(LanguageCode.values()[i], results.get(i).stream()
                     .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
@@ -119,6 +130,19 @@ public class ViatorDestinationProvider implements DestinationProvider {
                         countryIsoCode);
     }
 
+    private Optional<ViatorDestinationDTO> resolveDestinationCountry(
+            ViatorDestinationDTO dto, Map<Long, ViatorDestinationDTO> idToDestination) {
+
+        if (dto == null || dto.lookupIds() == null) {
+            return Optional.empty();
+        }
+
+        return dto.lookupIds().stream()
+                .map(idToDestination::get)
+                .filter(d -> d != null && "COUNTRY".equals(d.type()))
+                .findFirst();
+    }
+
     private List<RawDestinationDTO.Translation> resolveTranslations(
             Long destinationId,
             Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations) {
@@ -126,7 +150,17 @@ public class ViatorDestinationProvider implements DestinationProvider {
         return languageToDestinations.entrySet().stream()
                 .map(
                         entry -> {
-                            ViatorDestinationDTO dto = entry.getValue().get(destinationId);
+                            Map<Long, ViatorDestinationDTO> idToDestination = entry.getValue();
+
+                            if (idToDestination == null) {
+                                log.debug(
+                                        "No idToDestination Map found for language: {} while processing destinationId: {}",
+                                        entry.getKey(),
+                                        destinationId);
+                                return null;
+                            }
+
+                            ViatorDestinationDTO dto = idToDestination.get(destinationId);
                             if (dto == null) {
                                 log.debug(
                                         "No translation found for destinationId: {} in language: {}",
@@ -162,12 +196,4 @@ public class ViatorDestinationProvider implements DestinationProvider {
         };
     }
 
-    private Optional<ViatorDestinationDTO> resolveDestinationCountry(
-            ViatorDestinationDTO dto, Map<Long, ViatorDestinationDTO> idToDestination) {
-
-        return dto.lookupIds().stream()
-                .map(idToDestination::get)
-                .filter(d -> d != null && "COUNTRY".equals(d.type()))
-                .findFirst();
-    }
 }
