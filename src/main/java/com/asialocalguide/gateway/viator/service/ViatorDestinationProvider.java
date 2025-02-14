@@ -10,11 +10,11 @@ import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import com.asialocalguide.gateway.viator.util.Iso2CodeLookupMap;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,10 +41,8 @@ public class ViatorDestinationProvider implements DestinationProvider {
         log.info(
                 "Fetching Viator destinations for languages: {}", Arrays.toString(LanguageCode.values()));
 
-        Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations =
-                new EnumMap<>(LanguageCode.class);
 
-        List<CompletableFuture<List<ViatorDestinationDTO>>> futures = Arrays.stream(LanguageCode.values())
+        List<CompletableFuture<Pair<LanguageCode, List<ViatorDestinationDTO>>>> futures = Arrays.stream(LanguageCode.values())
                 .map(
                         language ->
                                 CompletableFuture.supplyAsync(
@@ -56,7 +54,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
                                                         throw new ViatorApiException(
                                                                 String.format("No destinations found for language: %s aborting ingestion.", language));
                                                     }
-                                                    return destinations;
+                                                    return Pair.of(language, destinations);
                                                 })
                                         .exceptionally(ex -> {
                                             throw new ViatorApiException(
@@ -64,24 +62,25 @@ public class ViatorDestinationProvider implements DestinationProvider {
                                         })
                 ).toList();
 
-        List<List<ViatorDestinationDTO>> results = new ArrayList<>();
-        for (CompletableFuture<List<ViatorDestinationDTO>> future : futures) {
-            try {
-                results.add(future.join());
-            } catch (CompletionException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof ViatorApiException viatorApiException) {
-                    throw viatorApiException;
-                }
-                throw new ViatorApiException("Error processing destinations", cause);
-            }
-        }
+        Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations =
+                new EnumMap<>(LanguageCode.class);
 
-        // Construct the map of destinations by language
-        for (int i = 0; i < LanguageCode.values().length; i++) {
-            languageToDestinations.put(LanguageCode.values()[i], results.get(i).stream()
-                    .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
-        }
+
+        futures.forEach(future -> {
+            try {
+                Pair<LanguageCode, List<ViatorDestinationDTO>> result = future.join();
+                if (!result.getSecond().isEmpty()) {
+                    languageToDestinations.put(result.getFirst(), result.getSecond().stream()
+                            .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
+                }
+            } catch (Exception e) {
+                if (e.getCause() instanceof ViatorApiException viatorApiException) {
+                    throw viatorApiException;
+                } else {
+                    throw new ViatorApiException("Failed to fetch destinations from Viator Provider.", e);
+                }
+            }
+        });
 
         // Use English destinations as base for creating RawDestinationDTOs, other languages used
         // for translations
