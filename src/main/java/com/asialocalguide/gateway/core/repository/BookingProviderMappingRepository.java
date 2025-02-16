@@ -15,5 +15,5 @@ public interface BookingProviderMappingRepository extends JpaRepository<Destinat
       FROM DestinationProviderMapping m
       WHERE m.provider.name = :providerName
       """)
-  Set<String> findProviderDestinationIdsByProviderId(@Param("providerName") BookingProviderName providerName);
+  Set<String> findProviderDestinationIdsByProviderName(@Param("providerName") BookingProviderName providerName);
 }

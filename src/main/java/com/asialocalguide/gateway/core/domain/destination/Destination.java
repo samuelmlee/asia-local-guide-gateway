@@ -1,7 +1,9 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,21 +22,13 @@ public class Destination implements Translatable {
   @JoinColumn(name = "country_id")
   private Country country;
 
-  @OneToMany(
-      mappedBy = "destination",
-      fetch = FetchType.EAGER,
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<DestinationTranslation> destinationTranslations = new HashSet<>();
 
   @Enumerated(EnumType.STRING)
   private DestinationType type;
 
-  @OneToMany(
-      mappedBy = "destination",
-      fetch = FetchType.EAGER,
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
   @Embedded Coordinates centerCoordinates;
@@ -83,9 +77,7 @@ public class Destination implements Translatable {
     if (o == null || getClass() != o.getClass()) return false;
 
     Destination that = (Destination) o;
-    return Objects.equals(id, that.id)
-        && Objects.equals(centerCoordinates, that.centerCoordinates)
-        && type == that.type;
+    return id != null && id.equals(that.id) && type == that.type;
   }
 
   @Override

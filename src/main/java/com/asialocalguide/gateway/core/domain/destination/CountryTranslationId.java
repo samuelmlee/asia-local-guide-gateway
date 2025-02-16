@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 public class CountryTranslationId implements Serializable {
   private Long country;
 
-  private String languageCode;
+  private LanguageCode languageCode;
 }

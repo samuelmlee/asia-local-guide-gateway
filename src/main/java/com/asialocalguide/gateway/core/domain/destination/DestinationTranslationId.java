@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 public class DestinationTranslationId implements Serializable {
   private Long destination;
 
-  private String languageCode;
+  private LanguageCode languageCode;
 }

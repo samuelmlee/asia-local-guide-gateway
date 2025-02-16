@@ -15,7 +15,7 @@ public enum LanguageCode {
     if (languageCode == null || languageCode.isEmpty()) {
       throw new IllegalArgumentException("Language code cannot be null or empty");
     }
-    if (!"EN".equals(languageCode) && !"FR".equals(languageCode)) {
+    if (!"EN".equalsIgnoreCase(languageCode) && !"FR".equalsIgnoreCase(languageCode)) {
       throw new IllegalArgumentException("Language code must be either EN or FR");
     }
     return LanguageCode.valueOf(languageCode.toUpperCase());

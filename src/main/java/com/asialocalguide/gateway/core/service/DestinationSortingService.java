@@ -7,13 +7,14 @@ import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Service
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Slf4j
+@Service
 public class DestinationSortingService {
 
   private final DestinationRepository destinationRepository;
@@ -53,12 +54,9 @@ public class DestinationSortingService {
             .collect(
                 Collectors.toMap(
                     Map.Entry::getKey,
-                    entry -> {
-                      List<RawDestinationDTO> rawDestinations = entry.getValue();
-
-                      // Group by country iso code
-                      return rawDestinations.stream().collect(Collectors.groupingBy(RawDestinationDTO::countryIsoCode));
-                    }));
+                    entry ->
+                        // Return Map Grouped by country iso code
+                        entry.getValue().stream().collect(Collectors.groupingBy(RawDestinationDTO::countryIsoCode))));
 
     // Fetch country data
     Map<String, Country> countryMap = buildCountryMap(providerToIsoCodeToRawDestinations);
@@ -112,7 +110,7 @@ public class DestinationSortingService {
       BookingProviderName providerName, List<RawDestinationDTO> destinationDTOs) {
 
     Set<String> existingProviderDestinationIds =
-        bookingProviderMappingRepository.findProviderDestinationIdsByProviderId(providerName);
+        bookingProviderMappingRepository.findProviderDestinationIdsByProviderName(providerName);
 
     return destinationDTOs.stream()
         .filter(d -> !existingProviderDestinationIds.contains(d.destinationId()))
@@ -144,7 +142,7 @@ public class DestinationSortingService {
       Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap) {
 
     for (RawDestinationDTO rawDto : rawDestinations) {
-      if (rawDto.destinationId() == null || rawDto.providerType() == null || rawDto.countryIsoCode() == null) {
+      if (rawDto.destinationId() == null || rawDto.providerName() == null || rawDto.countryIsoCode() == null) {
         log.warn("Invalid RawDestinationDTO: {}", rawDto);
         continue;
       }
@@ -153,12 +151,12 @@ public class DestinationSortingService {
 
       if (existingDestination.isPresent()) {
         existingDestinationsMap
-            .getOrDefault(providerName, new HashMap<>())
+            .computeIfAbsent(providerName, k -> new HashMap<>())
             .put(existingDestination.get().getId(), rawDto);
       } else {
         newDestinationsMap
-            .getOrDefault(providerName, new HashMap<>())
-            .getOrDefault(isoCode, new ArrayList<>())
+            .computeIfAbsent(providerName, k -> new HashMap<>())
+            .computeIfAbsent(isoCode, k -> new ArrayList<>())
             .add(rawDto);
       }
     }
