@@ -1,6 +1,8 @@
 package com.asialocalguide.gateway.core.service;
 
-import com.asialocalguide.gateway.core.domain.BookingProvider;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationTranslation;
@@ -8,10 +10,12 @@ import com.asialocalguide.gateway.core.domain.destination.DestinationType;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
-import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,152 +24,118 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class DestinationServiceTest {
 
-    @Mock
-    private DestinationProvider viatorProvider;
+  @Mock private DestinationProvider viatorProvider;
 
-    @Mock
-    private DestinationRepository destinationRepository;
+  @Mock private DestinationRepository destinationRepository;
 
-    @Mock
-    private BookingProviderRepository bookingProviderRepository;
+  @Mock private DestinationSortingService destinationSortingService;
 
-    @Mock
-    private BookingProviderMappingRepository bookingProviderMappingRepository;
+  @InjectMocks private DestinationService destinationService;
 
-    @Mock
-    private DestinationSortingService destinationSortingService;
+  private final BookingProviderName providerName = BookingProviderName.VIATOR;
+  private final String testDestinationId = "DEST-123";
+  private final String countryIsoCode = "US";
 
-    @InjectMocks
-    private DestinationService destinationService;
+  @BeforeEach
+  void setUp() {
+    LocaleContextHolder.setLocale(Locale.US); // Default to EN
+  }
 
-    private final BookingProviderName providerName = BookingProviderName.VIATOR;
-    private final String testDestinationId = "DEST-123";
-    private final String countryIsoCode = "US";
+  @Test
+  void syncDestinations_shouldProcessValidProviders() {
+    // Arrange
+    RawDestinationDTO rawDto = createTestRawDestination();
+    when(viatorProvider.getProviderName()).thenReturn(providerName);
+    when(viatorProvider.getDestinations()).thenReturn(List.of(rawDto));
 
-    @BeforeEach
-    void setUp() {
-        LocaleContextHolder.setLocale(Locale.US); // Default to EN
-    }
+    destinationService =
+        new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
 
-    @Test
-    void syncDestinations_shouldProcessValidProviders() {
-        // Arrange
-        RawDestinationDTO rawDto = createTestRawDestination();
-        when(viatorProvider.getProviderName()).thenReturn(providerName);
-        when(viatorProvider.getDestinations()).thenReturn(List.of(rawDto));
-        when(bookingProviderRepository.findByName(providerName))
-                .thenReturn(Optional.of(new BookingProvider()));
-        when(bookingProviderMappingRepository.findProviderDestinationIdsByProviderId(any()))
-                .thenReturn(Set.of());
+    // Act
+    destinationService.syncDestinations();
 
-        destinationService = new DestinationService(
-                List.of(viatorProvider),
-                destinationSortingService,
-                destinationRepository,
-                bookingProviderRepository,
-                bookingProviderMappingRepository
-        );
+    // Assert
+    verify(destinationSortingService).triageRawDestinations(anyMap());
+  }
 
-        // Act
-        destinationService.syncDestinations();
+  @Test
+  void syncDestinations_shouldHandleProviderExceptionsGracefully() {
+    // Arrange
+    when(viatorProvider.getProviderName()).thenReturn(providerName);
+    when(viatorProvider.getDestinations()).thenThrow(new ViatorApiException("API failure"));
 
-        // Assert
-        verify(destinationSortingService).triageRawDestinations(anyMap());
-    }
+    destinationService =
+        new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
 
-    @Test
-    void syncDestinations_shouldHandleProviderExceptionsGracefully() {
-        // Arrange
-        when(viatorProvider.getProviderName()).thenReturn(providerName);
-        when(viatorProvider.getDestinations()).thenThrow(new RuntimeException("API failure"));
+    // Act
+    assertDoesNotThrow(() -> destinationService.syncDestinations());
 
-        destinationService = new DestinationService(
-                List.of(viatorProvider),
-                destinationSortingService,
-                destinationRepository,
-                bookingProviderRepository,
-                bookingProviderMappingRepository
-        );
+    // Assert
+    verify(destinationSortingService).triageRawDestinations(Map.of(BookingProviderName.VIATOR, List.of()));
+  }
 
-        // Act
-        assertDoesNotThrow(() -> destinationService.syncDestinations());
+  @Test
+  void getAutocompleteSuggestions_shouldReturnLocalizedResults() {
+    // Arrange
+    LocaleContextHolder.setLocale(Locale.FRANCE);
+    Destination destination = createTestDestinationWithTranslations();
 
-        // Assert
-        verify(destinationSortingService).triageRawDestinations(Map.of(BookingProviderName.VIATOR, Map.of()));
-    }
+    when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.FR, "paris"))
+        .thenReturn(List.of(destination));
 
+    // Act
+    List<DestinationDTO> result = destinationService.getAutocompleteSuggestions("paris");
 
-    @Test
-    void getAutocompleteSuggestions_shouldReturnLocalizedResults() {
-        // Arrange
-        LocaleContextHolder.setLocale(Locale.FRANCE);
-        Destination destination = createTestDestinationWithTranslations();
+    // Assert
+    assertEquals(1, result.size());
+    assertEquals("Paris", result.getFirst().name());
+  }
 
-        when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(
-                LanguageCode.FR, "paris"))
-                .thenReturn(List.of(destination));
+  @Test
+  void getAutocompleteSuggestions_shouldHandleInvalidLocale() {
+    // Arrange
+    LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported locale
 
-        // Act
-        List<DestinationDTO> result = destinationService.getAutocompleteSuggestions("paris");
+    Destination destination = createTestDestinationWithTranslations();
+    when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.EN, "test"))
+        .thenReturn(List.of(destination));
 
-        // Assert
-        assertEquals(1, result.size());
-        assertEquals("Paris", result.getFirst().name());
-    }
+    // Act
+    List<DestinationDTO> result = destinationService.getAutocompleteSuggestions("test");
 
-    @Test
-    void getAutocompleteSuggestions_shouldHandleInvalidLocale() {
-        // Arrange
-        LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported locale
+    // Assert
+    assertFalse(result.isEmpty());
+  }
 
-        Destination destination = createTestDestinationWithTranslations();
-        when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(
-                LanguageCode.EN, "test"))
-                .thenReturn(List.of(destination));
+  @Test
+  void getAutocompleteSuggestions_shouldReturnEmptyForBlankQuery() {
+    // Act
+    List<DestinationDTO> result1 = destinationService.getAutocompleteSuggestions("");
+    List<DestinationDTO> result2 = destinationService.getAutocompleteSuggestions("   ");
 
-        // Act
-        List<DestinationDTO> result = destinationService.getAutocompleteSuggestions("test");
+    // Assert
+    assertTrue(result1.isEmpty());
+    assertTrue(result2.isEmpty());
+  }
 
-        // Assert
-        assertFalse(result.isEmpty());
-    }
+  private RawDestinationDTO createTestRawDestination() {
+    return new RawDestinationDTO(
+        testDestinationId,
+        List.of(new RawDestinationDTO.Translation("EN", "New York")),
+        DestinationType.CITY,
+        null,
+        providerName,
+        countryIsoCode);
+  }
 
-    @Test
-    void getAutocompleteSuggestions_shouldReturnEmptyForBlankQuery() {
-        // Act
-        List<DestinationDTO> result1 = destinationService.getAutocompleteSuggestions("");
-        List<DestinationDTO> result2 = destinationService.getAutocompleteSuggestions("   ");
-
-        // Assert
-        assertTrue(result1.isEmpty());
-        assertTrue(result2.isEmpty());
-    }
-
-    private RawDestinationDTO createTestRawDestination() {
-        return new RawDestinationDTO(
-                testDestinationId,
-                List.of(new RawDestinationDTO.Translation("EN", "New York")),
-                DestinationType.CITY,
-                null,
-                providerName,
-                countryIsoCode
-        );
-    }
-
-    private Destination createTestDestinationWithTranslations() {
-        Destination destination = new Destination();
-        destination.setType(DestinationType.CITY);
-        destination.addTranslation(new DestinationTranslation(LanguageCode.EN, "New York"));
-        destination.addTranslation(new DestinationTranslation(LanguageCode.FR, "Paris"));
-        return destination;
-    }
+  private Destination createTestDestinationWithTranslations() {
+    Destination destination = new Destination();
+    destination.setType(DestinationType.CITY);
+    destination.addTranslation(new DestinationTranslation(LanguageCode.EN, "New York"));
+    destination.addTranslation(new DestinationTranslation(LanguageCode.FR, "Paris"));
+    return destination;
+  }
 }
