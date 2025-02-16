@@ -153,8 +153,8 @@ public class DestinationSortingService {
         }
     }
 
-    // TODO: to update when getting Destinations from different providers, starting with cities
-    // Use approximation of center and sub string matching for name
+    // TODO: to update when getting Destinations from different providers, starting with destinations of type cities
+    // Use approximation of center coordinates and sub string matching for name
     // https://stackoverflow.com/questions/3320698/what-is-the-best-way-to-implement-a-substring-search-in-sql
     private Optional<Destination> findMatchingDestination(
             List<Destination> possibleDestinations, RawDestinationDTO rawDto) {
