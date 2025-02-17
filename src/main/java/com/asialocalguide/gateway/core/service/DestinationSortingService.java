@@ -43,20 +43,11 @@ public class DestinationSortingService {
 
     // Filter out existing destinations for each Provider
     Map<BookingProviderName, List<RawDestinationDTO>> filteredProviderToRawDestinations =
-        providerToRawDestinations.entrySet().stream()
-            .collect(
-                Collectors.toMap(
-                    Map.Entry::getKey, entry -> filterExistingDestinationByProvider(entry.getKey(), entry.getValue())));
+        filterExistingDestinations(providerToRawDestinations);
 
     // Build Map of ProviderName -> ISO Code -> Raw Destinations
     Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> providerToIsoCodeToRawDestinations =
-        filteredProviderToRawDestinations.entrySet().stream()
-            .collect(
-                Collectors.toMap(
-                    Map.Entry::getKey,
-                    entry ->
-                        // Return Map Grouped by country iso code
-                        entry.getValue().stream().collect(Collectors.groupingBy(RawDestinationDTO::countryIsoCode))));
+        groupRawDestinationsByIso(filteredProviderToRawDestinations);
 
     // Fetch country data
     Map<String, Country> countryMap = buildCountryMap(providerToIsoCodeToRawDestinations);
@@ -71,50 +62,65 @@ public class DestinationSortingService {
         new EnumMap<>(BookingProviderName.class);
 
     // Process each provider
-    for (var providerEntry : providerToIsoCodeToRawDestinations.entrySet()) {
-      BookingProviderName providerName = providerEntry.getKey();
-      Map<String, List<RawDestinationDTO>> isoCodeToRawDestinations = providerEntry.getValue();
+    providerToIsoCodeToRawDestinations.forEach(
+        (provider, isoCodeToRawDestinations) ->
+            // Process each ISO Code
+            isoCodeToRawDestinations.forEach(
+                (isoCode, rawDestinations) -> {
+                  // Get country
+                  Country country = countryMap.get(isoCode);
+                  if (country == null) {
+                    log.warn("Country not found for ISO Code: {}", isoCode);
+                    return;
+                  }
 
-      // Process each ISO Code
-      for (var isoEntry : isoCodeToRawDestinations.entrySet()) {
-        String isoCode = isoEntry.getKey();
-        List<RawDestinationDTO> rawDestinations = isoEntry.getValue();
+                  // Get possible existing destinations for this country
+                  List<Destination> possibleExistingDestinations =
+                      existingDestinationsByCountry.getOrDefault(isoCode, new ArrayList<>());
 
-        // Get country
-        Country country = countryMap.get(isoCode);
-        if (country == null) {
-          log.warn("Country not found for ISO Code: {}", isoCode);
-          continue;
-        }
-
-        // Get possible existing destinations for this country
-        List<Destination> possibleExistingDestinations =
-            existingDestinationsByCountry.getOrDefault(isoCode, new ArrayList<>());
-
-        // Process destinations
-        processRawDestinations(
-            providerName,
-            isoCode,
-            rawDestinations,
-            possibleExistingDestinations,
-            newDestinationsMap,
-            existingDestinationsMap);
-      }
-    }
+                  // Process destinations
+                  processRawDestinations(
+                      provider,
+                      isoCode,
+                      rawDestinations,
+                      possibleExistingDestinations,
+                      newDestinationsMap,
+                      existingDestinationsMap);
+                }));
 
     // Save new and updated destinations
     persistDestinations(newDestinationsMap, existingDestinationsMap);
   }
 
-  private List<RawDestinationDTO> filterExistingDestinationByProvider(
-      BookingProviderName providerName, List<RawDestinationDTO> destinationDTOs) {
+  private Map<BookingProviderName, List<RawDestinationDTO>> filterExistingDestinations(
+      Map<BookingProviderName, List<RawDestinationDTO>> providerToRawDestinations) {
 
-    Set<String> existingProviderDestinationIds =
-        bookingProviderMappingRepository.findProviderDestinationIdsByProviderName(providerName);
+    return providerToRawDestinations.entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> {
+                  BookingProviderName providerName = entry.getKey();
+                  List<RawDestinationDTO> destinationDTOs = entry.getValue();
 
-    return destinationDTOs.stream()
-        .filter(d -> !existingProviderDestinationIds.contains(d.destinationId()))
-        .collect(Collectors.toCollection(ArrayList::new));
+                  Set<String> existingProviderDestinationIds =
+                      bookingProviderMappingRepository.findProviderDestinationIdsByProviderName(providerName);
+
+                  return destinationDTOs.stream()
+                      .filter(d -> !existingProviderDestinationIds.contains(d.destinationId()))
+                      .toList();
+                }));
+  }
+
+  private static Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> groupRawDestinationsByIso(
+      Map<BookingProviderName, List<RawDestinationDTO>> filteredProviderToRawDestinations) {
+    return filteredProviderToRawDestinations.entrySet().stream()
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                entry ->
+                    // Return Map Grouped by country iso code
+                    entry.getValue().stream().collect(Collectors.groupingBy(RawDestinationDTO::countryIsoCode))));
   }
 
   private Map<String, Country> buildCountryMap(
@@ -142,8 +148,8 @@ public class DestinationSortingService {
       Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap) {
 
     for (RawDestinationDTO rawDto : rawDestinations) {
-      if (rawDto.destinationId() == null || rawDto.providerName() == null || rawDto.countryIsoCode() == null) {
-        log.warn("Invalid RawDestinationDTO: {}", rawDto);
+      if (rawDto == null) {
+        log.warn("Null RawDestinationDTO in rawDestinations for provider: {} and iso code : {}", providerName, isoCode);
         continue;
       }
 
