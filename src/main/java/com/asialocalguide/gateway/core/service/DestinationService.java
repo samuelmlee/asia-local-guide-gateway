@@ -2,20 +2,19 @@ package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
+import com.asialocalguide.gateway.core.domain.destination.DestinationIngestionInput;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
+import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -36,24 +35,21 @@ public class DestinationService {
     this.destinationRepository = destinationRepository;
   }
 
-  public void syncDestinations() {
+  public void syncDestinationsForProvider(BookingProviderName providerName) {
 
-    Map<BookingProviderName, List<RawDestinationDTO>> providerToIsoToRawDestinationDTOs =
+    Objects.requireNonNull(providerName);
+
+    DestinationProvider destinationProvider =
         destinationProviders.stream()
-            .collect(Collectors.toMap(DestinationProvider::getProviderName, this::getIsoCodeToRawDestinations));
+            .filter(provider -> provider.getProviderName().equals(providerName))
+            .findFirst()
+            .orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
 
-    destinationSortingService.triageRawDestinations(providerToIsoToRawDestinationDTOs);
-  }
+    List<RawDestinationDTO> rawDestinations = destinationProvider.getDestinations();
 
-  private List<RawDestinationDTO> getIsoCodeToRawDestinations(DestinationProvider provider) {
-    try {
+    DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
 
-      return provider.getDestinations();
-
-    } catch (Exception e) {
-      log.error("Failed to fetch destinations from provider: {}", provider.getProviderName(), e);
-      return List.of();
-    }
+    destinationSortingService.triageRawDestinations(input);
   }
 
   public List<DestinationDTO> getAutocompleteSuggestions(String query) {

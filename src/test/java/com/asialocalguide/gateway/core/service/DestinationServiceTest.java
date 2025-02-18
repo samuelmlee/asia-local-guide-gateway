@@ -45,7 +45,7 @@ class DestinationServiceTest {
   }
 
   @Test
-  void syncDestinations_shouldProcessValidProviders() {
+  void syncDestinations_ForProvider_shouldProcessValidProviders() {
     // Arrange
     RawDestinationDTO rawDto = createTestRawDestination();
     when(viatorProvider.getProviderName()).thenReturn(providerName);
@@ -55,14 +55,14 @@ class DestinationServiceTest {
         new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
 
     // Act
-    destinationService.syncDestinations();
+    destinationService.syncDestinationsForProvider();
 
     // Assert
     verify(destinationSortingService).triageRawDestinations(anyMap());
   }
 
   @Test
-  void syncDestinations_shouldHandleProviderExceptionsGracefully() {
+  void syncDestinations_ForProvider_shouldHandleProviderExceptionsGracefully() {
     // Arrange
     when(viatorProvider.getProviderName()).thenReturn(providerName);
     when(viatorProvider.getDestinations()).thenThrow(new ViatorApiException("API failure"));
@@ -71,7 +71,7 @@ class DestinationServiceTest {
         new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
 
     // Act
-    assertDoesNotThrow(() -> destinationService.syncDestinations());
+    assertDoesNotThrow(() -> destinationService.syncDestinationsForProvider());
 
     // Assert
     verify(destinationSortingService).triageRawDestinations(Map.of(BookingProviderName.VIATOR, List.of()));
