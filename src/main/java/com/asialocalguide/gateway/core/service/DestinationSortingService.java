@@ -62,6 +62,7 @@ public class DestinationSortingService {
 
     // Process each provider
     processDestinationsByIsoCode(
+        providerName,
         isoCodeToRawDestinations,
         countryMap,
         existingDestinationsByCountry,
@@ -69,10 +70,11 @@ public class DestinationSortingService {
         existingDestinationsMap);
 
     // Save new and updated destinations
-    persistDestinations(newDestinationsMap, existingDestinationsMap);
+    persistDestinations(providerName, newDestinationsMap, existingDestinationsMap);
   }
 
   private void processDestinationsByIsoCode(
+      BookingProviderName providerName,
       Map<String, List<RawDestinationDTO>> isoCodeToRawDestinations,
       Map<String, Country> countryMap,
       Map<String, List<Destination>> existingDestinationsByCountry,
@@ -94,7 +96,7 @@ public class DestinationSortingService {
 
           // Process destinations
           processRawDestinations(
-              provider,
+              providerName,
               isoCode,
               rawDestinations,
               possibleExistingDestinations,
@@ -135,8 +137,8 @@ public class DestinationSortingService {
       String isoCode,
       List<RawDestinationDTO> rawDestinations,
       List<Destination> possibleExistingDestinations,
-      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> newDestinationsMap,
-      Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap) {
+      Map<String, List<RawDestinationDTO>> newDestinationsMap,
+      Map<Long, RawDestinationDTO> existingDestinationsMap) {
 
     for (RawDestinationDTO rawDto : rawDestinations) {
       if (rawDto == null) {
@@ -147,28 +149,24 @@ public class DestinationSortingService {
       Optional<Destination> existingDestination = findMatchingDestination(possibleExistingDestinations, rawDto);
 
       if (existingDestination.isPresent()) {
-        existingDestinationsMap
-            .computeIfAbsent(providerName, k -> new HashMap<>())
-            .put(existingDestination.get().getId(), rawDto);
+        existingDestinationsMap.put(existingDestination.get().getId(), rawDto);
       } else {
-        newDestinationsMap
-            .computeIfAbsent(providerName, k -> new HashMap<>())
-            .computeIfAbsent(isoCode, k -> new ArrayList<>())
-            .add(rawDto);
+        newDestinationsMap.computeIfAbsent(isoCode, k -> new ArrayList<>()).add(rawDto);
       }
     }
   }
 
   private void persistDestinations(
-      Map<BookingProviderName, Map<String, List<RawDestinationDTO>>> newDestinationsMap,
-      Map<BookingProviderName, Map<Long, RawDestinationDTO>> existingDestinationsMap) {
+      BookingProviderName providerName,
+      Map<String, List<RawDestinationDTO>> newDestinationsMap,
+      Map<Long, RawDestinationDTO> existingDestinationsMap) {
 
     if (!newDestinationsMap.isEmpty()) {
-      destinationPersistenceService.persistNewDestinations(newDestinationsMap);
+      destinationPersistenceService.persistNewDestinations(providerName, newDestinationsMap);
     }
 
     if (!existingDestinationsMap.isEmpty()) {
-      destinationPersistenceService.persistExistingDestinations(existingDestinationsMap);
+      destinationPersistenceService.persistExistingDestinations(providerName, existingDestinationsMap);
     }
   }
 
