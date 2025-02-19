@@ -14,7 +14,7 @@ public class DestinationTranslation {
   @Id @ManyToOne private Destination destination;
 
   @Id
-  @Convert(converter = LanguageCodeConverter.class)
+  @Enumerated(EnumType.STRING)
   private LanguageCode languageCode;
 
   private String name;
@@ -41,13 +41,6 @@ public class DestinationTranslation {
 
   @Override
   public String toString() {
-    return "DestinationTranslation{"
-        + ", languageCode='"
-        + languageCode
-        + '\''
-        + ", names='"
-        + name
-        + '\''
-        + '}';
+    return "DestinationTranslation{" + ", languageCode='" + languageCode + '\'' + ", names='" + name + '\'' + '}';
   }
 }

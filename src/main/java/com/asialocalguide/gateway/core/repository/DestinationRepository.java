@@ -23,5 +23,5 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
   List<Destination> findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode languageCode, String name);
 
   @Query("SELECT d FROM Destination d WHERE d.country.iso2Code IN :isoCodes")
-  List<Destination> findByCountryIsoCodes(@Param("isoCodes") Set<String> isoCodes);
+  List<Destination> findByIsoCodes(@Param("isoCodes") Set<String> isoCodes);
 }

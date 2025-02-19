@@ -1,13 +1,12 @@
 package com.asialocalguide.gateway.core.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.Destination;
-import com.asialocalguide.gateway.core.domain.destination.DestinationTranslation;
-import com.asialocalguide.gateway.core.domain.destination.DestinationType;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -15,7 +14,6 @@ import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,10 +53,11 @@ class DestinationServiceTest {
         new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
 
     // Act
-    destinationService.syncDestinationsForProvider();
+    destinationService.syncDestinationsForProvider(BookingProviderName.VIATOR);
 
     // Assert
-    verify(destinationSortingService).triageRawDestinations(anyMap());
+    verify(destinationSortingService)
+        .triageRawDestinations(new DestinationIngestionInput(providerName, List.of(rawDto)));
   }
 
   @Test
@@ -71,10 +70,12 @@ class DestinationServiceTest {
         new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
 
     // Act
-    assertDoesNotThrow(() -> destinationService.syncDestinationsForProvider());
+    Throwable exception =
+        assertThrows(
+            ViatorApiException.class, () -> destinationService.syncDestinationsForProvider(BookingProviderName.VIATOR));
 
     // Assert
-    verify(destinationSortingService).triageRawDestinations(Map.of(BookingProviderName.VIATOR, List.of()));
+    assertThat(exception).hasMessageContaining("API failure");
   }
 
   @Test

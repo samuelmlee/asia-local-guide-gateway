@@ -1,6 +1,8 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -20,18 +22,22 @@ public class Destination implements Translatable {
 
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "country_id")
+  @NotNull
   private Country country;
 
   @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @NotEmpty
   private Set<DestinationTranslation> destinationTranslations = new HashSet<>();
 
   @Enumerated(EnumType.STRING)
+  @NotNull
   private DestinationType type;
 
   @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @NotEmpty
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
-  @Embedded Coordinates centerCoordinates;
+  @NotNull @Embedded Coordinates centerCoordinates;
 
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {

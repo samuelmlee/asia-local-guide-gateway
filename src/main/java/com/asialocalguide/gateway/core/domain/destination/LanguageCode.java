@@ -4,11 +4,17 @@ import lombok.Getter;
 
 @Getter
 public enum LanguageCode {
-  EN,
-  FR;
+  EN("en"),
+  FR("fr");
+
+  private final String code;
+
+  LanguageCode(String code) {
+    this.code = code;
+  }
 
   public String toDbValue() {
-    return this.name().toLowerCase();
+    return this.code;
   }
 
   public static LanguageCode from(String languageCode) {
@@ -23,6 +29,6 @@ public enum LanguageCode {
 
   @Override
   public String toString() {
-    return this.name().toLowerCase();
+    return this.code;
   }
 }
