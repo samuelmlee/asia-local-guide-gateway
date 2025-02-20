@@ -145,7 +145,8 @@ public class DestinationPersistenceService {
             .forEach(
                 name ->
                     newDestination.addTranslation(
-                        new DestinationTranslation(LanguageCode.from(name.languageCode()), name.name())));
+                        new DestinationTranslation(
+                            newDestination, LanguageCode.from(name.languageCode()), name.name())));
 
         DestinationProviderMapping mapping = new DestinationProviderMapping();
         mapping.setProviderDestinationId(rawDto.destinationId());

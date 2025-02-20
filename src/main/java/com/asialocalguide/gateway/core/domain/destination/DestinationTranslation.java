@@ -7,40 +7,47 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@IdClass(DestinationTranslationId.class)
 @NoArgsConstructor
 public class DestinationTranslation {
 
-  @Id @ManyToOne private Destination destination;
+  @EmbeddedId private DestinationTranslationId id;
 
-  @Id
-  @Enumerated(EnumType.STRING)
-  private LanguageCode languageCode;
+  @ManyToOne
+  @MapsId("destinationId")
+  @JoinColumn(name = "destination_id")
+  private Destination destination;
 
   private String name;
 
-  public DestinationTranslation(LanguageCode code, String name) {
-    this.languageCode = code;
+  public DestinationTranslation(Destination destination, LanguageCode languageCode, String name) {
+    this.id = new DestinationTranslationId();
+    this.id.setLanguageCode(languageCode);
+    this.destination = destination;
     this.name = name;
   }
 
   @Override
   public boolean equals(Object o) {
+    if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     DestinationTranslation that = (DestinationTranslation) o;
-    return languageCode.equals(that.languageCode) && name.equals(that.name);
+    return Objects.equals(id, that.id);
   }
 
   @Override
   public int hashCode() {
-    int result = 31 * Objects.hashCode(languageCode);
-    result = 31 * result + Objects.hashCode(name);
-    return result;
+    return Objects.hash(id);
   }
 
   @Override
   public String toString() {
-    return "DestinationTranslation{" + ", languageCode='" + languageCode + '\'' + ", names='" + name + '\'' + '}';
+    return "DestinationTranslation{"
+        + ", languageCode='"
+        + id.getLanguageCode()
+        + '\''
+        + ", name='"
+        + name
+        + '\''
+        + '}';
   }
 }

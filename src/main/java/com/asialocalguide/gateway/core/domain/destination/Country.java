@@ -2,16 +2,21 @@ package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
+
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import lombok.Builder;
-import lombok.Data;
-import org.hibernate.validator.constraints.Length;
 
 @Entity
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Country implements Translatable {
 
   @Id
@@ -45,7 +50,7 @@ public class Country implements Translatable {
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
     return countryTranslations.stream()
-        .filter(ct -> ct.getLanguageCode().equals(languageCode))
+        .filter(ct -> ct.getId().getLanguageCode().equals(languageCode))
         .findFirst()
         .map(CountryTranslation::getName);
   }

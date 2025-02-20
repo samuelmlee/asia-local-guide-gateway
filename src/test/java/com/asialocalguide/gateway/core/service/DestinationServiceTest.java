@@ -135,8 +135,8 @@ class DestinationServiceTest {
   private Destination createTestDestinationWithTranslations() {
     Destination destination = new Destination();
     destination.setType(DestinationType.CITY);
-    destination.addTranslation(new DestinationTranslation(LanguageCode.EN, "New York"));
-    destination.addTranslation(new DestinationTranslation(LanguageCode.FR, "Paris"));
+    destination.addTranslation(new DestinationTranslation(destination, LanguageCode.EN, "New York"));
+    destination.addTranslation(new DestinationTranslation(destination, LanguageCode.FR, "Paris"));
     return destination;
   }
 }

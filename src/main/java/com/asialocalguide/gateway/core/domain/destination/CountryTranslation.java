@@ -7,15 +7,15 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@IdClass(CountryTranslationId.class)
 @NoArgsConstructor
 public class CountryTranslation {
 
-  @Id @ManyToOne private Country country;
+  @EmbeddedId private CountryTranslationId id;
 
-  @Id
-  @Enumerated(EnumType.STRING)
-  private LanguageCode languageCode;
+  @ManyToOne
+  @MapsId("countryId")
+  @JoinColumn(name = "country_id")
+  private Country country;
 
   private String name;
 
@@ -24,25 +24,16 @@ public class CountryTranslation {
     if (o == null || getClass() != o.getClass()) return false;
 
     CountryTranslation that = (CountryTranslation) o;
-    return languageCode.equals(that.languageCode) && name.equals(that.name);
+    return id.getLanguageCode().equals(that.id.getLanguageCode()) && name.equals(that.name);
   }
 
   @Override
   public int hashCode() {
-    int result = 31 * Objects.hashCode(languageCode);
-    result = 31 * result + Objects.hashCode(name);
-    return result;
+    return 31 * Objects.hashCode(id);
   }
 
   @Override
   public String toString() {
-    return "CountryTranslation{"
-        + ", languageCode='"
-        + languageCode
-        + '\''
-        + ", name='"
-        + name
-        + '\''
-        + '}';
+    return "CountryTranslation{" + ", languageCode='" + id.getLanguageCode() + '\'' + ", name='" + name + '\'' + '}';
   }
 }
