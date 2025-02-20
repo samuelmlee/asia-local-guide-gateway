@@ -16,7 +16,7 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
       """
       SELECT d FROM Destination d
       JOIN d.destinationTranslations dt
-      WHERE dt.languageCode = :languageCode
+      WHERE dt.id.languageCode = :languageCode
       AND LOWER(dt.name) LIKE LOWER(CONCAT('%', :name, '%'))
       AND d.type IN ('CITY', 'REGION')
       """)
