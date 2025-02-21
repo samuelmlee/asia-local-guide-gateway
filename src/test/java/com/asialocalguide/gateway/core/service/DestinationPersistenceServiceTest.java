@@ -1,9 +1,5 @@
 package com.asialocalguide.gateway.core.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
@@ -11,7 +7,6 @@ import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +14,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DestinationPersistenceServiceTest {
@@ -194,6 +195,165 @@ class DestinationPersistenceServiceTest {
     service.persistNewDestinations(providerName, isoToDtos);
 
     verify(destinationRepository).saveAll(anyList()); // Only one valid DTO is processed
+  }
+
+  @Test
+  void persistExistingDestinations_NullProviderName_ExitsEarly() {
+
+    service.persistExistingDestinations(null, Map.of(1L, mockRawDestinationDTO()));
+
+    verifyNoInteractions(bookingProviderRepository, destinationRepository);
+  }
+
+  @Test
+  void persistExistingDestinations_PartialDestinationMatches_ProcessesOnlyFound() {
+    Long foundId = 1L;
+    Long missingId = 2L;
+    RawDestinationDTO dto = mockRawDestinationDTO();
+    Map<Long, RawDestinationDTO> input = Map.of(foundId, dto, missingId, dto);
+
+    Destination foundDestination = new Destination();
+    foundDestination.setId(foundId);
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(destinationRepository.findAllById(Set.of(foundId, missingId))).thenReturn(List.of(foundDestination));
+
+    service.persistExistingDestinations(providerName, input);
+
+    assertEquals(1, foundDestination.getDestinationProviderMappings().size());
+  }
+
+  @Test
+  void persistExistingDestinations_NullRawDtoInMap_LogsWarning() {
+    Long destinationId = 1L;
+    Map<Long, RawDestinationDTO> input = new HashMap<>();
+    input.put(destinationId, null);
+
+    Destination dest = new Destination();
+    dest.setId(destinationId);
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(destinationRepository.findAllById(any())).thenReturn(List.of(dest));
+
+    service.persistExistingDestinations(providerName, input);
+  }
+
+  @Test
+  void persistNewDestinations_NullProviderName_ExitsEarly() {
+
+    service.persistNewDestinations(null, Map.of("US", List.of(mockRawDestinationDTO())));
+    verifyNoInteractions(bookingProviderRepository, countryRepository, destinationRepository);
+  }
+
+  @Test
+  void persistNewDestinations_MultipleCountriesWithMixedValidity() {
+    String validIso = "US";
+    String invalidIso = "XX";
+    Country validCountry = Country.builder().iso2Code(validIso).build();
+
+    Map<String, List<RawDestinationDTO>> input =
+        Map.of(
+            validIso, List.of(mockRawDestinationDTO()),
+            invalidIso, List.of(mockRawDestinationDTO()));
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(countryRepository.findByIso2CodeIn(Set.of(validIso, invalidIso))).thenReturn(List.of(validCountry));
+
+    service.persistNewDestinations(providerName, input);
+
+    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
+    verify(destinationRepository).saveAll(captor.capture());
+    assertEquals(1, captor.getValue().size()); // Only valid country processed
+  }
+
+  @Test
+  void persistNewDestinations_WithEmptyNamesList_SkipsTranslationCreation() {
+    RawDestinationDTO dto =
+        new RawDestinationDTO(
+            "D123",
+            Collections.emptyList(), // Empty names
+            DestinationType.CITY,
+            null,
+            providerName,
+            "US");
+
+    Country country = Country.builder().iso2Code("US").build();
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+
+    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
+
+    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
+    verify(destinationRepository).saveAll(captor.capture());
+    assertTrue(captor.getValue().get(0).getDestinationTranslations().isEmpty());
+  }
+
+  @Test
+  void persistNewDestinations_WithNullCoordinates_SetsNullInEntity() {
+    RawDestinationDTO dto =
+        new RawDestinationDTO(
+            "D123",
+            List.of(new RawDestinationDTO.Translation("en", "Test")),
+            DestinationType.CITY,
+            null, // Null coordinates
+            providerName,
+            "US");
+
+    Country country = Country.builder().iso2Code("US").build();
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+
+    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
+
+    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
+    verify(destinationRepository).saveAll(captor.capture());
+    assertNull(captor.getValue().get(0).getCenterCoordinates());
+  }
+
+  @Test
+  void persistNewDestinations_WithMultipleTranslations_CreatesAll() {
+    RawDestinationDTO dto =
+        new RawDestinationDTO(
+            "D123",
+            List.of(
+                new RawDestinationDTO.Translation("en", "English"), new RawDestinationDTO.Translation("fr", "French")),
+            DestinationType.CITY,
+            null,
+            providerName,
+            "US");
+
+    Country country = Country.builder().iso2Code("US").build();
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+
+    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
+
+    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
+    verify(destinationRepository).saveAll(captor.capture());
+    assertEquals(2, captor.getValue().get(0).getDestinationTranslations().size());
+  }
+
+  @Test
+  void persistNewDestinations_WithInvalidLanguageCode_ThrowsException() {
+    RawDestinationDTO dto =
+        new RawDestinationDTO(
+            "D123",
+            List.of(new RawDestinationDTO.Translation("invalid", "Test")),
+            DestinationType.CITY,
+            null,
+            providerName,
+            "US");
+
+    Country country = Country.builder().iso2Code("US").build();
+
+    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+
+    assertThrows(
+        IllegalArgumentException.class, () -> service.persistNewDestinations(providerName, Map.of("US", List.of(dto))));
   }
 
   private static RawDestinationDTO mockRawDestinationDTO() {
