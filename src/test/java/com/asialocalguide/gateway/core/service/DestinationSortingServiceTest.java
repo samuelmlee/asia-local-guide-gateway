@@ -53,7 +53,7 @@ class DestinationSortingServiceTest {
     existingDestination = new Destination();
     existingDestination.setId(1L);
     existingDestination.setCenterCoordinates(new Coordinates(40.7128, -74.0060));
-    existingDestination.setCountry(Country.builder().iso2Code(supportedIsoCode).build());
+    existingDestination.setCountry(new Country(supportedIsoCode));
   }
 
   @Test

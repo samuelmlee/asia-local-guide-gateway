@@ -1,6 +1,7 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,14 +18,14 @@ public class CountryTranslation {
   @JoinColumn(name = "country_id")
   private Country country;
 
-  private String name;
+  @NotEmpty private String name;
 
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
 
     CountryTranslation that = (CountryTranslation) o;
-    return id.getLanguageCode().equals(that.id.getLanguageCode()) && name.equals(that.name);
+    return Objects.equals(id, that.id);
   }
 
   @Override

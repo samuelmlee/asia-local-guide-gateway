@@ -1,5 +1,9 @@
 package com.asialocalguide.gateway.core.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
@@ -7,6 +11,7 @@ import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,12 +19,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DestinationPersistenceServiceTest {
@@ -149,7 +148,7 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistNewDestinations_CreatesNewDestinationsWithMappingsAndTranslations() {
     String isoCode = "us";
-    Country country = Country.builder().iso2Code(isoCode).build();
+    Country country = new Country(isoCode);
 
     RawDestinationDTO.Translation translation = new RawDestinationDTO.Translation("en", "New York");
     RawDestinationDTO rawDto =
@@ -185,7 +184,7 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistNewDestinations_WithNullDtoInList_SkipsNull() {
     String isoCode = "us";
-    Country country = Country.builder().iso2Code(isoCode).build();
+    Country country = new Country(isoCode);
 
     Map<String, List<RawDestinationDTO>> isoToDtos = Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
 
@@ -249,7 +248,7 @@ class DestinationPersistenceServiceTest {
   void persistNewDestinations_MultipleCountriesWithMixedValidity() {
     String validIso = "US";
     String invalidIso = "XX";
-    Country validCountry = Country.builder().iso2Code(validIso).build();
+    Country validCountry = new Country(validIso);
 
     Map<String, List<RawDestinationDTO>> input =
         Map.of(
@@ -277,7 +276,7 @@ class DestinationPersistenceServiceTest {
             providerName,
             "US");
 
-    Country country = Country.builder().iso2Code("US").build();
+    Country country = new Country("US");
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
@@ -300,7 +299,7 @@ class DestinationPersistenceServiceTest {
             providerName,
             "US");
 
-    Country country = Country.builder().iso2Code("US").build();
+    Country country = new Country("US");
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
@@ -324,7 +323,7 @@ class DestinationPersistenceServiceTest {
             providerName,
             "US");
 
-    Country country = Country.builder().iso2Code("US").build();
+    Country country = new Country("US");
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
@@ -347,7 +346,7 @@ class DestinationPersistenceServiceTest {
             providerName,
             "US");
 
-    Country country = Country.builder().iso2Code("US").build();
+    Country country = new Country("US");
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));

@@ -11,13 +11,10 @@ import java.util.stream.Collectors;
 public class LookupIdDeserializer extends JsonDeserializer<List<Long>> {
 
   @Override
-  public List<Long> deserialize(
-      JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+  public List<Long> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+      throws IOException, NumberFormatException {
     String lookupIdString = jsonParser.getText();
-    List<Long> allIds =
-        Arrays.stream(lookupIdString.split("\\."))
-            .map(Long::parseLong)
-            .collect(Collectors.toList());
+    List<Long> allIds = Arrays.stream(lookupIdString.split("\\.")).map(Long::parseLong).collect(Collectors.toList());
     allIds.removeLast();
 
     return allIds;

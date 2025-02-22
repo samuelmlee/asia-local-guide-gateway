@@ -17,4 +17,9 @@ public enum LanguageCode {
     }
     return LanguageCode.valueOf(code.toUpperCase());
   }
+
+  @Override
+  public String toString() {
+    return this.name().toLowerCase();
+  }
 }

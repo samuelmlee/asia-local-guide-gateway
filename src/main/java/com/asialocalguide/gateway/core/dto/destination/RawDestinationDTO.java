@@ -11,9 +11,9 @@ public record RawDestinationDTO(
     @NotNull String destinationId,
     @NotNull @NotEmpty List<Translation> names,
     @NotNull DestinationType type,
-    Coordinates centerCoordinates,
+    @NotNull Coordinates centerCoordinates,
     @NotNull BookingProviderName providerName,
     @NotNull String countryIsoCode) {
 
-  public record Translation(String languageCode, String name) {}
+  public record Translation(@NotNull String languageCode, @NotNull String name) {}
 }
