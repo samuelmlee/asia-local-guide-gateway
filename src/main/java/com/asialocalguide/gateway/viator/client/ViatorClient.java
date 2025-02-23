@@ -2,10 +2,17 @@ package com.asialocalguide.gateway.viator.client;
 
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
 
 @Component
@@ -13,32 +20,34 @@ public class ViatorClient {
 
   private final RestClient viatorRestClient;
 
-  private final ResponseErrorHandler viatorResponseErrorHandler = new ViatorResponseErrorHandler();
-
   public ViatorClient(RestClient viatorRestClient) {
     this.viatorRestClient = viatorRestClient;
   }
 
   public List<ViatorDestinationDTO> getAllDestinationsForLanguage(String languageCode) {
     try {
-      ViatorDestinationResponseDTO destinationResponse =
+      ResponseEntity<ViatorDestinationResponseDTO> entity =
           viatorRestClient
               .get()
               .uri("/destinations")
               .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageCode))
               .retrieve()
-              .onStatus(viatorResponseErrorHandler)
-              .body(ViatorDestinationResponseDTO.class);
+              .onStatus(
+                  // Exclude 404 from errors
+                  status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND) || status.is5xxServerError(),
+                  (req, res) -> handleViatorError(res))
+              .toEntity(ViatorDestinationResponseDTO.class);
 
-      return Optional.ofNullable(destinationResponse)
-          .map(ViatorDestinationResponseDTO::destinations)
-          .orElseGet(List::of);
+      if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return List.of();
+      }
 
-    } catch (ViatorApiException e) {
-
-      throw e;
+      return Optional.ofNullable(entity.getBody()).map(ViatorDestinationResponseDTO::destinations).orElseGet(List::of);
 
     } catch (Exception e) {
+      if (e instanceof ViatorApiException) {
+        throw e;
+      }
 
       throw new ViatorApiException("Failed to call Destination API: " + e.getMessage(), e);
     }
@@ -47,25 +56,29 @@ public class ViatorClient {
   public List<ViatorActivityDTO> getActivitiesByRequestAndLanguage(
       String languageCode, ViatorActivitySearchDTO searchDTO) {
     try {
-      ViatorActivityResponseDTO activityResponse =
+      ResponseEntity<ViatorActivityResponseDTO> entity =
           viatorRestClient
               .post()
               .uri("/products/search")
               .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageCode))
               .body(searchDTO)
               .retrieve()
-              .onStatus(viatorResponseErrorHandler)
-              .body(ViatorActivityResponseDTO.class);
+              .onStatus(
+                  // Exclude 404 from errors
+                  status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND) || status.is5xxServerError(),
+                  (req, res) -> handleViatorError(res))
+              .toEntity(ViatorActivityResponseDTO.class);
 
-      return Optional.ofNullable(activityResponse)
-          .map(ViatorActivityResponseDTO::products)
-          .orElseGet(List::of);
+      if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return List.of();
+      }
 
-    } catch (ViatorApiException e) {
-
-      throw e;
+      return Optional.ofNullable(entity.getBody()).map(ViatorActivityResponseDTO::products).orElseGet(List::of);
 
     } catch (Exception e) {
+      if (e instanceof ViatorApiException) {
+        throw e;
+      }
 
       throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
     }
@@ -73,24 +86,37 @@ public class ViatorClient {
 
   public Optional<ViatorActivityAvailabilityDTO> getAvailabilityByProductCode(String productCode) {
     try {
-      ViatorActivityAvailabilityDTO availability =
+      ResponseEntity<ViatorActivityAvailabilityDTO> entity =
           viatorRestClient
               .get()
               .uri("/availability/schedules/{productCode}", productCode)
               .retrieve()
-              .onStatus(viatorResponseErrorHandler)
-              .body(ViatorActivityAvailabilityDTO.class);
+              .onStatus(
+                  // Exclude 404 from errors
+                  status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND) || status.is5xxServerError(),
+                  (req, res) -> handleViatorError(res))
+              .toEntity(ViatorActivityAvailabilityDTO.class);
 
-      return Optional.ofNullable(availability);
+      if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return Optional.empty();
+      }
 
-    } catch (ViatorApiException e) {
-
-      throw e;
+      return Optional.ofNullable(entity.getBody());
 
     } catch (Exception e) {
+      if (e instanceof ViatorApiException) {
+        throw e;
+      }
 
-      throw new ViatorApiException(
-          "Failed to call Availability Schedules API: " + e.getMessage(), e);
+      throw new ViatorApiException("Failed to call Availability Schedules API: " + e.getMessage(), e);
     }
+  }
+
+  private void handleViatorError(ClientHttpResponse response) throws IOException {
+    String responseBody =
+        new BufferedReader(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))
+            .lines()
+            .collect(Collectors.joining("\n"));
+    throw new ViatorApiException("Viator API error: " + response.getStatusCode() + " - " + responseBody);
   }
 }
