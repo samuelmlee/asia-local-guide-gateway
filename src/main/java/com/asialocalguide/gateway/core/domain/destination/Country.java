@@ -2,12 +2,13 @@ package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Entity
 @Data
@@ -46,6 +47,10 @@ public class Country implements Translatable {
   }
 
   public void removeTranslation(CountryTranslation translation) {
+    if (translation == null) {
+      throw new IllegalArgumentException("Translation cannot be null");
+    }
+
     if (countryTranslations == null) {
       return;
     }
