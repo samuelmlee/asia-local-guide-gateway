@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.dto;
+package com.asialocalguide.gateway.core.dto.planning;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.core.service;
 
-import com.asialocalguide.gateway.core.domain.ActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.google.ortools.Loader;
 import com.google.ortools.sat.*;
 import com.google.ortools.util.Domain;

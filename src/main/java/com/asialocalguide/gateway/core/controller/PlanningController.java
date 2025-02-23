@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.controller;
 
-import com.asialocalguide.gateway.core.dto.ActivityPlanningRequestDTO;
-import com.asialocalguide.gateway.core.dto.DayPlanDTO;
+import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
+import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.service.PlanningService;
 import jakarta.validation.Valid;
 import java.util.List;

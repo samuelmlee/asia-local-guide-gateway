@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.planning;
 
 import lombok.Data;
 

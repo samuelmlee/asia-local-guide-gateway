@@ -11,6 +11,7 @@ public class BookingProvider {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(unique = true)
-  private String name;
+  @Enumerated(EnumType.STRING)
+  @Column(unique = true, nullable = false)
+  private BookingProviderName name;
 }

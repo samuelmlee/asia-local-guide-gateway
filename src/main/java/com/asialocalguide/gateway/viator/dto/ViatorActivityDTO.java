@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.viator.dto;
 
-import com.asialocalguide.gateway.core.dto.ImageDTO;
+import com.asialocalguide.gateway.core.dto.planning.ImageDTO;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 

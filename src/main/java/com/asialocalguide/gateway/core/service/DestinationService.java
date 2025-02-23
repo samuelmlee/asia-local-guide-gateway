@@ -1,15 +1,17 @@
 package com.asialocalguide.gateway.core.service;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
-import com.asialocalguide.gateway.core.domain.*;
-import com.asialocalguide.gateway.core.dto.DestinationDTO;
-import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.Destination;
+import com.asialocalguide.gateway.core.domain.destination.DestinationIngestionInput;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
+import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
+import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
-import com.asialocalguide.gateway.viator.service.ViatorDestinationService;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,99 +20,74 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DestinationService {
 
-  private final ViatorDestinationService viatorDestinationService;
+  private final List<DestinationProvider> destinationProviders;
 
-  private final DestinationPersistenceService destinationPersistenceService;
+  private final DestinationSortingService destinationSortingService;
 
   private final DestinationRepository destinationRepository;
 
-  private final BookingProviderRepository bookingProviderRepository;
-
-  private final BookingProviderMappingRepository bookingProviderMappingRepository;
-
-  private static final String DEFAULT_LANGUAGE_CODE = "en";
-
   public DestinationService(
-      ViatorDestinationService viatorDestinationService,
-      DestinationPersistenceService destinationPersistenceService,
-      DestinationRepository destinationRepository,
-      BookingProviderRepository bookingProviderRepository,
-      BookingProviderMappingRepository bookingProviderMappingRepository) {
-
-    this.viatorDestinationService = viatorDestinationService;
-    this.destinationPersistenceService = destinationPersistenceService;
+      List<DestinationProvider> destinationProviders,
+      DestinationSortingService destinationSortingService,
+      DestinationRepository destinationRepository) {
+    this.destinationProviders = destinationProviders;
+    this.destinationSortingService = destinationSortingService;
     this.destinationRepository = destinationRepository;
-    this.bookingProviderRepository = bookingProviderRepository;
-    this.bookingProviderMappingRepository = bookingProviderMappingRepository;
   }
 
-  public void syncViatorDestinations() {
+  public void syncDestinationsForProvider(BookingProviderName providerName) {
 
-    SupportedLocale defaultLocale = SupportedLocale.getDefaultLocale();
+    Objects.requireNonNull(providerName);
 
-    List<ViatorDestinationDTO> destinations =
-        viatorDestinationService.getDestinationDTOs(defaultLocale);
+    DestinationProvider destinationProvider =
+        destinationProviders.stream()
+            .filter(provider -> provider.getProviderName().equals(providerName))
+            .findFirst()
+            .orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
 
-    BookingProvider viatorProvider =
-        bookingProviderRepository
-            .findByName("VIATOR")
-            .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
+    List<RawDestinationDTO> rawDestinations = destinationProvider.getDestinations();
 
-    Set<String> viatorDestinationIds =
-        bookingProviderMappingRepository.findProviderDestinationIdsByProviderId(
-            viatorProvider.getId());
+    DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
 
-    List<ViatorDestinationDTO> newDestinationDTOs =
-        destinations.stream()
-            .filter(d -> isNewViatorDestinationDto(d, viatorDestinationIds))
-            .collect(Collectors.toCollection(ArrayList::new));
-
-    destinationPersistenceService.buildAndSaveDestinationsFromViatorDtos(newDestinationDTOs);
-  }
-
-  private static boolean isNewViatorDestinationDto(
-      ViatorDestinationDTO d, Set<String> viatorDestinationIds) {
-
-    // Update method when Destination can be added by other providers to check for name and
-    // coordinates
-
-    return !viatorDestinationIds.contains(d.getDestinationId().toString());
+    destinationSortingService.triageRawDestinations(input);
   }
 
   public List<DestinationDTO> getAutocompleteSuggestions(String query) {
 
+    if (query == null || query.isBlank()) {
+      return List.of();
+    }
+
     Locale locale = LocaleContextHolder.getLocale();
 
+    LanguageCode languageCode;
+    try {
+      languageCode = LanguageCode.from(locale.getCountry());
+    } catch (Exception e) {
+      languageCode = LanguageCode.EN;
+    }
+    final LanguageCode finalLanguageCode = languageCode;
+
     List<Destination> destinations =
-        destinationRepository.findCityOrRegionByTranslationsForLocaleAndDestinationName(
-            locale.getLanguage(), query);
+        destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(finalLanguageCode, query);
 
     return destinations.stream()
         .map(
             destination -> {
-              String translationName = resolveTranslationName(destination, locale);
+              String translationName = destination.getTranslation(finalLanguageCode).orElse("");
 
-              String parentName =
-                  destination.getParentDestination() != null
-                      ? resolveTranslationName(destination.getParentDestination(), locale)
+              if (translationName.isEmpty()) {
+                return null;
+              }
+
+              String countryName =
+                  destination.getCountry() != null
+                      ? destination.getCountry().getTranslation(finalLanguageCode).orElse("")
                       : "";
 
-              return DestinationDTO.of(
-                  destination.getId(), translationName, destination.getType(), parentName);
+              return DestinationDTO.of(destination.getId(), translationName, destination.getType(), countryName);
             })
+        .filter(Objects::nonNull)
         .toList();
-  }
-
-  private String resolveTranslationName(Destination destination, Locale locale) {
-    return destination.getDestinationTranslations().stream()
-        .filter(t -> t.getLocale().equals(locale.getLanguage()))
-        .findFirst()
-        .or(
-            () ->
-                destination.getDestinationTranslations().stream()
-                    .filter(t -> t.getLocale().equals(DEFAULT_LANGUAGE_CODE))
-                    .findFirst())
-        .map(DestinationTranslation::getDestinationName)
-        .orElse("");
   }
 }

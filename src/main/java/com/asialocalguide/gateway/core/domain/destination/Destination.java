@@ -1,8 +1,10 @@
-package com.asialocalguide.gateway.core.domain;
+package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,34 +14,38 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Destination {
+public class Destination implements Translatable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "parent_destination_id")
-  private Destination parentDestination;
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "country_id")
+  @NotNull
+  private Country country;
 
-  @OneToMany(
-      mappedBy = "destination",
-      fetch = FetchType.EAGER,
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @NotEmpty
   private Set<DestinationTranslation> destinationTranslations = new HashSet<>();
 
   @Enumerated(EnumType.STRING)
+  @NotNull
   private DestinationType type;
 
-  @OneToMany(
-      mappedBy = "destination",
-      fetch = FetchType.EAGER,
-      cascade = CascadeType.ALL,
-      orphanRemoval = true)
+  @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  @NotEmpty
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
-  @Embedded Coordinates coordinates;
+  @NotNull @Embedded Coordinates centerCoordinates;
+
+  @Override
+  public Optional<String> getTranslation(LanguageCode languageCode) {
+    return destinationTranslations.stream()
+        .filter(t -> t.getId().getLanguageCode().equals(languageCode))
+        .findFirst()
+        .map(DestinationTranslation::getName);
+  }
 
   public void addTranslation(DestinationTranslation translation) {
     translation.setDestination(this);
@@ -77,9 +83,7 @@ public class Destination {
     if (o == null || getClass() != o.getClass()) return false;
 
     Destination that = (Destination) o;
-    return Objects.equals(id, that.id)
-        && Objects.equals(parentDestination, that.parentDestination)
-        && type == that.type;
+    return id != null && id.equals(that.id) && type == that.type;
   }
 
   @Override

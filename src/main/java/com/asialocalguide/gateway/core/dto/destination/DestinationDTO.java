@@ -1,6 +1,6 @@
-package com.asialocalguide.gateway.core.dto;
+package com.asialocalguide.gateway.core.dto.destination;
 
-import com.asialocalguide.gateway.core.domain.DestinationType;
+import com.asialocalguide.gateway.core.domain.destination.DestinationType;
 
 public record DestinationDTO(
     Long destinationId, String name, DestinationType type, String parentName) {

@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.dto;
+package com.asialocalguide.gateway.core.dto.planning;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
