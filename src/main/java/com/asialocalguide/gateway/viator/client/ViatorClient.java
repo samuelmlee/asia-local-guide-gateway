@@ -24,13 +24,13 @@ public class ViatorClient {
     this.viatorRestClient = viatorRestClient;
   }
 
-  public List<ViatorDestinationDTO> getAllDestinationsForLanguage(String languageCode) {
+  public List<ViatorDestinationDTO> getAllDestinationsForLanguage(String languageIsoCode) {
     try {
       ResponseEntity<ViatorDestinationResponseDTO> entity =
           viatorRestClient
               .get()
               .uri("/destinations")
-              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageCode))
+              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageIsoCode))
               .retrieve()
               .onStatus(
                   // Exclude 404 from errors
@@ -54,13 +54,13 @@ public class ViatorClient {
   }
 
   public List<ViatorActivityDTO> getActivitiesByRequestAndLanguage(
-      String languageCode, ViatorActivitySearchDTO searchDTO) {
+      String languageIsoCode, ViatorActivitySearchDTO searchDTO) {
     try {
       ResponseEntity<ViatorActivityResponseDTO> entity =
           viatorRestClient
               .post()
               .uri("/products/search")
-              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageCode))
+              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageIsoCode))
               .body(searchDTO)
               .retrieve()
               .onStatus(

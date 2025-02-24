@@ -7,7 +7,10 @@ import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.viator.dto.*;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySortingOrder;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySortingType;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -31,8 +34,7 @@ public class ActivityService {
     this.viatorActivityService = viatorActivityService;
   }
 
-  public List<ViatorActivityDetailDTO> getActivities(
-      SupportedLocale locale, ActivityPlanningRequestDTO request) {
+  public List<ViatorActivityDetailDTO> getActivities(SupportedLocale locale, ActivityPlanningRequestDTO request) {
 
     // TODO: ActivityService should return a list of activities that is independent of the provider
 
@@ -42,9 +44,7 @@ public class ActivityService {
             .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
 
     Destination destination =
-        destinationRepository
-            .findById(request.destinationId())
-            .orElseThrow(IllegalArgumentException::new);
+        destinationRepository.findById(request.destinationId()).orElseThrow(IllegalArgumentException::new);
 
     String viatorDestinationId =
         destination.getBookingProviderMapping(viatorProvider.getId()).getProviderDestinationId();
@@ -67,10 +67,7 @@ public class ActivityService {
 
     ViatorActivitySearchDTO searchDTO =
         new ViatorActivitySearchDTO(
-            filteringDTO,
-            sorting,
-            new ViatorActivitySearchDTO.Pagination(1, Math.max(durationDays, 1) * 4),
-            "EUR");
+            filteringDTO, sorting, new ViatorActivitySearchDTO.Pagination(1, Math.max(durationDays, 1) * 4), "EUR");
 
     return viatorActivityService.getActivityDetails(locale, searchDTO);
   }

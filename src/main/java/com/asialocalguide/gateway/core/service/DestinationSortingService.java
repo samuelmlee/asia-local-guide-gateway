@@ -52,7 +52,7 @@ public class DestinationSortingService {
     Set<String> supportedIsoCodes = countryRepository.findAllIso2Codes();
 
     // Fetch existing destinations grouped by country
-    Map<String, List<Destination>> inputIsoCodeToExistingDestinations =
+    Map<String, List<Destination>> isoCodeToExistingDestinations =
         fetchDestinationsByIsoCode(isoCodeToRawDestinations.keySet());
 
     // Maps to store new and existing destinations
@@ -64,7 +64,7 @@ public class DestinationSortingService {
         providerName,
         supportedIsoCodes,
         isoCodeToRawDestinations,
-        inputIsoCodeToExistingDestinations,
+        isoCodeToExistingDestinations,
         newDestinationsMap,
         existingDestinationsMap);
 
@@ -76,7 +76,7 @@ public class DestinationSortingService {
       BookingProviderName providerName,
       Set<String> supportedIsoCodes,
       Map<String, List<RawDestinationDTO>> isoCodeToRawDestinations,
-      Map<String, List<Destination>> existingDestinationsByIsoCode,
+      Map<String, List<Destination>> isoCodeToExistingDestinations,
       Map<String, List<RawDestinationDTO>> newDestinationsMap,
       Map<Long, RawDestinationDTO> existingDestinationsMap) {
 
@@ -89,7 +89,7 @@ public class DestinationSortingService {
 
           // Get possible existing destinations for this country
           List<Destination> possibleExistingDestinations =
-              existingDestinationsByIsoCode.getOrDefault(isoCode, new ArrayList<>());
+              isoCodeToExistingDestinations.getOrDefault(isoCode, new ArrayList<>());
 
           // Process destinations
           processRawDestinations(
