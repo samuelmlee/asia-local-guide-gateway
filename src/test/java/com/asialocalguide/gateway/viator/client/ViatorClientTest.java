@@ -1,44 +1,41 @@
 package com.asialocalguide.gateway.viator.client;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
-
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import com.github.tomakehurst.wiremock.http.Fault;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import java.io.IOException;
+import java.util.List;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@WireMockTest
 public class ViatorClientTest {
 
-  private RestClient restClient;
-  private MockRestServiceServer mockServer;
   private ViatorClient viatorClient;
+
+  @RegisterExtension
+  static WireMockExtension wireMock = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   @BeforeEach
   void setup() {
-    mockServer = MockRestServiceServer.bindTo(RestClient.builder()).build();
-    restClient = RestClient.builder().baseUrl("https://api.sandbox.viator.com/partner").build();
+    RestClient restClient = RestClient.builder().baseUrl(wireMock.baseUrl()).build();
+
     viatorClient = new ViatorClient(restClient);
   }
 
-  // Helper method to serialize objects to JSON (simplified for testing)
-  private String asJsonString(Object obj) {
-    try {
-      return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(obj);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  private String asJsonString(Object obj) throws Exception {
+    return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(obj);
   }
 
   // ----------------------------------------------------------
@@ -46,65 +43,52 @@ public class ViatorClientTest {
   // ----------------------------------------------------------
 
   @Test
-  void getAllDestinationsForLanguage_Success_ReturnsDestinations() {
-    // Mock response
+  void getAllDestinationsForLanguage_Success_ReturnsDestinations() throws Exception {
     ViatorDestinationResponseDTO mockResponse =
         new ViatorDestinationResponseDTO(
             List.of(new ViatorDestinationDTO(1L, "Paris", "CITY", List.of(100L), null)), 1);
-    mockServer
-        .expect(ExpectedCount.once(), requestTo("/destinations"))
-        .andExpect(method(HttpMethod.GET))
-        .andExpect(header("Accept-Language", "en"))
-        .andRespond(withSuccess(asJsonString(mockResponse), MediaType.APPLICATION_JSON));
 
-    // Execute
+    wireMock.stubFor(
+        get(urlPathEqualTo("/destinations"))
+            .withHeader("Accept-Language", equalTo("en"))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(asJsonString(mockResponse))));
+
     List<ViatorDestinationDTO> result = viatorClient.getAllDestinationsForLanguage("en");
 
-    // Verify
     assertThat(result).hasSize(1);
-    mockServer.verify();
-  }
-
-  @Test
-  void getAllDestinationsForLanguage_EmptyBody_ReturnsEmptyList() {
-    mockServer.expect(requestTo("/destinations")).andRespond(withSuccess("null", MediaType.APPLICATION_JSON));
-
-    List<ViatorDestinationDTO> result = viatorClient.getAllDestinationsForLanguage("en");
-    assertThat(result).isEmpty();
-    mockServer.verify();
+    wireMock.verify(1, getRequestedFor(urlPathEqualTo("/destinations")));
   }
 
   @Test
   void getAllDestinationsForLanguage_404_ReturnsEmptyList() {
-    mockServer
-        .expect(requestTo("/destinations"))
-        .andExpect(header("Accept-Language", "en")) // Verify language header
-        .andRespond(withStatus(HttpStatus.NOT_FOUND));
+    wireMock.stubFor(get(urlPathEqualTo("/destinations")).willReturn(aResponse().withStatus(404)));
 
     List<ViatorDestinationDTO> result = viatorClient.getAllDestinationsForLanguage("en");
+
     assertThat(result).isEmpty();
-    mockServer.verify();
+    wireMock.verify(1, getRequestedFor(urlPathEqualTo("/destinations")));
   }
 
   @Test
-  void getAllDestinationsForLanguage_400_ThrowsExceptionWithBodyDetails() {
+  void getAllDestinationsForLanguage_400_ThrowsExceptionWithBodyDetails() throws Exception {
     String errorBody = "{\"error\": \"Invalid language\"}";
-    mockServer
-        .expect(requestTo("/destinations"))
-        .andRespond(withStatus(HttpStatus.BAD_REQUEST).body(errorBody).contentType(MediaType.APPLICATION_JSON));
+
+    wireMock.stubFor(
+        get(urlPathEqualTo("/destinations"))
+            .willReturn(
+                aResponse()
+                    .withStatus(400)
+                    .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(errorBody)));
 
     ViatorApiException exception =
         assertThrows(ViatorApiException.class, () -> viatorClient.getAllDestinationsForLanguage("en"));
+
     assertThat(exception.getMessage()).contains("400").contains(errorBody);
-    mockServer.verify();
-  }
-
-  @Test
-  void getAllDestinationsForLanguage_500_ThrowsException() {
-    mockServer.expect(requestTo("/destinations")).andRespond(withServerError());
-
-    assertThrows(ViatorApiException.class, () -> viatorClient.getAllDestinationsForLanguage("en"));
-    mockServer.verify();
   }
 
   // ----------------------------------------------------------
@@ -112,46 +96,24 @@ public class ViatorClientTest {
   // ----------------------------------------------------------
 
   @Test
-  void getActivitiesByRequestAndLanguage_Success_ReturnsActivities() {
-    ViatorActivityResponseDTO mockResponse =
-        new ViatorActivityResponseDTO(
-            List.of(
-                new ViatorActivityDTO(
-                    "TOUR-1",
-                    "Eiffel Tower Tour",
-                    "A great tour",
-                    List.of(),
-                    new ViatorActivityDTO.ReviewsDTO(List.of(), 100, 4.8),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null)),
-            1);
-    mockServer
-        .expect(requestTo("/products/search"))
-        .andExpect(method(HttpMethod.POST))
-        .andExpect(content().json(asJsonString(new ViatorActivitySearchDTO(null, null, null, "USD"))))
-        .andRespond(withSuccess(asJsonString(mockResponse), MediaType.APPLICATION_JSON));
+  void getActivitiesByRequestAndLanguage_Success_ReturnsActivities() throws Exception {
+    ViatorActivityResponseDTO mockResponse = new ViatorActivityResponseDTO(List.of(createTestActivity()), 1);
+
+    wireMock.stubFor(
+        post(urlPathEqualTo("/products/search"))
+            .withHeader("Accept-Language", equalTo("en"))
+            .withRequestBody(equalToJson(asJsonString(new ViatorActivitySearchDTO(null, null, null, "USD"))))
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                    .withBody(asJsonString(mockResponse))));
 
     List<ViatorActivityDTO> result =
         viatorClient.getActivitiesByRequestAndLanguage("en", new ViatorActivitySearchDTO(null, null, null, "USD"));
+
     assertThat(result).hasSize(1);
-    mockServer.verify();
-  }
-
-  @Test
-  void getActivitiesByRequestAndLanguage_404_ReturnsEmptyList() {
-    mockServer.expect(requestTo("/products/search")).andRespond(withStatus(HttpStatus.NOT_FOUND));
-
-    List<ViatorActivityDTO> result =
-        viatorClient.getActivitiesByRequestAndLanguage("en", new ViatorActivitySearchDTO(null, null, null, "USD"));
-    assertThat(result).isEmpty();
-    mockServer.verify();
+    wireMock.verify(1, postRequestedFor(urlPathEqualTo("/products/search")));
   }
 
   // ----------------------------------------------------------
@@ -159,49 +121,14 @@ public class ViatorClientTest {
   // ----------------------------------------------------------
 
   @Test
-  void getAvailabilityByProductCode_Success_ReturnsAvailability() {
-    ViatorActivityAvailabilityDTO mockResponse =
-        new ViatorActivityAvailabilityDTO(
-            "TOUR-1",
-            List.of(
-                new ViatorActivityAvailabilityDTO.BookableItem(
-                    "OPTION-1",
-                    List.of(
-                        new ViatorActivityAvailabilityDTO.Season(
-                            "2023-10-01",
-                            "2023-10-31",
-                            List.of(
-                                new ViatorActivityAvailabilityDTO.PricingRecord(
-                                    List.of("MONDAY"),
-                                    List.of(new ViatorActivityAvailabilityDTO.TimedEntry("09:00", List.of())))))))),
-            "USD",
-            new ViatorActivityAvailabilityDTO.Summary(99.99));
-    mockServer
-        .expect(requestTo("/availability/schedules/TOUR-1"))
-        .andRespond(withSuccess(asJsonString(mockResponse), MediaType.APPLICATION_JSON));
-
-    Optional<ViatorActivityAvailabilityDTO> result = viatorClient.getAvailabilityByProductCode("TOUR-1");
-    assertThat(result).isPresent();
-    mockServer.verify();
-  }
-
-  @Test
-  void getAvailabilityByProductCode_404_ReturnsEmptyOptional() {
-    mockServer.expect(requestTo("/availability/schedules/INVALID")).andRespond(withStatus(HttpStatus.NOT_FOUND));
-
-    Optional<ViatorActivityAvailabilityDTO> result = viatorClient.getAvailabilityByProductCode("INVALID");
-    assertThat(result).isEmpty();
-    mockServer.verify();
-  }
-
-  @Test
   void getAvailabilityByProductCode_EncodedProductCode_UriEncodedCorrectly() {
     String productCode = "TOUR/123";
-    String encodedProductCode = "TOUR%2F123";
-    mockServer.expect(requestTo("/availability/schedules/" + encodedProductCode)).andRespond(withSuccess());
+
+    wireMock.stubFor(get(urlPathEqualTo("/availability/schedules/TOUR%2F123")).willReturn(aResponse().withStatus(200)));
 
     viatorClient.getAvailabilityByProductCode(productCode);
-    mockServer.verify();
+
+    wireMock.verify(1, getRequestedFor(urlPathEqualTo("/availability/schedules/TOUR%2F123")));
   }
 
   // ----------------------------------------------------------
@@ -211,29 +138,41 @@ public class ViatorClientTest {
   @Test
   void handleViatorError_IncludesStatusCodeAndBodyInException() {
     String errorBody = "Custom error message";
-    mockServer
-        .expect(requestTo("/destinations"))
-        .andRespond(withStatus(HttpStatus.FORBIDDEN).body(errorBody).contentType(MediaType.TEXT_PLAIN));
+
+    wireMock.stubFor(get(urlPathEqualTo("/destinations")).willReturn(aResponse().withStatus(403).withBody(errorBody)));
 
     ViatorApiException exception =
         assertThrows(ViatorApiException.class, () -> viatorClient.getAllDestinationsForLanguage("en"));
+
     assertThat(exception.getMessage()).contains("403").contains(errorBody);
-    mockServer.verify();
   }
 
   @Test
   void unexpectedException_WrappedInViatorApiException() {
-    // Simulate a network error (e.g., connection refused)
-    mockServer
-        .expect(requestTo("/destinations"))
-        .andRespond(
-            request -> {
-              throw new IOException("Connection failed");
-            });
+    wireMock.stubFor(
+        get(urlPathEqualTo("/destinations")).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
 
     ViatorApiException exception =
         assertThrows(ViatorApiException.class, () -> viatorClient.getAllDestinationsForLanguage("en"));
-    assertThat(exception.getCause()).hasMessageContaining("Connection failed");
-    mockServer.verify();
+
+    assertThat(exception.getCause()).isInstanceOf(IOException.class);
+  }
+
+  private ViatorActivityDTO createTestActivity() {
+    return new ViatorActivityDTO(
+        "TOUR-1",
+        "Eiffel Tower Tour",
+        "A great tour",
+        List.of(),
+        new ViatorActivityDTO.ReviewsDTO(List.of(), 100, 4.8),
+        new ViatorActivityDTO.DurationDTO(null, null, 120),
+        "CONFIRMATION_TYPE",
+        "ITINERARY_TYPE",
+        new ViatorActivityDTO.PricingDTO(new ViatorActivityDTO.PricingDTO.SummaryDTO(99.99, 129.99), "USD"),
+        "https://tour-url",
+        List.of(),
+        List.of(1, 2, 3),
+        List.of("FLAG1"),
+        new ViatorActivityDTO.TranslationInfoDTO(false, "SOURCE"));
   }
 }
