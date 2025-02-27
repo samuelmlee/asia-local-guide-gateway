@@ -11,12 +11,12 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
-import java.io.IOException;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @WireMockTest
@@ -46,7 +46,10 @@ public class ViatorClientTest {
   void getAllDestinationsForLanguage_Success_ReturnsDestinations() throws Exception {
     ViatorDestinationResponseDTO mockResponse =
         new ViatorDestinationResponseDTO(
-            List.of(new ViatorDestinationDTO(1L, "Paris", "CITY", List.of(100L), null)), 1);
+            List.of(
+                new ViatorDestinationDTO(1L, "France", "COUNTRY", List.of(20L, 85L, 100L), null),
+                new ViatorDestinationDTO(2L, "Paris", "CITY", List.of(1L, 85L, 100L), null)),
+            1);
 
     wireMock.stubFor(
         get(urlPathEqualTo("/destinations"))
@@ -59,7 +62,7 @@ public class ViatorClientTest {
 
     List<ViatorDestinationDTO> result = viatorClient.getAllDestinationsForLanguage("en");
 
-    assertThat(result).hasSize(1);
+    assertThat(result).hasSize(2);
     wireMock.verify(1, getRequestedFor(urlPathEqualTo("/destinations")));
   }
 
@@ -67,9 +70,9 @@ public class ViatorClientTest {
   void getAllDestinationsForLanguage_404_ReturnsEmptyList() {
     wireMock.stubFor(get(urlPathEqualTo("/destinations")).willReturn(aResponse().withStatus(404)));
 
-    List<ViatorDestinationDTO> result = viatorClient.getAllDestinationsForLanguage("en");
+    assertThatThrownBy(() -> viatorClient.getAllDestinationsForLanguage("en"), "404")
+        .isInstanceOf(ViatorApiException.class);
 
-    assertThat(result).isEmpty();
     wireMock.verify(1, getRequestedFor(urlPathEqualTo("/destinations")));
   }
 
@@ -152,10 +155,7 @@ public class ViatorClientTest {
     wireMock.stubFor(
         get(urlPathEqualTo("/destinations")).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
 
-    ViatorApiException exception =
-        assertThrows(ViatorApiException.class, () -> viatorClient.getAllDestinationsForLanguage("en"));
-
-    assertThat(exception.getCause()).isInstanceOf(IOException.class);
+    assertThatThrownBy(() -> viatorClient.getAllDestinationsForLanguage("en")).isInstanceOf(ViatorApiException.class);
   }
 
   private ViatorActivityDTO createTestActivity() {
