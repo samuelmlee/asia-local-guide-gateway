@@ -7,8 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
@@ -45,7 +45,7 @@ class DestinationServiceTest {
   @Test
   void syncDestinations_ForProvider_shouldProcessValidProviders() {
     // Arrange
-    RawDestinationDTO rawDto = createTestRawDestination();
+    CrossPlatformDestination rawDto = createTestRawDestination();
     when(viatorProvider.getProviderName()).thenReturn(providerName);
     when(viatorProvider.getDestinations()).thenReturn(List.of(rawDto));
 
@@ -122,10 +122,10 @@ class DestinationServiceTest {
     assertTrue(result2.isEmpty());
   }
 
-  private RawDestinationDTO createTestRawDestination() {
-    return new RawDestinationDTO(
+  private CrossPlatformDestination createTestRawDestination() {
+    return new CrossPlatformDestination(
         testDestinationId,
-        List.of(new RawDestinationDTO.Translation("EN", "New York")),
+        List.of(new CrossPlatformDestination.Translation("EN", "New York")),
         DestinationType.CITY,
         null,
         providerName,

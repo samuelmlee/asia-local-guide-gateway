@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -36,15 +36,15 @@ class DestinationSortingServiceTest {
   private final BookingProviderName providerName = BookingProviderName.VIATOR;
   private final String supportedIsoCode = "US";
   private final String unsupportedIsoCode = "XX";
-  private RawDestinationDTO validRawDto;
+  private CrossPlatformDestination validRawDto;
   private Destination existingDestination;
 
   @BeforeEach
   void setUp() {
     validRawDto =
-        new RawDestinationDTO(
+        new CrossPlatformDestination(
             "D123",
-            List.of(new RawDestinationDTO.Translation("en", "New York")),
+            List.of(new CrossPlatformDestination.Translation("en", "New York")),
             DestinationType.CITY,
             new Coordinates(40.7128, -74.0060),
             providerName,
@@ -70,7 +70,7 @@ class DestinationSortingServiceTest {
 
     sortingService.triageRawDestinations(new DestinationIngestionInput(providerName, List.of(validRawDto)));
 
-    ArgumentCaptor<Map<String, List<RawDestinationDTO>>> newDestCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, List<CrossPlatformDestination>>> newDestCaptor = ArgumentCaptor.forClass(Map.class);
     verify(destinationPersistenceService).persistNewDestinations(eq(providerName), newDestCaptor.capture());
 
     assertEquals(1, newDestCaptor.getValue().get(supportedIsoCode).size());
@@ -80,13 +80,13 @@ class DestinationSortingServiceTest {
   @Test
   void triageRawDestinations_MixedNewAndExisting_PersistsBothTypes() {
     // Setup existing destination match
-    RawDestinationDTO existingRawDto = validRawDto;
+    CrossPlatformDestination existingRawDto = validRawDto;
 
     // Setup new destination with different coordinates
-    RawDestinationDTO newRawDto =
-        new RawDestinationDTO(
+    CrossPlatformDestination newRawDto =
+        new CrossPlatformDestination(
             "D456",
-            List.of(new RawDestinationDTO.Translation("en", "Los Angeles")),
+            List.of(new CrossPlatformDestination.Translation("en", "Los Angeles")),
             DestinationType.CITY,
             new Coordinates(34.0522, -118.2437),
             providerName,
@@ -100,8 +100,8 @@ class DestinationSortingServiceTest {
     sortingService.triageRawDestinations(
         new DestinationIngestionInput(providerName, List.of(existingRawDto, newRawDto)));
 
-    ArgumentCaptor<Map<Long, RawDestinationDTO>> existingCaptor = ArgumentCaptor.forClass(Map.class);
-    ArgumentCaptor<Map<String, List<RawDestinationDTO>>> newCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<Long, CrossPlatformDestination>> existingCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, List<CrossPlatformDestination>>> newCaptor = ArgumentCaptor.forClass(Map.class);
 
     verify(destinationPersistenceService).persistExistingDestinations(eq(providerName), existingCaptor.capture());
     verify(destinationPersistenceService).persistNewDestinations(eq(providerName), newCaptor.capture());
@@ -112,10 +112,10 @@ class DestinationSortingServiceTest {
 
   @Test
   void triageRawDestinations_NullCoordinates_HandledAsNewDestination() {
-    RawDestinationDTO nullCoordsDto =
-        new RawDestinationDTO(
+    CrossPlatformDestination nullCoordsDto =
+        new CrossPlatformDestination(
             "D789",
-            List.of(new RawDestinationDTO.Translation("en", "Test")),
+            List.of(new CrossPlatformDestination.Translation("en", "Test")),
             DestinationType.CITY,
             null,
             providerName,
@@ -128,7 +128,7 @@ class DestinationSortingServiceTest {
 
     sortingService.triageRawDestinations(new DestinationIngestionInput(providerName, List.of(nullCoordsDto)));
 
-    ArgumentCaptor<Map<String, List<RawDestinationDTO>>> newCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<String, List<CrossPlatformDestination>>> newCaptor = ArgumentCaptor.forClass(Map.class);
     verify(destinationPersistenceService).persistNewDestinations(eq(providerName), newCaptor.capture());
 
     assertEquals(1, newCaptor.getValue().get(supportedIsoCode).size());

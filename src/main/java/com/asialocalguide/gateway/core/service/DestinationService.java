@@ -1,11 +1,11 @@
 package com.asialocalguide.gateway.core.service;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationIngestionInput;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
@@ -45,7 +45,7 @@ public class DestinationService {
             .findFirst()
             .orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
 
-    List<RawDestinationDTO> rawDestinations = destinationProvider.getDestinations();
+    List<CrossPlatformDestination> rawDestinations = destinationProvider.getDestinations();
 
     DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
 

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -63,8 +63,9 @@ class DestinationPersistenceServiceTest {
   void persistExistingDestinations_AddsMissingProviderMappings() {
     // Setup
     Long destinationId = 100L;
-    RawDestinationDTO rawDto = new RawDestinationDTO("D123", List.of(), DestinationType.CITY, null, providerName, "US");
-    Map<Long, RawDestinationDTO> idToRawDestinations = Map.of(destinationId, rawDto);
+    CrossPlatformDestination rawDto =
+        new CrossPlatformDestination("D123", List.of(), DestinationType.CITY, null, providerName, "US");
+    Map<Long, CrossPlatformDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     Destination existingDestination = new Destination();
     existingDestination.setId(destinationId);
@@ -87,8 +88,9 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistExistingDestinations_SkipsWhenMappingExists() {
     Long destinationId = 100L;
-    RawDestinationDTO rawDto = new RawDestinationDTO("D123", List.of(), DestinationType.CITY, null, providerName, "US");
-    Map<Long, RawDestinationDTO> idToRawDestinations = Map.of(destinationId, rawDto);
+    CrossPlatformDestination rawDto =
+        new CrossPlatformDestination("D123", List.of(), DestinationType.CITY, null, providerName, "US");
+    Map<Long, CrossPlatformDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     Destination existingDestination = new Destination();
     existingDestination.setId(destinationId);
@@ -127,15 +129,15 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistNewDestinations_WhenCountryNotFound_SkipsDTOs() {
     String isoCode = "US";
-    RawDestinationDTO rawDto =
-        new RawDestinationDTO(
+    CrossPlatformDestination rawDto =
+        new CrossPlatformDestination(
             "D123",
-            List.of(new RawDestinationDTO.Translation("en", "New York")),
+            List.of(new CrossPlatformDestination.Translation("en", "New York")),
             DestinationType.CITY,
             new Coordinates(),
             providerName,
             isoCode);
-    Map<String, List<RawDestinationDTO>> isoToDtos = Map.of(isoCode, List.of(rawDto));
+    Map<String, List<CrossPlatformDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of());
@@ -150,16 +152,16 @@ class DestinationPersistenceServiceTest {
     String isoCode = "us";
     Country country = new Country(isoCode);
 
-    RawDestinationDTO.Translation translation = new RawDestinationDTO.Translation("en", "New York");
-    RawDestinationDTO rawDto =
-        new RawDestinationDTO(
+    CrossPlatformDestination.Translation translation = new CrossPlatformDestination.Translation("en", "New York");
+    CrossPlatformDestination rawDto =
+        new CrossPlatformDestination(
             "D123",
             List.of(translation),
             DestinationType.CITY,
             new Coordinates(40.7128, -74.0060),
             providerName,
             isoCode);
-    Map<String, List<RawDestinationDTO>> isoToDtos = Map.of(isoCode, List.of(rawDto));
+    Map<String, List<CrossPlatformDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
@@ -186,7 +188,8 @@ class DestinationPersistenceServiceTest {
     String isoCode = "us";
     Country country = new Country(isoCode);
 
-    Map<String, List<RawDestinationDTO>> isoToDtos = Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
+    Map<String, List<CrossPlatformDestination>> isoToDtos =
+        Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
@@ -208,8 +211,8 @@ class DestinationPersistenceServiceTest {
   void persistExistingDestinations_PartialDestinationMatches_ProcessesOnlyFound() {
     Long foundId = 1L;
     Long missingId = 2L;
-    RawDestinationDTO dto = mockRawDestinationDTO();
-    Map<Long, RawDestinationDTO> input = Map.of(foundId, dto, missingId, dto);
+    CrossPlatformDestination dto = mockRawDestinationDTO();
+    Map<Long, CrossPlatformDestination> input = Map.of(foundId, dto, missingId, dto);
 
     Destination foundDestination = new Destination();
     foundDestination.setId(foundId);
@@ -225,7 +228,7 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistExistingDestinations_NullRawDtoInMap_LogsWarning() {
     Long destinationId = 1L;
-    Map<Long, RawDestinationDTO> input = new HashMap<>();
+    Map<Long, CrossPlatformDestination> input = new HashMap<>();
     input.put(destinationId, null);
 
     Destination dest = new Destination();
@@ -250,7 +253,7 @@ class DestinationPersistenceServiceTest {
     String invalidIso = "XX";
     Country validCountry = new Country(validIso);
 
-    Map<String, List<RawDestinationDTO>> input =
+    Map<String, List<CrossPlatformDestination>> input =
         Map.of(
             validIso, List.of(mockRawDestinationDTO()),
             invalidIso, List.of(mockRawDestinationDTO()));
@@ -267,8 +270,8 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistNewDestinations_WithEmptyNamesList_SkipsTranslationCreation() {
-    RawDestinationDTO dto =
-        new RawDestinationDTO(
+    CrossPlatformDestination dto =
+        new CrossPlatformDestination(
             "D123",
             Collections.emptyList(), // Empty names
             DestinationType.CITY,
@@ -290,10 +293,10 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistNewDestinations_WithNullCoordinates_SetsNullInEntity() {
-    RawDestinationDTO dto =
-        new RawDestinationDTO(
+    CrossPlatformDestination dto =
+        new CrossPlatformDestination(
             "D123",
-            List.of(new RawDestinationDTO.Translation("en", "Test")),
+            List.of(new CrossPlatformDestination.Translation("en", "Test")),
             DestinationType.CITY,
             null, // Null coordinates
             providerName,
@@ -313,11 +316,12 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistNewDestinations_WithMultipleTranslations_CreatesAll() {
-    RawDestinationDTO dto =
-        new RawDestinationDTO(
+    CrossPlatformDestination dto =
+        new CrossPlatformDestination(
             "D123",
             List.of(
-                new RawDestinationDTO.Translation("en", "English"), new RawDestinationDTO.Translation("fr", "French")),
+                new CrossPlatformDestination.Translation("en", "English"),
+                new CrossPlatformDestination.Translation("fr", "French")),
             DestinationType.CITY,
             null,
             providerName,
@@ -337,10 +341,10 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistNewDestinations_WithInvalidLanguageCode_ThrowsException() {
-    RawDestinationDTO dto =
-        new RawDestinationDTO(
+    CrossPlatformDestination dto =
+        new CrossPlatformDestination(
             "D123",
-            List.of(new RawDestinationDTO.Translation("invalid", "Test")),
+            List.of(new CrossPlatformDestination.Translation("invalid", "Test")),
             DestinationType.CITY,
             null,
             providerName,
@@ -355,10 +359,10 @@ class DestinationPersistenceServiceTest {
         IllegalArgumentException.class, () -> service.persistNewDestinations(providerName, Map.of("US", List.of(dto))));
   }
 
-  private static RawDestinationDTO mockRawDestinationDTO() {
-    return new RawDestinationDTO(
+  private static CrossPlatformDestination mockRawDestinationDTO() {
+    return new CrossPlatformDestination(
         "test-id",
-        List.of(new RawDestinationDTO.Translation("en", "Test")),
+        List.of(new CrossPlatformDestination.Translation("en", "Test")),
         DestinationType.CITY,
         null,
         BookingProviderName.VIATOR,

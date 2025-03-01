@@ -7,8 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Coordinates;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationType;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
@@ -42,15 +42,15 @@ class ViatorDestinationProviderTest {
                 new ViatorDestinationDTO(1L, "France", "COUNTRY", List.of(1L), testCoords),
                 new ViatorDestinationDTO(2L, "Paris", "CITY", List.of(1L), testCoords)));
 
-    List<RawDestinationDTO> result = destinationProvider.getDestinations();
+    List<CrossPlatformDestination> result = destinationProvider.getDestinations();
 
     assertThat(result).hasSize(1);
-    RawDestinationDTO dto = result.getFirst();
+    CrossPlatformDestination dto = result.getFirst();
     assertThat(dto.destinationId()).isEqualTo("2");
     assertThat(dto.type()).isEqualTo(DestinationType.CITY);
     assertThat(dto.countryIsoCode()).isEqualTo("fr");
     assertThat(dto.names())
-        .extracting(RawDestinationDTO.Translation::languageCode)
+        .extracting(CrossPlatformDestination.Translation::languageCode)
         .containsExactlyInAnyOrder("en", "fr");
   }
 
@@ -60,7 +60,7 @@ class ViatorDestinationProviderTest {
 
     when(viatorClient.getAllDestinationsForLanguage(anyString())).thenReturn(List.of(countryDestination, invalidType));
 
-    List<RawDestinationDTO> result = destinationProvider.getDestinations();
+    List<CrossPlatformDestination> result = destinationProvider.getDestinations();
     assertThat(result).isEmpty();
   }
 
@@ -83,7 +83,7 @@ class ViatorDestinationProviderTest {
     when(viatorClient.getAllDestinationsForLanguage("fr"))
         .thenReturn(List.of(new ViatorDestinationDTO(5L, "Paris", "CITY", List.of(999L), testCoords)));
 
-    List<RawDestinationDTO> result = destinationProvider.getDestinations();
+    List<CrossPlatformDestination> result = destinationProvider.getDestinations();
     assertThat(result).isEmpty();
   }
 
@@ -98,7 +98,9 @@ class ViatorDestinationProviderTest {
     when(viatorClient.getAllDestinationsForLanguage("fr"))
         .thenReturn(List.of(countryDestination)); // Missing French translation for Paris
 
-    List<RawDestinationDTO> result = destinationProvider.getDestinations();
-    assertThat(result.get(0).names()).extracting(RawDestinationDTO.Translation::languageCode).containsExactly("en");
+    List<CrossPlatformDestination> result = destinationProvider.getDestinations();
+    assertThat(result.get(0).names())
+        .extracting(CrossPlatformDestination.Translation::languageCode)
+        .containsExactly("en");
   }
 }

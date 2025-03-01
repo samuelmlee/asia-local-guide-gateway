@@ -1,9 +1,9 @@
 package com.asialocalguide.gateway.viator.service;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationType;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
@@ -35,7 +35,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
   }
 
   @Override
-  public List<RawDestinationDTO> getDestinations() throws ViatorApiException {
+  public List<CrossPlatformDestination> getDestinations() throws ViatorApiException {
     log.info("Fetching Viator destinations for languages: {}", Arrays.toString(LanguageCode.values()));
 
     List<CompletableFuture<Pair<LanguageCode, List<ViatorDestinationDTO>>>> futures =
@@ -96,7 +96,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
         .toList();
   }
 
-  private RawDestinationDTO createRawDestinationDTO(
+  private CrossPlatformDestination createRawDestinationDTO(
       ViatorDestinationDTO dto, Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations) {
 
     if (dto == null) {
@@ -119,7 +119,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
       return null;
     }
 
-    return new RawDestinationDTO(
+    return new CrossPlatformDestination(
         String.valueOf(dto.destinationId()),
         resolveTranslations(dto.destinationId(), languageToDestinations),
         mapToDestinationType(dto.type()),
@@ -141,7 +141,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
         .findFirst();
   }
 
-  private List<RawDestinationDTO.Translation> resolveTranslations(
+  private List<CrossPlatformDestination.Translation> resolveTranslations(
       Long destinationId, Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations) {
 
     return languageToDestinations.entrySet().stream()
@@ -162,7 +162,7 @@ public class ViatorDestinationProvider implements DestinationProvider {
                 log.debug("No translation found for destinationId: {} in language: {}", destinationId, entry.getKey());
                 return null;
               }
-              return new RawDestinationDTO.Translation(entry.getKey().toString(), dto.name());
+              return new CrossPlatformDestination.Translation(entry.getKey().toString(), dto.name());
             })
         .filter(Objects::nonNull)
         .toList();

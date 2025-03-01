@@ -1,13 +1,11 @@
-package com.asialocalguide.gateway.core.dto.destination;
+package com.asialocalguide.gateway.core.domain.destination;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.Coordinates;
-import com.asialocalguide.gateway.core.domain.destination.DestinationType;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
-public record RawDestinationDTO(
+public record CrossPlatformDestination(
     @NotNull String destinationId,
     @NotNull @NotEmpty List<Translation> names,
     @NotNull DestinationType type,

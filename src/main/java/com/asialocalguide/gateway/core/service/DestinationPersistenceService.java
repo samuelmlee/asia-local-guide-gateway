@@ -3,7 +3,7 @@ package com.asialocalguide.gateway.core.service;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.dto.destination.RawDestinationDTO;
+import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -40,7 +40,7 @@ public class DestinationPersistenceService {
    */
   @Transactional
   public void persistExistingDestinations(
-      BookingProviderName providerName, Map<Long, RawDestinationDTO> idToRawDestinations) {
+      BookingProviderName providerName, Map<Long, CrossPlatformDestination> idToRawDestinations) {
     if (providerName == null || idToRawDestinations == null || idToRawDestinations.isEmpty()) {
       log.warn(
           "Persist existing destinations: BookingProviderName is null or Map<Long, RawDestinationDTO> to process is"
@@ -62,7 +62,7 @@ public class DestinationPersistenceService {
 
     existingDestinations.forEach(
         destination -> {
-          RawDestinationDTO rawDto = idToRawDestinations.get(destination.getId());
+          CrossPlatformDestination rawDto = idToRawDestinations.get(destination.getId());
           if (rawDto == null) {
             log.warn(
                 "RawDestinationDTO not found in idToRawDestinations Map for existing Destination Id to process: {}",
@@ -93,7 +93,7 @@ public class DestinationPersistenceService {
    */
   @Transactional
   public void persistNewDestinations(
-      BookingProviderName providerName, Map<String, List<RawDestinationDTO>> isoCodeToRawDestinations) {
+      BookingProviderName providerName, Map<String, List<CrossPlatformDestination>> isoCodeToRawDestinations) {
     if (providerName == null || isoCodeToRawDestinations == null || isoCodeToRawDestinations.isEmpty()) {
       log.warn("Abort processing RawDestinationDTO: BookingProviderName is null or List<RawDestinationDTO>> is empty");
       return;
@@ -119,16 +119,18 @@ public class DestinationPersistenceService {
     for (var isoEntry : isoCodeToRawDestinations.entrySet()) {
 
       String isoCode = isoEntry.getKey();
-      List<RawDestinationDTO> rawDestinationDTOs = isoEntry.getValue();
+      List<CrossPlatformDestination> crossPlatformDestinations = isoEntry.getValue();
 
       Country country = countryMap.get(isoCode);
       if (country == null) {
         log.warn(
-            "Country not found for ISO Code: {}, List<RawDestination> not processed : {}", isoCode, rawDestinationDTOs);
+            "Country not found for ISO Code: {}, List<RawDestination> not processed : {}",
+            isoCode,
+            crossPlatformDestinations);
         continue;
       }
 
-      for (RawDestinationDTO rawDto : rawDestinationDTOs) {
+      for (CrossPlatformDestination rawDto : crossPlatformDestinations) {
 
         if (rawDto == null) {
           log.warn("Encountered null RawDestinationDTO");
