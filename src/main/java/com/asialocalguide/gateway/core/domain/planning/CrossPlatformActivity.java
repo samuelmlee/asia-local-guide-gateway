@@ -6,54 +6,45 @@ import java.util.List;
 import java.util.Map;
 
 public class CrossPlatformActivity {
-  // Core Identification
-  private String id; // e.g., "GYG-50872" or "VIATOR-43850P2"
-  private String title; // "2-Park 2-Day Universal Orlando™ Theme Park Tickets"
-  private String description; // Main activity description
-  private String abstractSummary; // Short summary (GYG's "abstract")
-  private List<String> languages; // Supported languages (e.g., ["en", "de"])
+  private String id;
+  private String title;
+  private String description;
+  private String abstractSummary;
+  private List<String> languages;
 
-  // Pricing
-  private Price price; // Unified price structure
-  private PricingType pricingType; // PER_PERSON, PER_GROUP, etc.
+  private Price price;
+  private PricingType pricingType;
 
-  // Media
-  private List<Image> images; // All image variants
-  private String coverImageUrl; // Primary image URL
+  private List<Image> images;
+  private String coverImageUrl;
 
-  // Logistics
-  private Duration duration; // Activity duration
-  private List<Location> locations; // Start/end points, POIs
-  private Logistics logistics; // Pickup, redemption details
+  private Duration duration;
+  private List<Location> locations;
+  private Logistics logistics;
 
-  // Availability & Booking
   private boolean mobileVoucherAccepted;
   private CancellationPolicy cancellationPolicy;
   private Instant createdAt;
   private Instant lastUpdatedAt;
 
-  // Reviews & Ratings
   private double averageRating;
   private int totalReviews;
-  private List<ReviewSource> reviewSources; // Viator, GetYourGuide, TripAdvisor
+  private List<ReviewSource> reviewSources;
 
-  // Categorization
-  private List<String> tags; // "Bestseller", "Family-Friendly"
+  private List<String> tags;
 
-  // Vendor-Specific Metadata
-  private String sourceVendor; // "GETYOURGUIDE" or "VIATOR"
-  private Map<String, Object> vendorSpecificData; // Raw fields not mapped above
+  private String sourceVendor;
+  private Map<String, Object> vendorSpecificData;
 
-  // Nested Classes
   public static class Price {
     private Double amount;
-    private String currency; // "USD", "EUR"
-    private String description; // "Per person", "Group rate"
+    private String currency;
+    private String description;
   }
 
   public static class Duration {
     private double value;
-    private TimeUnit unit; // HOUR, DAY, etc.
+    private TimeUnit unit;
   }
 
   public static class Image {
@@ -77,17 +68,16 @@ public class CrossPlatformActivity {
   }
 
   public static class CancellationPolicy {
-    private String summary; // Free-text description
+    private String summary;
     private boolean refundable;
   }
 
   public static class ReviewSource {
-    private String provider; // "VIATOR", "GYG", "TRIPADVISOR"
+    private String provider;
     private double averageRating;
     private int totalReviews;
   }
 
-  // Enums
   public enum PricingType {
     PER_PERSON,
     PER_GROUP,
