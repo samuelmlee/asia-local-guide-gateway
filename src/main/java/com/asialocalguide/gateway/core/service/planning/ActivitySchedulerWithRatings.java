@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.service;
+package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.google.ortools.Loader;
@@ -48,19 +48,14 @@ public class ActivitySchedulerWithRatings {
 
       startTimes[a] =
           model.newIntVarFromDomain(
-              Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()),
-              "start_activity_" + a);
+              Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()), "start_activity_" + a);
       // Add a buffer of 3 time slots to the duration between activities
       int duration = activityDurations[a] + 3;
       endTimes[a] = model.newIntVar(0, (long) numDays * numTimeSlotsPerDay, "end_activity_" + a);
       isAssigned[a] = model.newBoolVar("is_assigned_" + a);
       activityIntervals[a] =
           model.newOptionalIntervalVar(
-              startTimes[a],
-              model.newConstant(duration),
-              endTimes[a],
-              isAssigned[a],
-              "interval_activity_" + a);
+              startTimes[a], model.newConstant(duration), endTimes[a], isAssigned[a], "interval_activity_" + a);
 
       allIntervals.add(activityIntervals[a]);
     }

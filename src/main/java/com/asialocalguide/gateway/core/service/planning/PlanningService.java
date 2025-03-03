@@ -1,10 +1,11 @@
-package com.asialocalguide.gateway.core.service;
+package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
+import com.asialocalguide.gateway.core.service.ViatorActivityAvailabilityMapper;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import java.time.*;
@@ -28,21 +29,18 @@ public class PlanningService {
     List<ViatorActivityDetailDTO> activityDetails = activityService.getActivities(locale, request);
 
     // Extract the list of ViatorActivityDTO
-    List<ViatorActivityDTO> activities =
-        activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
+    List<ViatorActivityDTO> activities = activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
 
     LocalDate startDate = request.startDate();
     LocalDate endDate = request.endDate();
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
-    ActivityData activityData =
-        ViatorActivityAvailabilityMapper.mapToActivityData(activityDetails, startDate, endDate);
+    ActivityData activityData = ViatorActivityAvailabilityMapper.mapToActivityData(activityDetails, startDate, endDate);
 
     // Generate availability 3d array using scheduler
     boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(activityData);
 
-    return createDayPlans(
-        startDate, totalDays, activities, schedule, activityData.getValidStartTimes());
+    return createDayPlans(startDate, totalDays, activities, schedule, activityData.getValidStartTimes());
   }
 
   private List<DayPlanDTO> createDayPlans(
@@ -87,8 +85,7 @@ public class PlanningService {
     return dayActivities;
   }
 
-  private DayActivityDTO createDayActivity(
-      ViatorActivityDTO activity, LocalDate day, String startHour) {
+  private DayActivityDTO createDayActivity(ViatorActivityDTO activity, LocalDate day, String startHour) {
 
     LocalDateTime startTime = toLocalDateTime(day, startHour);
     LocalDateTime endTime = startTime.plus(getDuration(activity));
@@ -114,8 +111,6 @@ public class PlanningService {
   }
 
   private Duration getDuration(ViatorActivityDTO activity) {
-    return activity.getDurationMinutes() == 0
-        ? Duration.ZERO
-        : Duration.ofMinutes(activity.getDurationMinutes());
+    return activity.getDurationMinutes() == 0 ? Duration.ZERO : Duration.ofMinutes(activity.getDurationMinutes());
   }
 }

@@ -11,6 +11,8 @@ import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestinati
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
+import com.asialocalguide.gateway.core.service.destination.DestinationService;
+import com.asialocalguide.gateway.core.service.destination.DestinationSortingService;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.util.List;
 import java.util.Locale;

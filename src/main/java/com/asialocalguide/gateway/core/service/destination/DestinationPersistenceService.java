@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.service;
+package com.asialocalguide.gateway.core.service.destination;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;

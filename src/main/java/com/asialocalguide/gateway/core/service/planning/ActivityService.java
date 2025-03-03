@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.service;
+package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProvider;

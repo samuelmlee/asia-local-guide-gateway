@@ -2,7 +2,7 @@ package com.asialocalguide.gateway.core.controller;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
-import com.asialocalguide.gateway.core.service.DestinationService;
+import com.asialocalguide.gateway.core.service.destination.DestinationService;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
