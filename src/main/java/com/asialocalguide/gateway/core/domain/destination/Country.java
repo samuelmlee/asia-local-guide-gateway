@@ -2,21 +2,21 @@ package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.validator.constraints.Length;
 
 @Entity
-@Data
 @NoArgsConstructor
 public class Country implements Translatable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Getter
   private Long id;
 
   @OneToMany(mappedBy = "country", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -25,6 +25,8 @@ public class Country implements Translatable {
   @Column(name = "iso_2_code")
   @NotEmpty
   @Length(min = 2, max = 2)
+  @Getter
+  @Setter
   private String iso2Code;
 
   public Country(String iso2Code) {

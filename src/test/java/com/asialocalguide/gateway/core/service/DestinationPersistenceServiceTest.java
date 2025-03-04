@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.service;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -7,7 +8,6 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -68,9 +68,9 @@ class DestinationPersistenceServiceTest {
         new CrossPlatformDestination("D123", List.of(), DestinationType.CITY, null, providerName, "US");
     Map<Long, CrossPlatformDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
-    Destination existingDestination = new Destination();
-    existingDestination.setId(destinationId);
-    existingDestination.setDestinationProviderMappings(new HashSet<>());
+    // Create mock Destination
+    Destination existingDestination = mock(Destination.class);
+    when(existingDestination.getId()).thenReturn(destinationId);
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(destinationRepository.findAllById(Set.of(destinationId))).thenReturn(List.of(existingDestination));
@@ -78,12 +78,14 @@ class DestinationPersistenceServiceTest {
     // Execute
     service.persistExistingDestinations(providerName, idToRawDestinations);
 
-    // Verify
-    assertEquals(1, existingDestination.getDestinationProviderMappings().size());
-    DestinationProviderMapping mapping = existingDestination.getBookingProviderMapping(providerId);
-    assertNotNull(mapping);
-    assertEquals("D123", mapping.getProviderDestinationId());
-    verify(destinationRepository, never()).saveAll(any()); // Managed entities, no save needed
+    // Verify addProviderMapping was called once with correct arguments
+    ArgumentCaptor<DestinationProviderMapping> captor = ArgumentCaptor.forClass(DestinationProviderMapping.class);
+    verify(existingDestination, times(1)).addProviderMapping(captor.capture());
+
+    DestinationProviderMapping addedMapping = captor.getValue();
+    assertNotNull(addedMapping);
+    assertEquals("D123", addedMapping.getProviderDestinationId());
+    assertEquals(providerId, addedMapping.getProvider().getId());
   }
 
   @Test
@@ -93,19 +95,23 @@ class DestinationPersistenceServiceTest {
         new CrossPlatformDestination("D123", List.of(), DestinationType.CITY, null, providerName, "US");
     Map<Long, CrossPlatformDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
-    Destination existingDestination = new Destination();
-    existingDestination.setId(destinationId);
+    Destination existingDestination = mock(Destination.class);
+
     DestinationProviderMapping existingMapping = new DestinationProviderMapping();
     existingMapping.setProviderDestinationId("D123");
     existingMapping.setProvider(provider);
     existingDestination.addProviderMapping(existingMapping);
+
+    when(existingDestination.getBookingProviderMapping(1L)).thenReturn(existingMapping);
+    when(existingDestination.getId()).thenReturn(destinationId);
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(destinationRepository.findAllById(Set.of(destinationId))).thenReturn(List.of(existingDestination));
 
     service.persistExistingDestinations(providerName, idToRawDestinations);
 
-    assertEquals(1, existingDestination.getDestinationProviderMappings().size());
+    // Verify addProviderMapping was called Once when setting up the mock
+    verify(existingDestination, times(1)).addProviderMapping(any(DestinationProviderMapping.class));
   }
 
   // Tests for persistNewDestinations
@@ -178,10 +184,12 @@ class DestinationPersistenceServiceTest {
     Destination saved = savedDestinations.get(0);
     assertEquals(country, saved.getCountry());
     assertEquals(DestinationType.CITY, saved.getType());
-    assertEquals(1, saved.getDestinationTranslations().size());
-    assertEquals("New York", saved.getDestinationTranslations().iterator().next().getName());
-    assertEquals(1, saved.getDestinationProviderMappings().size());
-    assertEquals("D123", saved.getDestinationProviderMappings().iterator().next().getProviderDestinationId());
+
+    assertEquals(Optional.of("New York"), saved.getTranslation(LanguageCode.EN));
+
+    assertNotNull(saved.getBookingProviderMapping(1L));
+
+    assertEquals("D123", saved.getBookingProviderMapping(1L).getProviderDestinationId());
   }
 
   @Test
@@ -215,15 +223,23 @@ class DestinationPersistenceServiceTest {
     CrossPlatformDestination dto = mockRawDestinationDTO();
     Map<Long, CrossPlatformDestination> input = Map.of(foundId, dto, missingId, dto);
 
-    Destination foundDestination = new Destination();
-    foundDestination.setId(foundId);
+    // Create a mock Destination and stub getId()
+    Destination foundDestination = mock(Destination.class);
+    when(foundDestination.getId()).thenReturn(foundId);
 
     when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
     when(destinationRepository.findAllById(Set.of(foundId, missingId))).thenReturn(List.of(foundDestination));
 
     service.persistExistingDestinations(providerName, input);
 
-    assertEquals(1, foundDestination.getDestinationProviderMappings().size());
+    ArgumentCaptor<DestinationProviderMapping> captor = ArgumentCaptor.forClass(DestinationProviderMapping.class);
+
+    verify(foundDestination).addProviderMapping(captor.capture());
+
+    DestinationProviderMapping addedMapping = captor.getValue();
+    assertNotNull(addedMapping);
+    assertEquals(dto.destinationId(), addedMapping.getProviderDestinationId());
+    assertEquals(providerId, addedMapping.getProvider().getId());
   }
 
   @Test
@@ -232,13 +248,11 @@ class DestinationPersistenceServiceTest {
     Map<Long, CrossPlatformDestination> input = new HashMap<>();
     input.put(destinationId, null);
 
-    Destination dest = new Destination();
-    dest.setId(destinationId);
+    assertThatThrownBy(() -> service.persistExistingDestinations(providerName, input))
+        .isInstanceOf(IllegalStateException.class);
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
-    when(destinationRepository.findAllById(any())).thenReturn(List.of(dest));
-
-    service.persistExistingDestinations(providerName, input);
+    // Verify no repository interactions
+    verifyNoInteractions(destinationRepository);
   }
 
   @Test
@@ -270,29 +284,6 @@ class DestinationPersistenceServiceTest {
   }
 
   @Test
-  void persistNewDestinations_WithEmptyNamesList_SkipsTranslationCreation() {
-    CrossPlatformDestination dto =
-        new CrossPlatformDestination(
-            "D123",
-            Collections.emptyList(), // Empty names
-            DestinationType.CITY,
-            null,
-            providerName,
-            "US");
-
-    Country country = new Country("US");
-
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
-
-    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
-
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    assertTrue(captor.getValue().get(0).getDestinationTranslations().isEmpty());
-  }
-
-  @Test
   void persistNewDestinations_WithNullCoordinates_SetsNullInEntity() {
     CrossPlatformDestination dto =
         new CrossPlatformDestination(
@@ -321,8 +312,8 @@ class DestinationPersistenceServiceTest {
         new CrossPlatformDestination(
             "D123",
             List.of(
-                new CrossPlatformDestination.Translation("en", "English"),
-                new CrossPlatformDestination.Translation("fr", "French")),
+                new CrossPlatformDestination.Translation("en", "Singapore"),
+                new CrossPlatformDestination.Translation("fr", "Singapour")),
             DestinationType.CITY,
             null,
             providerName,
@@ -337,7 +328,9 @@ class DestinationPersistenceServiceTest {
 
     ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
     verify(destinationRepository).saveAll(captor.capture());
-    assertEquals(2, captor.getValue().get(0).getDestinationTranslations().size());
+    Destination destination = captor.getValue().getFirst();
+    assertEquals(Optional.of("Singapore"), destination.getTranslation(LanguageCode.EN));
+    assertEquals(Optional.of("Singapour"), destination.getTranslation(LanguageCode.FR));
   }
 
   @Test

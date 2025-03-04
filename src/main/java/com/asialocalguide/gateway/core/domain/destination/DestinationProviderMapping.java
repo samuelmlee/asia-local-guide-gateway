@@ -4,16 +4,13 @@ import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Data
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
+@Getter
 public class DestinationProviderMapping {
 
   @Id
@@ -22,13 +19,15 @@ public class DestinationProviderMapping {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "destination_id", nullable = false)
+  @Setter
   private Destination destination;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "provider_id", nullable = false)
+  @Setter
   private BookingProvider provider;
 
-  @NotNull @NotEmpty private String providerDestinationId;
+  @Setter @NotNull @NotEmpty private String providerDestinationId;
 
   @Override
   public boolean equals(Object o) {
