@@ -3,26 +3,26 @@ package com.asialocalguide.gateway.core.domain.destination;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Destination implements Translatable {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Getter
   private Long id;
 
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "country_id")
   @NotNull
+  @Getter
+  @Setter
   private Country country;
 
   @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -31,13 +31,15 @@ public class Destination implements Translatable {
 
   @Enumerated(EnumType.STRING)
   @NotNull
+  @Getter
+  @Setter
   private DestinationType type;
 
   @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   @NotEmpty
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
-  @NotNull @Embedded Coordinates centerCoordinates;
+  @NotNull @Embedded @Getter @Setter Coordinates centerCoordinates;
 
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
@@ -83,7 +85,7 @@ public class Destination implements Translatable {
     if (o == null || getClass() != o.getClass()) return false;
 
     Destination that = (Destination) o;
-    return id != null && id.equals(that.id) && type == that.type;
+    return id != null && id.equals(that.id);
   }
 
   @Override

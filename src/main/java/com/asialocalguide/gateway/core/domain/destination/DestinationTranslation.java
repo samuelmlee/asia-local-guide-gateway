@@ -2,12 +2,13 @@ package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.*;
 import java.util.Objects;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
 @NoArgsConstructor
+@Getter
 public class DestinationTranslation {
 
   @EmbeddedId private DestinationTranslationId id;
@@ -15,9 +16,10 @@ public class DestinationTranslation {
   @ManyToOne
   @MapsId("destinationId")
   @JoinColumn(name = "destination_id")
+  @Setter
   private Destination destination;
 
-  private String name;
+  @Setter private String name;
 
   public DestinationTranslation(Destination destination, LanguageCode languageCode, String name) {
     this.id = new DestinationTranslationId();

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.repository.BookingProviderMappingRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -37,7 +36,6 @@ class DestinationSortingServiceTest {
 
   private final BookingProviderName providerName = BookingProviderName.VIATOR;
   private final String supportedIsoCode = "US";
-  private final String unsupportedIsoCode = "XX";
   private CrossPlatformDestination validRawDto;
   private Destination existingDestination;
 
@@ -53,7 +51,6 @@ class DestinationSortingServiceTest {
             supportedIsoCode);
 
     existingDestination = new Destination();
-    existingDestination.setId(1L);
     existingDestination.setCenterCoordinates(new Coordinates(40.7128, -74.0060));
     existingDestination.setCountry(new Country(supportedIsoCode));
   }
@@ -76,7 +73,7 @@ class DestinationSortingServiceTest {
     verify(destinationPersistenceService).persistNewDestinations(eq(providerName), newDestCaptor.capture());
 
     assertEquals(1, newDestCaptor.getValue().get(supportedIsoCode).size());
-    assertEquals(validRawDto, newDestCaptor.getValue().get(supportedIsoCode).get(0));
+    assertEquals(validRawDto, newDestCaptor.getValue().get(supportedIsoCode).getFirst());
   }
 
   @Test
