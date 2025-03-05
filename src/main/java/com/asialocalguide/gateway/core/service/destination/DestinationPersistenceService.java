@@ -3,7 +3,6 @@ package com.asialocalguide.gateway.core.service.destination;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
@@ -57,8 +56,6 @@ public class DestinationPersistenceService {
 
     // Fetch all existing Destinations in batch
     List<Destination> existingDestinations = destinationRepository.findAllById(idToRawDestinations.keySet());
-
-    List<Destination> updatedDestinations = new ArrayList<>();
 
     existingDestinations.forEach(
         destination -> {
