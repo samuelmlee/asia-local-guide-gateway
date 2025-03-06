@@ -6,7 +6,9 @@ import com.google.ortools.sat.*;
 import com.google.ortools.util.Domain;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ActivitySchedulerWithRatings {
 
   private ActivitySchedulerWithRatings() {}
@@ -92,7 +94,7 @@ public class ActivitySchedulerWithRatings {
         }
       }
     } else {
-      System.out.println("No feasible solution found. Solver status: " + status);
+      log.warn("No feasible solution found. Solver status: {}", status);
     }
     return finalSchedule;
   }
