@@ -1,23 +1,23 @@
 package com.asialocalguide.gateway.viator.client;
 
-import com.asialocalguide.gateway.viator.dto.*;
-import com.asialocalguide.gateway.viator.exception.ViatorApiException;
-import com.github.tomakehurst.wiremock.http.Fault;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestClient;
-
-import java.util.List;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import com.asialocalguide.gateway.core.domain.destination.Coordinates;
+import com.asialocalguide.gateway.viator.dto.*;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
+import com.github.tomakehurst.wiremock.http.Fault;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestClient;
 
 @WireMockTest
 public class ViatorClientTest {
@@ -47,8 +47,10 @@ public class ViatorClientTest {
     ViatorDestinationResponseDTO mockResponse =
         new ViatorDestinationResponseDTO(
             List.of(
-                new ViatorDestinationDTO(1L, "France", "COUNTRY", List.of(20L, 85L, 100L), null),
-                new ViatorDestinationDTO(2L, "Paris", "CITY", List.of(1L, 85L, 100L), null)),
+                new ViatorDestinationDTO(
+                    1L, "France", "COUNTRY", List.of(20L, 85L, 100L), new Coordinates(48.8575, 2.3514)),
+                new ViatorDestinationDTO(
+                    2L, "Paris", "CITY", List.of(1L, 85L, 100L), new Coordinates(48.8575, 2.3514))),
             1);
 
     wireMock.stubFor(

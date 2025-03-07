@@ -65,7 +65,13 @@ class DestinationPersistenceServiceTest {
     // Setup
     Long destinationId = 100L;
     CrossPlatformDestination rawDto =
-        new CrossPlatformDestination("D123", List.of(), DestinationType.CITY, null, providerName, "US");
+        new CrossPlatformDestination(
+            "D123",
+            List.of(new CrossPlatformDestination.Translation("en", "Paris")),
+            DestinationType.CITY,
+            null,
+            providerName,
+            "US");
     Map<Long, CrossPlatformDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     // Create mock Destination
@@ -92,7 +98,13 @@ class DestinationPersistenceServiceTest {
   void persistExistingDestinations_SkipsWhenMappingExists() {
     Long destinationId = 100L;
     CrossPlatformDestination rawDto =
-        new CrossPlatformDestination("D123", List.of(), DestinationType.CITY, null, providerName, "US");
+        new CrossPlatformDestination(
+            "D123",
+            List.of(new CrossPlatformDestination.Translation("en", "Paris")),
+            DestinationType.CITY,
+            null,
+            providerName,
+            "US");
     Map<Long, CrossPlatformDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     Destination existingDestination = mock(Destination.class);

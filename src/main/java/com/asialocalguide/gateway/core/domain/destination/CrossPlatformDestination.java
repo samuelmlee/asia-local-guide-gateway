@@ -9,7 +9,7 @@ public record CrossPlatformDestination(
     @NotNull String destinationId,
     @NotNull @NotEmpty List<Translation> names,
     @NotNull DestinationType type,
-    @NotNull Coordinates centerCoordinates,
+    Coordinates centerCoordinates,
     @NotNull BookingProviderName providerName,
     @NotNull String countryIsoCode) {
 
