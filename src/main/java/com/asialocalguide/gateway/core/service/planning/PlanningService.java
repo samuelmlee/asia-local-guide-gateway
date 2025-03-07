@@ -1,46 +1,71 @@
 package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
-import com.asialocalguide.gateway.core.domain.planning.ActivityData;
+import com.asialocalguide.gateway.core.domain.BookingProvider;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.Destination;
+import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
-import com.asialocalguide.gateway.core.service.ViatorActivityAvailabilityMapper;
+import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
+import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
-import java.time.*;
+import com.asialocalguide.gateway.viator.service.ViatorActivityService;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.stereotype.Service;
 
 @Service
 public class PlanningService {
 
-  private final ActivityService activityService;
+  private final BookingProviderRepository bookingProviderRepository;
 
-  public PlanningService(ActivityService activityService) {
-    this.activityService = activityService;
+  private final DestinationRepository destinationRepository;
+
+  private final ViatorActivityService viatorActivityService;
+
+  public PlanningService(
+      ViatorActivityService viatorActivityService,
+      BookingProviderRepository bookingProviderRepository,
+      DestinationRepository destinationRepository) {
+    this.viatorActivityService = viatorActivityService;
+    this.bookingProviderRepository = bookingProviderRepository;
+    this.destinationRepository = destinationRepository;
   }
 
   public List<DayPlanDTO> generateActivityPlanning(ActivityPlanningRequestDTO request) {
     SupportedLocale locale = SupportedLocale.getDefaultLocale();
-    List<ViatorActivityDetailDTO> activityDetails = activityService.getActivities(locale, request);
-
-    // Extract the list of ViatorActivityDTO
-    List<ViatorActivityDTO> activities = activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
 
     LocalDate startDate = request.startDate();
     LocalDate endDate = request.endDate();
     long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
-    ActivityData activityData = ViatorActivityAvailabilityMapper.mapToActivityData(activityDetails, startDate, endDate);
+    BookingProvider viatorProvider =
+        bookingProviderRepository
+            .findByName(BookingProviderName.VIATOR)
+            .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
+
+    Destination destination =
+        destinationRepository.findById(request.destinationId()).orElseThrow(IllegalArgumentException::new);
+
+    String viatorDestinationId =
+        destination.getBookingProviderMapping(viatorProvider.getId()).getProviderDestinationId();
+
+    ProviderActivityData result = viatorActivityService.fetchProviderActivityData(request, viatorDestinationId, locale);
 
     // Generate availability 3d array using scheduler
-    boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(activityData);
+    boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityData());
 
-    return createDayPlans(startDate, totalDays, activities, schedule, activityData.getValidStartTimes());
+    return createDayPlans(
+        startDate, totalDays, result.activities(), schedule, result.activityData().getValidStartTimes());
   }
 
   private List<DayPlanDTO> createDayPlans(

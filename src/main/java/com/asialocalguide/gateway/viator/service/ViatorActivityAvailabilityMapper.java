@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.service;
+package com.asialocalguide.gateway.viator.service;
 
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.OneHourTimeSlot;
@@ -10,10 +10,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-/**
- * A helper class to flatten a single "bookable item" into an object we can treat as a single
- * "activity."
- */
+/** A helper class to flatten a single "bookable item" into an object we can treat as a single "activity." */
 class MappedActivity {
   String productCode;
   // All the seasons (with start/end) and pricing records, etc.
@@ -36,12 +33,11 @@ public class ViatorActivityAvailabilityMapper {
    *
    * <p>[activityIndex][dayIndex][timeSlotIndex]
    *
-   * <p>Where: - 'activityIndex' runs over **all** BookableItems from **all** DTOs. - 'dayIndex'
-   * covers the range from the earliest startDate to the latest endDate found. - 'timeSlotIndex'
-   * covers every unique startTime found in all TimedEntries.
+   * <p>Where: - 'activityIndex' runs over **all** BookableItems from **all** DTOs. - 'dayIndex' covers the range from
+   * the earliest startDate to the latest endDate found. - 'timeSlotIndex' covers every unique startTime found in all
+   * TimedEntries.
    *
-   * <p>The returned array element is TRUE if that (activity, day, timeSlot) is available, FALSE
-   * otherwise.
+   * <p>The returned array element is TRUE if that (activity, day, timeSlot) is available, FALSE otherwise.
    */
   public static ActivityData mapToActivityData(
       List<ViatorActivityDetailDTO> detailDTOS, LocalDate minDate, LocalDate maxDate) {
@@ -52,8 +48,7 @@ public class ViatorActivityAvailabilityMapper {
     }
 
     // Extract the list of ViatorActivityDTO
-    List<ViatorActivityDTO> activities =
-        detailDTOS.stream().map(ViatorActivityDetailDTO::activity).toList();
+    List<ViatorActivityDTO> activities = detailDTOS.stream().map(ViatorActivityDetailDTO::activity).toList();
     // Extract the list of ViatorActivityAvailabilityDTO
     List<ViatorActivityAvailabilityDTO> availabilities =
         detailDTOS.stream().map(ViatorActivityDetailDTO::availability).toList();
@@ -74,8 +69,7 @@ public class ViatorActivityAvailabilityMapper {
     // Return the filled 3D arrays for availability and startTimes
     fillAvailability(allActivities, allDates, availability, startTimes);
 
-    return new ActivityData(
-        availability, startTimes, mapActivityRating(activities), mapActivityDuration(activities));
+    return new ActivityData(availability, startTimes, mapActivityRating(activities), mapActivityDuration(activities));
   }
 
   private static void fillAvailability(
@@ -124,8 +118,7 @@ public class ViatorActivityAvailabilityMapper {
               availability[a][d][tIndex] = true;
 
               // Ensure we store the earliest time per time slot
-              if (startTimes[a][d][tIndex] == null
-                  || entry.startTime().compareTo(startTimes[a][d][tIndex]) < 0) {
+              if (startTimes[a][d][tIndex] == null || entry.startTime().compareTo(startTimes[a][d][tIndex]) < 0) {
                 startTimes[a][d][tIndex] = entry.startTime();
               }
             }
