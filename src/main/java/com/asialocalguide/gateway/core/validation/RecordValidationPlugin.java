@@ -18,18 +18,14 @@ public class RecordValidationPlugin implements Plugin {
 
   @Override
   public boolean matches(TypeDescription target) {
-    return target.getDeclaredMethods().stream()
-        .anyMatch(m -> m.isConstructor() && isConstrained(m));
+    return target.getDeclaredMethods().stream().anyMatch(m -> m.isConstructor() && isConstrained(m));
   }
 
   @Override
-  public Builder<?> apply(
-      Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+  public Builder<?> apply(Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
     return builder
         .constructor(this::isConstrained)
-        .intercept(
-            SuperMethodCall.INSTANCE.andThen(
-                MethodDelegation.to(RecordValidationInterceptor.class)));
+        .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(RecordValidationInterceptor.class)));
   }
 
   private boolean isConstrained(MethodDescription method) {
@@ -57,5 +53,9 @@ public class RecordValidationPlugin implements Plugin {
   }
 
   @Override
-  public void close() throws IOException {}
+  public void close() throws IOException {
+    /* This plugin does not open streams or connections
+     * that require explicit cleanup. The method is declared to fulfill the Plugin
+     * interface contract but needs no implementation. */
+  }
 }

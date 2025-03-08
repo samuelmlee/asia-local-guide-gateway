@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RecordValidationInterceptor {
 
-  private static Validator VALIDATOR = null;
+  private static Validator validator = null;
 
   static {
     try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
-      VALIDATOR = factory.getValidator();
+      validator = factory.getValidator();
     } catch (ValidationException e) {
       log.error("Failed to create validator", e);
     }
@@ -25,12 +25,12 @@ public class RecordValidationInterceptor {
   private RecordValidationInterceptor() {}
 
   public static <T> void validate(@Origin Constructor<T> constructor, @AllArguments Object[] args) {
-    if (VALIDATOR == null) {
+    if (validator == null) {
       throw new IllegalStateException("Validator is not initialized");
     }
 
     Set<ConstraintViolation<T>> violations =
-        VALIDATOR.forExecutables().validateConstructorParameters(constructor, args);
+        validator.forExecutables().validateConstructorParameters(constructor, args);
 
     if (!violations.isEmpty()) {
       String message =
