@@ -3,7 +3,7 @@ package com.asialocalguide.gateway.viator.service;
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
-import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
 import java.time.LocalDate;
@@ -23,12 +23,13 @@ public class ViatorActivityService {
     this.viatorClient = viatorClient;
   }
 
-  public ProviderActivityData fetchProviderActivityData(
-      ActivityPlanningRequestDTO request, String viatorDestinationId, SupportedLocale locale) {
+  public ProviderActivityData fetchProviderActivityData(ProviderPlanningRequest request, SupportedLocale locale) {
 
-    List<ViatorActivityDetailDTO> activityDetails = getActivities(locale, viatorDestinationId, request);
+    // Refactor: remove ActivityPlanningRequestDTO from input
 
-    // Extract the list of ViatorActivityDTO
+    List<ViatorActivityDetailDTO> activityDetails = getActivities(locale, request);
+
+    // Remove ViatorActivityDetailDTO and call getAvailability and getActivities separately
     List<ViatorActivityDTO> activities = activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
 
     LocalDate startDate = request.startDate();
@@ -39,17 +40,18 @@ public class ViatorActivityService {
     return new ProviderActivityData(activities, activityData, startDate);
   }
 
-  public List<ViatorActivityDetailDTO> getActivities(
-      SupportedLocale locale, String viatorDestinationId, ActivityPlanningRequestDTO request) {
+  public List<ViatorActivityDetailDTO> getActivities(SupportedLocale locale, ProviderPlanningRequest request) {
 
     // TODO: ActivityService should return a list of activities that is independent of the provider
 
     ViatorActivitySearchDTO.Range ratingRange = new ViatorActivitySearchDTO.Range(4, 5);
 
+    List<Integer> activityTagIds = request.activityTags().stream().map(Integer::valueOf).toList();
+
     ViatorActivitySearchDTO.Filtering filteringDTO =
         new ViatorActivitySearchDTO.Filtering(
-            Long.valueOf(viatorDestinationId),
-            request.activityTagIds(),
+            Long.valueOf(request.providerDestinationId()),
+            activityTagIds,
             request.startDate(),
             request.endDate(),
             ratingRange);

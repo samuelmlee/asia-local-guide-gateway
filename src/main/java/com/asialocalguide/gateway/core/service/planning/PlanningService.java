@@ -5,9 +5,10 @@ import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
-import com.asialocalguide.gateway.core.dto.planning.ActivityPlanningRequestDTO;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
@@ -41,12 +42,12 @@ public class PlanningService {
     this.destinationRepository = destinationRepository;
   }
 
-  public List<DayPlanDTO> generateActivityPlanning(ActivityPlanningRequestDTO request) {
+  public List<DayPlanDTO> generateActivityPlanning(PlanningRequestDTO request) {
     SupportedLocale locale = SupportedLocale.getDefaultLocale();
 
     LocalDate startDate = request.startDate();
     LocalDate endDate = request.endDate();
-    long totalDays = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+    long duration = ChronoUnit.DAYS.between(startDate, endDate) + 1;
 
     BookingProvider viatorProvider =
         bookingProviderRepository
@@ -59,13 +60,16 @@ public class PlanningService {
     String viatorDestinationId =
         destination.getBookingProviderMapping(viatorProvider.getId()).getProviderDestinationId();
 
-    ProviderActivityData result = viatorActivityService.fetchProviderActivityData(request, viatorDestinationId, locale);
+    ProviderPlanningRequest providerRequest =
+        new ProviderPlanningRequest(startDate, endDate, (int) duration, request.activityTagIds(), viatorDestinationId);
+
+    ProviderActivityData result = viatorActivityService.fetchProviderActivityData(providerRequest, locale);
 
     // Generate availability 3d array using scheduler
     boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityData());
 
     return createDayPlans(
-        startDate, totalDays, result.activities(), schedule, result.activityData().getValidStartTimes());
+        startDate, duration, result.activities(), schedule, result.activityData().getValidStartTimes());
   }
 
   private List<DayPlanDTO> createDayPlans(

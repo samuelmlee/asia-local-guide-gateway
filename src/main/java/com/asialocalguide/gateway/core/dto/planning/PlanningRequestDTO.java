@@ -4,8 +4,8 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 
-public record ActivityPlanningRequestDTO(
+public record PlanningRequestDTO(
     @NotNull LocalDate startDate,
     @NotNull LocalDate endDate,
     @NotNull Long destinationId,
-    List<Long> activityTagIds) {}
+    List<String> activityTagIds) {}
