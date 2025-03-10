@@ -25,23 +25,21 @@ public class ViatorActivityService {
 
   public ProviderActivityData fetchProviderActivityData(ProviderPlanningRequest request) {
 
-    List<ViatorActivityDetailDTO> activityDetails = getActivities(request);
+    ViatorActivitySearchDTO searchDTO = buildActivitySearchDTO(request);
 
-    // Remove ViatorActivityDetailDTO and call getAvailability and getActivities separately
-    List<ViatorActivityDTO> activities = activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
+    List<ViatorActivityDTO> activities = getViatorActivityDTOS(request.locale(), searchDTO);
+
+    List<ViatorActivityAvailabilityDTO> availabilities = getViatorAvailabilityDTOS(activities);
 
     LocalDate startDate = request.startDate();
     LocalDate endDate = request.endDate();
 
-    ActivityData activityData = ViatorActivityAvailabilityMapper.mapToActivityData(activityDetails, startDate, endDate);
+    ActivityData activityData = ViatorActivityAvailabilityMapper.mapToActivityData(activities, availabilities, startDate, endDate);
 
     return new ProviderActivityData(activities, activityData, startDate);
   }
 
-  public List<ViatorActivityDetailDTO> getActivities(ProviderPlanningRequest request) {
-
-    // TODO: ActivityService should return a list of activities that is independent of the provider
-
+  private static ViatorActivitySearchDTO buildActivitySearchDTO(ProviderPlanningRequest request) {
     ViatorActivitySearchDTO.Range ratingRange = new ViatorActivitySearchDTO.Range(4, 5);
 
     List<Integer> activityTagIds = request.activityTags().stream().map(Integer::valueOf).toList();
@@ -60,21 +58,19 @@ public class ViatorActivityService {
 
     int durationDays = (int) ChronoUnit.DAYS.between(request.startDate(), request.endDate());
 
-    ViatorActivitySearchDTO searchDTO =
-        new ViatorActivitySearchDTO(
-            filteringDTO, sorting, new ViatorActivitySearchDTO.Pagination(1, Math.max(durationDays, 1) * 4), "EUR");
-
-    return getActivityDetails(request.locale(), searchDTO);
+      return new ViatorActivitySearchDTO(
+          filteringDTO, sorting, new ViatorActivitySearchDTO.Pagination(1, Math.max(durationDays, 1) * 4), "EUR");
   }
 
-  public List<ViatorActivityDetailDTO> getActivityDetails(
-      SupportedLocale defaultLocale, ViatorActivitySearchDTO searchDTO) {
-
-    List<ViatorActivityDTO> activities =
-        viatorClient.getActivitiesByRequestAndLanguage(defaultLocale.getCode(), searchDTO).stream()
+  private List<ViatorActivityDTO> getViatorActivityDTOS(SupportedLocale defaultLocale, ViatorActivitySearchDTO searchDTO) {
+    return viatorClient.getActivitiesByRequestAndLanguage(defaultLocale.getCode(), searchDTO).stream()
             // No activities without duration information should be returned
             .filter(dto -> dto.getDurationMinutes() > 0)
             .toList();
+  }
+
+  public List<ViatorActivityAvailabilityDTO> getViatorAvailabilityDTOS(
+      List<ViatorActivityDTO> activities) {
 
     Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> availabilityFutures =
         getIdCompletableFutureMap(activities);
@@ -88,12 +84,12 @@ public class ViatorActivityService {
                   availabilityFutures.get(activity.productCode()).join();
 
               return availabilityOpt
-                  .map(availabilityDTO -> new ViatorActivityDetailDTO(activity, availabilityDTO))
                   .orElse(null);
             })
         .filter(Objects::nonNull)
         .toList();
   }
+
 
   private Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> getIdCompletableFutureMap(
       List<ViatorActivityDTO> activities) {

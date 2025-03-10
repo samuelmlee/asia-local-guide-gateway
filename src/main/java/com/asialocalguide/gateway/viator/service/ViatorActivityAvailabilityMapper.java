@@ -4,7 +4,7 @@ import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.OneHourTimeSlot;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
-import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -40,18 +40,14 @@ public class ViatorActivityAvailabilityMapper {
    * <p>The returned array element is TRUE if that (activity, day, timeSlot) is available, FALSE otherwise.
    */
   public static ActivityData mapToActivityData(
-      List<ViatorActivityDetailDTO> detailDTOS, LocalDate minDate, LocalDate maxDate) {
+      List<ViatorActivityDTO> activities, List<ViatorActivityAvailabilityDTO> availabilities, LocalDate minDate, LocalDate maxDate) {
 
-    if (detailDTOS == null || detailDTOS.isEmpty() || minDate == null || maxDate == null) {
+    if (activities == null || activities.isEmpty() ||
+            availabilities == null || availabilities.isEmpty() ||
+            minDate == null || maxDate == null) {
       // Input data invalid => empty array
       return new ActivityData(new boolean[0][0][0], new String[0][0][0], new int[0], new int[0]);
     }
-
-    // Extract the list of ViatorActivityDTO
-    List<ViatorActivityDTO> activities = detailDTOS.stream().map(ViatorActivityDetailDTO::activity).toList();
-    // Extract the list of ViatorActivityAvailabilityDTO
-    List<ViatorActivityAvailabilityDTO> availabilities =
-        detailDTOS.stream().map(ViatorActivityDetailDTO::availability).toList();
 
     // 1) Flatten all BookableItems
     List<MappedActivity> allActivities = flattenDtos(availabilities);
