@@ -23,11 +23,9 @@ public class ViatorActivityService {
     this.viatorClient = viatorClient;
   }
 
-  public ProviderActivityData fetchProviderActivityData(ProviderPlanningRequest request, SupportedLocale locale) {
+  public ProviderActivityData fetchProviderActivityData(ProviderPlanningRequest request) {
 
-    // Refactor: remove ActivityPlanningRequestDTO from input
-
-    List<ViatorActivityDetailDTO> activityDetails = getActivities(locale, request);
+    List<ViatorActivityDetailDTO> activityDetails = getActivities(request);
 
     // Remove ViatorActivityDetailDTO and call getAvailability and getActivities separately
     List<ViatorActivityDTO> activities = activityDetails.stream().map(ViatorActivityDetailDTO::activity).toList();
@@ -40,7 +38,7 @@ public class ViatorActivityService {
     return new ProviderActivityData(activities, activityData, startDate);
   }
 
-  public List<ViatorActivityDetailDTO> getActivities(SupportedLocale locale, ProviderPlanningRequest request) {
+  public List<ViatorActivityDetailDTO> getActivities(ProviderPlanningRequest request) {
 
     // TODO: ActivityService should return a list of activities that is independent of the provider
 
@@ -66,7 +64,7 @@ public class ViatorActivityService {
         new ViatorActivitySearchDTO(
             filteringDTO, sorting, new ViatorActivitySearchDTO.Pagination(1, Math.max(durationDays, 1) * 4), "EUR");
 
-    return getActivityDetails(locale, searchDTO);
+    return getActivityDetails(request.locale(), searchDTO);
   }
 
   public List<ViatorActivityDetailDTO> getActivityDetails(

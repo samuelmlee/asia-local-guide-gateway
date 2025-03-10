@@ -61,9 +61,9 @@ public class PlanningService {
         destination.getBookingProviderMapping(viatorProvider.getId()).getProviderDestinationId();
 
     ProviderPlanningRequest providerRequest =
-        new ProviderPlanningRequest(startDate, endDate, (int) duration, request.activityTagIds(), viatorDestinationId);
+        new ProviderPlanningRequest(startDate, endDate, (int) duration, request.activityTagIds(), viatorDestinationId, locale);
 
-    ProviderActivityData result = viatorActivityService.fetchProviderActivityData(providerRequest, locale);
+    ProviderActivityData result = viatorActivityService.fetchProviderActivityData(providerRequest);
 
     // Generate availability 3d array using scheduler
     boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityData());
