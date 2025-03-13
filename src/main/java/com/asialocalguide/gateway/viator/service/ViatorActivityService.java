@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -37,12 +39,14 @@ public class ViatorActivityService {
 
         try {
             ViatorActivitySearchDTO searchDTO = buildActivitySearchDTO(request);
-            List<ViatorActivityDTO> activities = fetchValidActivities(request.locale(), searchDTO);
-            List<ViatorActivityAvailabilityDTO> availabilities = fetchActivityAvailabilities(activities);
+            Map<String, ViatorActivityDTO> idToActivities = fetchValidActivities(request.locale(), searchDTO);
+            List<ViatorActivityAvailabilityDTO> availabilities = fetchActivityAvailabilities(idToActivities.values());
+
+            List<ViatorActivityDTO> activitiesToProcess = filterNoDataActivities(idToActivities, availabilities);
 
             return new ProviderActivityData(
-                    Collections.unmodifiableList(activities),
-                    mapToActivityData(activities, availabilities, request),
+                    activitiesToProcess,
+                    mapToActivityData(activitiesToProcess, availabilities, request),
                     request.startDate()
             );
         } catch (Exception e) {
@@ -107,59 +111,56 @@ public class ViatorActivityService {
         return new ViatorActivitySearchDTO.Pagination(1, itemsPerPage);
     }
 
-    private List<ViatorActivityDTO> fetchValidActivities(SupportedLocale locale, ViatorActivitySearchDTO searchDTO) {
-        return Optional.ofNullable(viatorClient.getActivitiesByRequestAndLanguage(
+    private Map<String, ViatorActivityDTO> fetchValidActivities(SupportedLocale locale, ViatorActivitySearchDTO searchDTO) {
+        return viatorClient.getActivitiesByRequestAndLanguage(
                         requireNonNull(locale, "Locale must not be null").getCode(),
-                        requireNonNull(searchDTO, "SearchDTO must not be null")))
-                .orElse(Collections.emptyList())
+                        requireNonNull(searchDTO, "SearchDTO must not be null"))
                 .stream()
+                // Activities without duration should not be processed
                 .filter(dto -> dto.getDurationMinutes() > 0)
-                .toList();
+                .collect(Collectors.toMap(ViatorActivityDTO::productCode, Function.identity()));
+
     }
 
-    private List<ViatorActivityAvailabilityDTO> fetchActivityAvailabilities(List<ViatorActivityDTO> activities) {
+    private List<ViatorActivityAvailabilityDTO> fetchActivityAvailabilities(Collection<ViatorActivityDTO> activities) {
         if (activities == null || activities.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
-        Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures =
+        List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures =
                 createAvailabilityFutures(activities);
 
-        return futures.entrySet().parallelStream()
-                .map(entry -> handleAvailabilityFuture(entry.getKey(), entry.getValue()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+        var futureArray = futures.toArray(new CompletableFuture[0]);
+
+        return CompletableFuture.allOf(futureArray)
+                .thenApply(ignored -> futures.stream()
+                        .map(CompletableFuture::join)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList())
+                .join();
+    }
+
+    private List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
+            Collection<ViatorActivityDTO> activities) {
+
+        return activities.stream().map(activity -> {
+            String productCode = requireNonNull(activity.productCode());
+
+            return CompletableFuture
+                    .supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
+                    .exceptionally(ex -> {
+                        log.warn("Error while fetching Activity Availability for product code : {}", productCode);
+                        return Optional.empty();
+                    });
+        }).toList();
+    }
+
+    private List<ViatorActivityDTO> filterNoDataActivities(Map<String, ViatorActivityDTO> idToActivities, List<ViatorActivityAvailabilityDTO> availabilities) {
+
+        return availabilities.stream().map(availability -> idToActivities.get(availability.productCode()))
+                .filter(Objects::nonNull)
                 .toList();
-    }
-
-    private Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
-            List<ViatorActivityDTO> activities) {
-
-        Map<String, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures = new ConcurrentHashMap<>();
-        activities.forEach(activity -> {
-            String productCode = requireNonNull(activity.productCode(), "Product code must not be null");
-            futures.put(productCode, fetchAvailabilityAsync(productCode));
-        });
-        return futures;
-    }
-
-    private CompletableFuture<Optional<ViatorActivityAvailabilityDTO>> fetchAvailabilityAsync(String productCode) {
-        return CompletableFuture
-                .supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
-                .exceptionally(ex -> {
-                    log.error("Error fetching availability for productCode: {}", productCode, ex);
-                    return Optional.empty();
-                });
-    }
-
-    private Optional<ViatorActivityAvailabilityDTO> handleAvailabilityFuture(
-            String productCode, CompletableFuture<Optional<ViatorActivityAvailabilityDTO>> future) {
-        try {
-            return future.get(30, TimeUnit.SECONDS);
-        } catch (ExecutionException | TimeoutException | InterruptedException e) {
-            log.error("Failed to fetch availability for productCode: {}", productCode, e);
-            return Optional.empty();
-        }
     }
 
     private ActivityData mapToActivityData(List<ViatorActivityDTO> activities,
@@ -177,5 +178,4 @@ public class ViatorActivityService {
             throw new ViatorActivityServiceException("Activity data mapping failed", e);
         }
     }
-
 }
