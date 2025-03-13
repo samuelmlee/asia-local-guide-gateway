@@ -8,10 +8,10 @@ public record CommonActivity(
 
         String title,
         String description,
-        List<CommonImageDTO> images,
-        CommonReviewsDTO reviews,
-        CommonDurationDTO duration,
-        CommonPricingDTO pricing,
+        List<CommonImage> images,
+        CommonReviews reviews,
+        CommonDuration duration,
+        CommonPricing pricing,
         String bookingUrl,
         List<String> categories,
         // To implement when distances between activities are needed
@@ -21,16 +21,16 @@ public record CommonActivity(
         String providerId
 ) {
 
-    public record CommonImageDTO(Integer height, Integer width, String url) {
+    public record CommonImage(Integer height, Integer width, String url) {
     }
 
-    public record CommonReviewsDTO(Double averageRating, Integer totalReviews) {
+    public record CommonReviews(Double averageRating, Integer totalReviews) {
     }
 
-    public record CommonDurationDTO(Integer minMinutes, Integer maxMinutes) {
+    public record CommonDuration(Integer minMinutes, Integer maxMinutes) {
     }
 
-    public record CommonPricingDTO(Double amount, String currency) {
+    public record CommonPricing(Double amount, String currency) {
     }
 
 

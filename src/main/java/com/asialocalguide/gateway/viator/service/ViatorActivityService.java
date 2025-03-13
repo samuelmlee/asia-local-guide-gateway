@@ -2,12 +2,14 @@ package com.asialocalguide.gateway.viator.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityAvailabilityMappingException;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
+import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
@@ -44,8 +46,10 @@ public class ViatorActivityService {
 
             List<ViatorActivityDTO> activitiesToProcess = filterNoDataActivities(idToActivities, availabilities);
 
+            List<CommonActivity> commonActivities = activitiesToProcess.stream().map(ViatorActivityAdapter::toCommon).toList();
+
             return new ProviderActivityData(
-                    activitiesToProcess,
+                    commonActivities,
                     mapToActivityData(activitiesToProcess, availabilities, request),
                     request.startDate()
             );

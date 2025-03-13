@@ -2,11 +2,10 @@ package com.asialocalguide.gateway.viator.util;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonDurationDTO;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonImageDTO;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonPricingDTO;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonReviewsDTO;
-import com.asialocalguide.gateway.core.dto.planning.ImageDTO;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonDuration;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonImage;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonPricing;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonReviews;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO.DurationDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO.PricingDTO;
@@ -36,40 +35,40 @@ public class ViatorActivityAdapter {
         );
     }
 
-    private static List<CommonImageDTO> mapImages(List<ImageDTO> images) {
+    private static List<CommonImage> mapImages(List<ViatorActivityDTO.ImageDTO> images) {
         return Optional.ofNullable(images)
                 .orElse(Collections.emptyList())
                 .stream()
                 // Only mapping cover image
-                .filter(ImageDTO::isCover)
+                .filter(ViatorActivityDTO.ImageDTO::isCover)
                 .flatMap(img -> img.variants().stream())
-                .map(variant -> new CommonImageDTO(variant.height(), variant.width(), variant.url()))
+                .map(variant -> new CommonImage(variant.height(), variant.width(), variant.url()))
                 .toList();
     }
 
-    private static CommonReviewsDTO mapReviews(ReviewsDTO reviews) {
-        return new CommonReviewsDTO(
+    private static CommonReviews mapReviews(ReviewsDTO reviews) {
+        return new CommonReviews(
                 reviews.combinedAverageRating(),
                 reviews.totalReviews()
         );
     }
 
-    private static CommonDurationDTO mapDuration(DurationDTO duration) {
+    private static CommonDuration mapDuration(DurationDTO duration) {
         if (duration.fixedDurationInMinutes() != null) {
-            return new CommonDurationDTO(
+            return new CommonDuration(
                     duration.fixedDurationInMinutes(),
                     duration.fixedDurationInMinutes()
             );
         }
 
-        return new CommonDurationDTO(
+        return new CommonDuration(
                 duration.variableDurationFromMinutes(),
                 duration.variableDurationToMinutes()
         );
     }
 
-    private static CommonPricingDTO mapPricing(PricingDTO pricing) {
-        return new CommonPricingDTO(
+    private static CommonPricing mapPricing(PricingDTO pricing) {
+        return new CommonPricing(
                 Optional.ofNullable(pricing.summary())
                         .map(PricingDTO.SummaryDTO::fromPrice)
                         .orElse(null),
