@@ -1,12 +1,13 @@
 package com.asialocalguide.gateway.core.service.composer;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.CrossPlatformDestination;
+import com.asialocalguide.gateway.core.domain.destination.CommonDestination;
+
 import java.util.List;
 
 public interface DestinationProvider {
 
-  BookingProviderName getProviderName();
+    BookingProviderName getProviderName();
 
-  List<CrossPlatformDestination> getDestinations();
+    List<CommonDestination> getDestinations();
 }
