@@ -1,10 +1,12 @@
 package com.asialocalguide.gateway.viator.service;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
+import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityAvailabilityMappingException;
@@ -24,7 +26,9 @@ import static java.util.Objects.requireNonNull;
 
 @Service
 @Slf4j
-public class ViatorActivityService {
+public class ViatorActivityService implements ActivityProvider {
+
+    public static final BookingProviderName providerName = BookingProviderName.VIATOR;
 
     private static final String DEFAULT_CURRENCY = "EUR";
     private static final int MIN_RATING = 4;
@@ -36,6 +40,12 @@ public class ViatorActivityService {
         this.viatorClient = viatorClient;
     }
 
+    @Override
+    public BookingProviderName getProviderName() {
+        return null;
+    }
+
+    @Override
     public ProviderActivityData fetchProviderActivityData(ProviderPlanningRequest request) {
         validatePlanningRequest(request);
 

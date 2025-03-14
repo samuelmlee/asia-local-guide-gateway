@@ -1,18 +1,13 @@
 package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.config.SupportedLocale;
-import com.asialocalguide.gateway.core.domain.BookingProvider;
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
-import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.viator.service.ViatorActivityService;
+import com.asialocalguide.gateway.core.service.strategy.FetchActivitiesStrategy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -20,56 +15,45 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
+@Slf4j
 public class PlanningService {
 
-    private final BookingProviderRepository bookingProviderRepository;
+    List<FetchActivitiesStrategy> activitiesStrategies;
 
-    private final DestinationRepository destinationRepository;
-
-    private final ViatorActivityService viatorActivityService;
-
-    public PlanningService(
-            ViatorActivityService viatorActivityService,
-            BookingProviderRepository bookingProviderRepository,
-            DestinationRepository destinationRepository) {
-        this.viatorActivityService = viatorActivityService;
-        this.bookingProviderRepository = bookingProviderRepository;
-        this.destinationRepository = destinationRepository;
+    public PlanningService(List<FetchActivitiesStrategy> activitiesStrategies) {
+        this.activitiesStrategies = activitiesStrategies;
     }
 
     public List<DayPlanDTO> generateActivityPlanning(PlanningRequestDTO request) {
         SupportedLocale locale = SupportedLocale.getDefaultLocale();
 
-        LocalDate startDate = request.startDate();
-        LocalDate endDate = request.endDate();
-        long duration = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        List<ProviderActivityData> providerDataList = activitiesStrategies.stream()
+                .map(strategy -> {
 
-        BookingProvider viatorProvider =
-                bookingProviderRepository
-                        .findByName(BookingProviderName.VIATOR)
-                        .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
+                    try {
+                        return strategy.fetchProviderActivity(request, locale);
+                    } catch (Exception e) {
+                        log.error("Error during fetching of activities from Provider : {}", strategy.getProviderName(), e);
+                        return null;
+                    }
 
-        Destination destination =
-                destinationRepository.findById(request.destinationId()).orElseThrow(IllegalArgumentException::new);
+                })
+                .filter(Objects::nonNull)
+                .toList();
 
-        String viatorDestinationId =
-                destination.getBookingProviderMapping(viatorProvider.getId()).getProviderDestinationId();
-
-        ProviderPlanningRequest providerRequest =
-                new ProviderPlanningRequest(startDate, endDate, (int) duration, request.activityTagIds(), viatorDestinationId, locale);
-
-        ProviderActivityData result = viatorActivityService.fetchProviderActivityData(providerRequest);
+        // Implement merging of ProviderActivityData when using multiple providers
+        ProviderActivityData result = providerDataList.getFirst();
 
         // Generate availability 3d array using scheduler
         boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityData());
 
         return createDayPlans(
-                startDate, duration, result.activities(), schedule, result.activityData().getValidStartTimes());
+                request.startDate(), request.getDuration(), result.activities(), schedule, result.activityData().getValidStartTimes());
     }
 
     private List<DayPlanDTO> createDayPlans(
