@@ -41,12 +41,17 @@ public class ViatorActivityAdapter {
                 .stream()
                 // Only mapping cover image
                 .filter(ViatorActivityDTO.ImageDTO::isCover)
-                .flatMap(img -> img.variants().stream())
+                .flatMap(img ->
+                        Optional.ofNullable(img.variants()).orElse(List.of()).stream())
                 .map(variant -> new CommonImage(variant.height(), variant.width(), variant.url()))
                 .toList();
     }
 
     private static CommonReviews mapReviews(ReviewsDTO reviews) {
+        if (reviews == null) {
+            return new CommonReviews(0.0, 0);
+        }
+
         return new CommonReviews(
                 reviews.combinedAverageRating(),
                 reviews.totalReviews()
@@ -54,6 +59,10 @@ public class ViatorActivityAdapter {
     }
 
     private static CommonDuration mapDuration(DurationDTO duration) {
+        if (duration == null) {
+            return new CommonDuration(0, 0);
+        }
+
         if (duration.fixedDurationInMinutes() != null) {
             return new CommonDuration(
                     duration.fixedDurationInMinutes(),
@@ -68,10 +77,14 @@ public class ViatorActivityAdapter {
     }
 
     private static CommonPricing mapPricing(PricingDTO pricing) {
+        if (pricing == null) {
+            return new CommonPricing(0.0, "UNKNOWN");
+        }
+
         return new CommonPricing(
                 Optional.ofNullable(pricing.summary())
                         .map(PricingDTO.SummaryDTO::fromPrice)
-                        .orElse(null),
+                        .orElse(0.0),
                 pricing.currency()
         );
     }

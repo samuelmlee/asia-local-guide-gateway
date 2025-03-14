@@ -119,7 +119,7 @@ class DestinationPersistenceServiceTest {
         existingMapping.setProvider(provider);
         existingDestination.addProviderMapping(existingMapping);
 
-        when(existingDestination.getBookingProviderMapping(1L)).thenReturn(existingMapping);
+        when(existingDestination.getBookingProviderMapping(1L)).thenReturn(Optional.of(existingMapping));
         when(existingDestination.getId()).thenReturn(destinationId);
 
         when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
@@ -206,7 +206,9 @@ class DestinationPersistenceServiceTest {
 
         assertNotNull(saved.getBookingProviderMapping(1L));
 
-        assertEquals("D123", saved.getBookingProviderMapping(1L).getProviderDestinationId());
+        assertTrue(saved.getBookingProviderMapping(1L).isPresent());
+
+        assertEquals("D123", saved.getBookingProviderMapping(1L).get().getProviderDestinationId());
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
+import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
@@ -44,8 +45,10 @@ public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
         Destination destination =
                 destinationRepository.findById(request.destinationId()).orElseThrow(IllegalArgumentException::new);
 
-        String viatorDestinationId =
-                destination.getBookingProviderMapping(viatorProvider.getId()).getProviderDestinationId();
+        DestinationProviderMapping providerMapping =
+                destination.getBookingProviderMapping(viatorProvider.getId()).orElseThrow(() -> new IllegalStateException("Destination BookingProvider Mapping not found"));
+
+        String viatorDestinationId = providerMapping.getProviderDestinationId();
 
         ProviderPlanningRequest providerRequest =
                 new ProviderPlanningRequest(request.startDate(), request.endDate(), request.getDuration(), request.activityTagIds(), viatorDestinationId, locale);
