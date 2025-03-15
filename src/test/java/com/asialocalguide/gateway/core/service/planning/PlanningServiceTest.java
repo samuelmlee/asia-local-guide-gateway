@@ -4,6 +4,7 @@ import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivitiesStrategy;
@@ -14,9 +15,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
@@ -86,7 +90,7 @@ class PlanningServiceTest {
         when(strategy1.fetchProviderActivity(any(), any()))
                 .thenReturn(new ProviderActivityData(
                         List.of(),
-                        new ActivityData(new boolean[0][0][0], new String[0][0][0], new int[0], new int[0]),
+                        new ActivityData(new boolean[1][2][24], new String[1][2][24], new int[0], new int[0]),
                         today
                 ));
 
@@ -97,17 +101,21 @@ class PlanningServiceTest {
 
     @Test
     void generateActivityPlanning_shouldHandleSchedulingFailure() {
+        boolean[][][] availability = new boolean[1][2][24];
+
+        String[][][] startTimes = new String[1][2][24];
+
         // Setup invalid activity data that can't be scheduled
         ActivityData invalidData = new ActivityData(
-                new boolean[][][]{{{true}}},  // Availability
-                new String[][][]{{{""}}},     // Start times
+                availability,  // Availability
+                startTimes,     // Start times
                 new int[]{1},                 // Ratings
-                new int[]{1440}               // 24-hour duration
+                new int[]{8}               // 8-hour duration
         );
 
         when(strategy1.fetchProviderActivity(any(), any()))
                 .thenReturn(new ProviderActivityData(
-                        List.of(createTestActivity()),
+                        List.of(createTestActivity(4.5)),
                         invalidData,
                         today
                 ));
@@ -117,24 +125,38 @@ class PlanningServiceTest {
         assertTrue(result.getFirst().activities().isEmpty());
     }
 
-
     @Test
     void generateActivityPlanning_shouldCreateMultiDaySchedule() {
-        // Setup activities available across 3 days
+        // 24 slots/day format: 0=00:00-01:00, 1=01:00-02:00,...23=23:00-00:00
+        int numDays = 3;
+        int slotsPerDay = 24;
+
+        // 1 activity available at 09:00, 14:00, 18:00 each day (slots 9, 14, 18)
+        boolean[][][] availability = new boolean[1][numDays][slotsPerDay];
+        String[][][] startTimes = new String[1][numDays][slotsPerDay];
+
+        // Initialize availability and start times
+        for (int day = 0; day < numDays; day++) {
+            availability[0][day][9] = true;   // 09:00-10:00
+            availability[0][day][14] = true;  // 14:00-15:00
+            availability[0][day][18] = true;  // 18:00-19:00
+
+            Arrays.fill(startTimes[0][day], ""); // Initialize empty
+            startTimes[0][day][9] = "09:00";
+            startTimes[0][day][14] = "14:00";
+            startTimes[0][day][18] = "18:00";
+        }
+
         ActivityData testData = new ActivityData(
-                new boolean[][][]{ // 1 activity x 3 days x 1 slot
-                        {{true}, {true}, {true}}
-                },
-                new String[][][]{ // Start times for each day
-                        {{"09:00"}, {"14:00"}, {"18:00"}}
-                },
-                new int[]{5},
+                availability,
+                startTimes,
+                new int[]{5}, // Rating
                 new int[]{60}
         );
 
         when(strategy1.fetchProviderActivity(any(), any()))
                 .thenReturn(new ProviderActivityData(
-                        List.of(createTestActivity(), createTestActivity(), createTestActivity()),
+                        List.of(createTestActivity(4.5)), // Single activity instance
                         testData,
                         today
                 ));
@@ -148,40 +170,74 @@ class PlanningServiceTest {
 
         List<DayPlanDTO> result = planningService.generateActivityPlanning(multiDayRequest);
 
-        assertEquals(3, result.size());
-        assertEquals(3, result.stream()
+        // Verify the activity is scheduled once across all days
+        int totalScheduled = result.stream()
                 .mapToInt(day -> day.activities().size())
-                .sum());
+                .sum();
+        assertEquals(1, totalScheduled);
+
+        // Verify it's scheduled in the optimal slot (earliest high-rated)
+        DayActivityDTO scheduled = result.stream()
+                .flatMap(day -> day.activities().stream())
+                .findFirst()
+                .orElseThrow();
+        assertEquals("09:00", scheduled.startTime().format(DateTimeFormatter.ofPattern("HH:mm")));
     }
 
     @Test
     void generateActivityPlanning_shouldHandleTimeSlotConflicts() {
-        // Setup activities that would create scheduling conflicts
+        // Setup 1-day request with 24 slots
+        LocalDate endDate = today.plusDays(0); // Same day (1-day duration)
+        int numDays = 1;
+        int slotsPerDay = 24;
+
+        // Activity 0: High rating (5), duration 57m (1 slot) at slot 9
+        // Activity 1: Low rating (4), duration 57m (1 slot) at slot 9 (CONFLICT)
+        boolean[][][] availability = {
+                { // Activity 0
+                        new boolean[slotsPerDay]
+                },
+                { // Activity 1
+                        new boolean[slotsPerDay]
+                }
+        };
+
+        String[][][] startTimes = new String[2][numDays][slotsPerDay];
+
+        // Create conflict at slot 9
+        availability[0][0][9] = true; // Activity 0 available
+        availability[1][0][9] = true; // Activity 1 available (same slot)
+
+        startTimes[0][0][9] = "09:00";
+        startTimes[1][0][9] = "09:00";
+
         ActivityData conflictData = new ActivityData(
-                new boolean[][][]{ // 2 activities x 1 day x 2 slots
-                        {{true, true}},
-                        {{true, false}}
-                },
-                new String[][][]{
-                        {{"09:00", "10:00"}},
-                        {{"14:00", ""}}
-                },
-                new int[]{5, 4},
-                new int[]{60, 120}
+                availability,
+                startTimes,
+                new int[]{4, 5},  // Ratings
+                new int[]{1, 1} // Durations
         );
 
         when(strategy1.fetchProviderActivity(any(), any()))
                 .thenReturn(new ProviderActivityData(
-                        List.of(createTestActivity(), createTestActivity()),
+                        List.of(createTestActivity(4.5), createTestActivity(5)),
                         conflictData,
                         today
                 ));
 
-        List<DayPlanDTO> result = planningService.generateActivityPlanning(validRequest);
+        PlanningRequestDTO request = new PlanningRequestDTO(
+                today,
+                endDate,
+                1L,
+                List.of("adventure")
+        );
 
-        // Verify the scheduler resolves conflicts by selecting higher-rated activity
+        List<DayPlanDTO> result = planningService.generateActivityPlanning(request);
+
+        // Verify only 1 activity is scheduled
         assertEquals(1, result.size());
-        assertFalse(result.getFirst().activities().isEmpty());
+        assertEquals(1, result.getFirst().activities().size());
+        assertEquals(5, result.getFirst().activities().getFirst().combinedAverageRating());
     }
 
     private ProviderActivityData createTestProviderData() {
@@ -195,7 +251,7 @@ class PlanningServiceTest {
         startTimes[0][1][13] = "14:00";
 
         return new ProviderActivityData(
-                List.of(createTestActivity()),
+                List.of(createTestActivity(4.5)),
                 new ActivityData(
                         availability,
                         startTimes,
@@ -206,15 +262,15 @@ class PlanningServiceTest {
         );
     }
 
-    private CommonActivity createTestActivity() {
+    private CommonActivity createTestActivity(double rating) {
         return new CommonActivity(
                 "Test Activity",
                 "Test Description",
                 List.of(),
-                new CommonActivity.CommonReviews(4.5, 100),
+                new CommonActivity.CommonReviews(rating, 100),
                 new CommonActivity.CommonDuration(60, 60),
                 new CommonActivity.CommonPricing(50.0, "EUR"),
-                "http://booking.com",
+                "http://viator.com",
                 List.of("adventure"),
                 BookingProviderName.VIATOR,
                 "VIATOR-123"
