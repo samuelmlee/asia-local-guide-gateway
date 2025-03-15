@@ -46,6 +46,10 @@ public class PlanningService {
                 .filter(Objects::nonNull)
                 .toList();
 
+        if (providerDataList.isEmpty()) {
+            return List.of();
+        }
+
         // Implement merging of ProviderActivityData when using multiple providers
         ProviderActivityData result = providerDataList.getFirst();
 

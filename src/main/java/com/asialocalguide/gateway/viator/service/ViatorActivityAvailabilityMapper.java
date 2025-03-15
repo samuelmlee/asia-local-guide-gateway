@@ -46,7 +46,7 @@ public class ViatorActivityAvailabilityMapper {
         if (activities == null || activities.isEmpty() ||
                 availabilities == null || availabilities.isEmpty() ||
                 minDate == null || maxDate == null) {
-            // Input data invalid => empty array
+            // Input data invalid => empty arrays
             return new ActivityData(new boolean[0][0][0], new String[0][0][0], new int[0], new int[0]);
         }
 
@@ -133,8 +133,10 @@ public class ViatorActivityAvailabilityMapper {
             String productCode = dto.productCode();
             // Only considering first default bookable item to not pollute the calendar with multiple
             // entries of the same activity
-            ViatorActivityAvailabilityDTO.BookableItem item = dto.bookableItems().getFirst();
-            activities.add(new MappedActivity(productCode, item.seasons()));
+            if (!dto.bookableItems().isEmpty()) {
+                ViatorActivityAvailabilityDTO.BookableItem item = dto.bookableItems().getFirst();
+                activities.add(new MappedActivity(productCode, item.seasons()));
+            }
         }
         return activities;
     }
@@ -193,6 +195,7 @@ public class ViatorActivityAvailabilityMapper {
                         viatorActivityDTO -> {
                             int durationMinutes = viatorActivityDTO.getDurationMinutes();
 
+                            // One slot per hour, return Integer of number of slots taken
                             return OneHourTimeSlot.getDurationInSlots(durationMinutes);
                         })
                 .toArray();
