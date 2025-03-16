@@ -9,7 +9,6 @@ import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
-import com.asialocalguide.gateway.viator.exception.ViatorActivityAvailabilityMappingException;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
 import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 import lombok.extern.slf4j.Slf4j;
@@ -187,7 +186,7 @@ public class ViatorActivityService implements ActivityProvider {
                     request.startDate(),
                     request.endDate()
             );
-        } catch (ViatorActivityAvailabilityMappingException e) {
+        } catch (Exception e) {
             log.error("Failed to map activity data: {}", e.getMessage());
             throw new ViatorActivityServiceException("Activity data mapping failed", e);
         }

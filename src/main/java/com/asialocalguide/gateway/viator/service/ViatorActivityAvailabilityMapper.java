@@ -95,7 +95,7 @@ public class ViatorActivityAvailabilityMapper {
                         // Resolve index from startTime, find match from OneHourTimeSlot enum
                         int tIndex = OneHourTimeSlot.getIndexFromTimeString(entry.startTime());
 
-                        if (tIndex == -1) {
+                        if (tIndex < 0 || tIndex >= OneHourTimeSlot.values().length) {
                             continue;
                         }
 
