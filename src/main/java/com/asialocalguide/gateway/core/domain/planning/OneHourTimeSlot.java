@@ -51,7 +51,7 @@ public enum OneHourTimeSlot {
 
         String[] parts = time.split(":");
 
-        if (ArrayUtils.isNotEmpty(parts)) {
+        if (!ArrayUtils.isNotEmpty(parts)) {
             return -1;
         }
 
