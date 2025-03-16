@@ -94,6 +94,11 @@ public class ViatorActivityAvailabilityMapper {
                     for (ViatorActivityAvailabilityDTO.TimedEntry entry : pricingRecord.timedEntries()) {
                         // Resolve index from startTime, find match from OneHourTimeSlot enum
                         int tIndex = OneHourTimeSlot.getIndexFromTimeString(entry.startTime());
+
+                        if (tIndex == -1) {
+                            continue;
+                        }
+
                         Set<String> unavailable = new HashSet<>();
 
                         if (entry.unavailableDates() != null) {

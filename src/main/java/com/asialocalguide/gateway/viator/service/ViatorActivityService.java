@@ -42,7 +42,7 @@ public class ViatorActivityService implements ActivityProvider {
 
     @Override
     public BookingProviderName getProviderName() {
-        return null;
+        return providerName;
     }
 
     @Override

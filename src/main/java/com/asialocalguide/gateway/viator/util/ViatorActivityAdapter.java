@@ -21,6 +21,21 @@ public class ViatorActivityAdapter {
     }
 
     public static CommonActivity toCommon(ViatorActivityDTO viator) {
+        if (viator == null) {
+            return new CommonActivity(
+                    "[DEFAULT] Missing Activity",
+                    "",
+                    Collections.emptyList(),
+                    new CommonReviews(0.0, 0),
+                    new CommonDuration(0, 0),
+                    new CommonPricing(0.0, "EUR"),
+                    "",
+                    Collections.emptyList(),
+                    BookingProviderName.VIATOR,
+                    "DEFAULT_ID"
+            );
+        }
+
         return new CommonActivity(
                 viator.title(),
                 viator.description(),
