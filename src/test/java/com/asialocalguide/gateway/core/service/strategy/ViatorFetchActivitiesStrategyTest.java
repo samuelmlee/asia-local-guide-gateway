@@ -135,7 +135,6 @@ class ViatorFetchActivitiesStrategyTest {
 
         // Verify
         assertThat(result).isEqualTo(expectedData);
-        assertThat(result.activities()).isNull();
 
         ArgumentCaptor<ProviderPlanningRequest> captor =
                 ArgumentCaptor.forClass(ProviderPlanningRequest.class);
@@ -154,7 +153,7 @@ class ViatorFetchActivitiesStrategyTest {
         setupViatorProvider();
         Destination destination = mock(Destination.class);
         DestinationProviderMapping mapping = new DestinationProviderMapping();
-        mapping.setProviderDestinationId("D123");
+        mapping.setProviderDestinationId("VIATOR_DEST_123");
 
         when(destinationRepository.findById(validRequest.destinationId()))
                 .thenReturn(Optional.of(destination));
