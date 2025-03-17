@@ -17,6 +17,14 @@ public class ActivitySchedulerWithRatings {
     private ActivitySchedulerWithRatings() {
     }
 
+    /**
+     * Generates an optimal activity schedule using constraint programming.
+     *
+     * @param activityData Contains availability matrix, ratings, and durations
+     * @return 3D array [activity][day][timeSlot] indicating scheduled times
+     * @throws IllegalArgumentException If input data is invalid
+     * @throws IllegalStateException    If OR-Tools native libraries fail to load
+     */
     public static boolean[][][] scheduleActivities(ActivityData activityData) {
         Objects.requireNonNull(activityData);
 
@@ -27,12 +35,9 @@ public class ActivitySchedulerWithRatings {
 
         validateActivityData(availabilityMatrix, activityRatings, activityDurations);
 
-        try {
-            Loader.loadNativeLibraries();
-        } catch (Exception e) {
-            throw new IllegalStateException("OR-Tools library loading failed", e);
-        }
+        loadNativeLibraries();
 
+        // Get scheduling dimensions
         int numTimeSlotsPerDay = availabilityMatrix[0][0].length;
 
         int numActivities = availabilityMatrix.length;
@@ -47,19 +52,21 @@ public class ActivitySchedulerWithRatings {
         List<IntervalVar> allIntervals = new ArrayList<>();
 
         for (int a = 0; a < numActivities; a++) {
-            List<Integer> validStartTimes = getValidStartTimes(numDays, numTimeSlotsPerDay, availabilityMatrix, a);
+            List<Integer> validStartTimeslots = getValidStartTimeslots(numDays, numTimeSlotsPerDay, availabilityMatrix, a);
 
-            if (validStartTimes.isEmpty()) {
+            if (validStartTimeslots.isEmpty()) {
                 continue;
             }
 
+            // Create CP-SAT variables for this activity
             startTimes[a] =
                     model.newIntVarFromDomain(
-                            Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()), "start_activity_" + a);
+                            Domain.fromValues(validStartTimeslots.stream().mapToLong(i -> i).toArray()), "start_activity_" + a);
             // Add a buffer of 3 time slots to the duration between activities
             int duration = activityDurations[a] + 3;
             endTimes[a] = model.newIntVar(0, (long) numDays * numTimeSlotsPerDay, "end_activity_" + a);
             isAssigned[a] = model.newBoolVar("is_assigned_" + a);
+            // Create interval variable representing the activity's time slot
             activityIntervals[a] =
                     model.newOptionalIntervalVar(
                             startTimes[a], model.newConstant(duration), endTimes[a], isAssigned[a], "interval_activity_" + a);
@@ -67,6 +74,7 @@ public class ActivitySchedulerWithRatings {
             allIntervals.add(activityIntervals[a]);
         }
 
+        // Add no-overlap constraint for all activities
         model.addNoOverlap(allIntervals);
 
         // Ensure each activity is scheduled at most once
@@ -88,6 +96,69 @@ public class ActivitySchedulerWithRatings {
         CpSolver solver = new CpSolver();
         CpSolverStatus status = solver.solve(model);
 
+        return buildScheduleFromSolution(numActivities, numDays, numTimeSlots, status, startTimes, solver, isAssigned);
+    }
+
+    /**
+     * Loads required OR-Tools native libraries
+     */
+    private static void loadNativeLibraries() {
+        try {
+            Loader.loadNativeLibraries();
+        } catch (Exception e) {
+            throw new IllegalStateException("OR-Tools library loading failed", e);
+        }
+    }
+
+    /**
+     * Validates consistency of activity data dimensions
+     *
+     * @throws IllegalArgumentException If:
+     *                                  - Any input array is empty
+     *                                  - Array lengths don't match
+     */
+    private static void validateActivityData(boolean[][][] availabilityMatrix, int[] ratings, int[] durations) {
+        if (ArrayUtils.isEmpty(availabilityMatrix) || ArrayUtils.isEmpty(ratings) || ArrayUtils.isEmpty(durations)) {
+            throw new IllegalArgumentException("ActivityData fields must not be empty");
+        }
+        int numActivities = availabilityMatrix.length;
+        if (ratings.length != numActivities || durations.length != numActivities) {
+            throw new IllegalArgumentException("Inconsistent activity data sizes");
+        }
+    }
+
+    /**
+     * Converts 3D availability matrix to absolute time slots for an activity
+     *
+     * @param numDays            Total number of scheduling days
+     * @param numTimeSlotsPerDay Time slots per day (typically 24)
+     * @param availabilityMatrix 3D availability matrix [activity][day][slot]
+     * @param activityIndex      Index of the activity to process
+     * @return List of absolute time slots (day*slotsPerDay + slot)
+     */
+    private static List<Integer> getValidStartTimeslots(int numDays, int numTimeSlotsPerDay, boolean[][][] availabilityMatrix, int activityIndex) {
+        List<Integer> validStartTimes = new ArrayList<>();
+
+        // Convert 2D (day, slot) availability to 1D absolute slots
+        for (int d = 0; d < numDays; d++) {
+            for (int t = 0; t < numTimeSlotsPerDay; t++) {
+                if (availabilityMatrix[activityIndex][d][t]) {
+                    // Absolute slot index is day * time slot per day + time slot assigned
+                    int absoluteSlot = d * numTimeSlotsPerDay + t;
+                    validStartTimes.add(absoluteSlot);
+                }
+            }
+        }
+        return validStartTimes;
+    }
+
+    /**
+     * Converts solver solution to a 3D schedule array
+     *
+     * @param status Solver result status
+     * @return 3D schedule array with true values for scheduled times
+     */
+    private static boolean[][][] buildScheduleFromSolution(int numActivities, int numDays, int numTimeSlots, CpSolverStatus status, IntVar[] startTimes, CpSolver solver, BoolVar[] isAssigned) {
         boolean[][][] finalSchedule = new boolean[numActivities][numDays][numTimeSlots];
         if (status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE) {
             for (int a = 0; a < numActivities; a++) {
@@ -102,29 +173,5 @@ public class ActivitySchedulerWithRatings {
             log.warn("No feasible solution found. Solver status: {}", status);
         }
         return finalSchedule;
-    }
-
-    private static void validateActivityData(boolean[][][] availabilityMatrix, int[] ratings, int[] durations) {
-        if (ArrayUtils.isEmpty(availabilityMatrix) || ArrayUtils.isEmpty(ratings) || ArrayUtils.isEmpty(durations)) {
-            throw new IllegalArgumentException("ActivityData fields must not be empty");
-        }
-        int numActivities = availabilityMatrix.length;
-        if (ratings.length != numActivities || durations.length != numActivities) {
-            throw new IllegalArgumentException("Inconsistent activity data sizes");
-        }
-    }
-
-    private static List<Integer> getValidStartTimes(int numDays, int numTimeSlotsPerDay, boolean[][][] availabilityMatrix, int activityIndex) {
-        List<Integer> validStartTimes = new ArrayList<>();
-
-        for (int d = 0; d < numDays; d++) {
-            for (int t = 0; t < numTimeSlotsPerDay; t++) {
-                if (availabilityMatrix[activityIndex][d][t]) {
-                    int absoluteSlot = d * numTimeSlotsPerDay + t;
-                    validStartTimes.add(absoluteSlot);
-                }
-            }
-        }
-        return validStartTimes;
     }
 }
