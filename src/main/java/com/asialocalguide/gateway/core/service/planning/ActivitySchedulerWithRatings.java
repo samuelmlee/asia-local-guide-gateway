@@ -4,98 +4,127 @@ import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.google.ortools.Loader;
 import com.google.ortools.sat.*;
 import com.google.ortools.util.Domain;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Objects;
 
 @Slf4j
 public class ActivitySchedulerWithRatings {
 
-  private ActivitySchedulerWithRatings() {}
+    private ActivitySchedulerWithRatings() {
+    }
 
-  public static boolean[][][] scheduleActivities(ActivityData activityData) {
+    public static boolean[][][] scheduleActivities(ActivityData activityData) {
+        Objects.requireNonNull(activityData);
 
-    Loader.loadNativeLibraries();
+        // Map activities into availability, ratings, and durations
+        boolean[][][] availabilityMatrix = activityData.getAvailabilityMatrix();
+        int[] activityRatings = activityData.getRatings();
+        int[] activityDurations = activityData.getDurations();
 
-    // Map activities into availability, ratings, and durations
-    boolean[][][] availabilityMatrix = activityData.getAvailabilityMatrix();
-    int[] activityRatings = activityData.getRatings();
-    int[] activityDurations = activityData.getDurations();
+        validateActivityData(availabilityMatrix, activityRatings, activityDurations);
 
-    int numTimeSlotsPerDay = availabilityMatrix[0][0].length;
-
-    int numActivities = availabilityMatrix.length;
-    int numDays = availabilityMatrix[0].length;
-    int numTimeSlots = availabilityMatrix[0][0].length; // 23 slots per day
-
-    CpModel model = new CpModel();
-    IntVar[] startTimes = new IntVar[numActivities];
-    IntVar[] endTimes = new IntVar[numActivities];
-    IntervalVar[] activityIntervals = new IntervalVar[numActivities];
-    BoolVar[] isAssigned = new BoolVar[numActivities];
-    List<IntervalVar> allIntervals = new ArrayList<>();
-
-    for (int a = 0; a < numActivities; a++) {
-      List<Integer> validStartTimes = new ArrayList<>();
-      for (int d = 0; d < numDays; d++) {
-        for (int t = 0; t < numTimeSlotsPerDay; t++) {
-          if (availabilityMatrix[a][d][t]) {
-            int absoluteSlot = d * numTimeSlotsPerDay + t;
-            validStartTimes.add(absoluteSlot);
-          }
+        try {
+            Loader.loadNativeLibraries();
+        } catch (Exception e) {
+            throw new IllegalStateException("OR-Tools library loading failed", e);
         }
-      }
 
-      if (validStartTimes.isEmpty()) continue;
+        int numTimeSlotsPerDay = availabilityMatrix[0][0].length;
 
-      startTimes[a] =
-          model.newIntVarFromDomain(
-              Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()), "start_activity_" + a);
-      // Add a buffer of 3 time slots to the duration between activities
-      int duration = activityDurations[a] + 3;
-      endTimes[a] = model.newIntVar(0, (long) numDays * numTimeSlotsPerDay, "end_activity_" + a);
-      isAssigned[a] = model.newBoolVar("is_assigned_" + a);
-      activityIntervals[a] =
-          model.newOptionalIntervalVar(
-              startTimes[a], model.newConstant(duration), endTimes[a], isAssigned[a], "interval_activity_" + a);
+        int numActivities = availabilityMatrix.length;
+        int numDays = availabilityMatrix[0].length;
+        int numTimeSlots = availabilityMatrix[0][0].length; // 24 slots per day
 
-      allIntervals.add(activityIntervals[a]);
-    }
+        CpModel model = new CpModel();
+        IntVar[] startTimes = new IntVar[numActivities];
+        IntVar[] endTimes = new IntVar[numActivities];
+        IntervalVar[] activityIntervals = new IntervalVar[numActivities];
+        BoolVar[] isAssigned = new BoolVar[numActivities];
+        List<IntervalVar> allIntervals = new ArrayList<>();
 
-    model.addNoOverlap(allIntervals);
+        for (int a = 0; a < numActivities; a++) {
+            List<Integer> validStartTimes = getValidStartTimes(numDays, numTimeSlotsPerDay, availabilityMatrix, a);
 
-    // Ensure each activity is scheduled at most once
-    for (int a = 0; a < numActivities; a++) {
-      if (startTimes[a] != null) {
-        model.addLessOrEqual(isAssigned[a], 1);
-      }
-    }
+            if (validStartTimes.isEmpty()) {
+                continue;
+            }
 
-    // Objective: Maximize the sum of activity ratings of assigned activities
-    LinearExprBuilder objective = LinearExpr.newBuilder();
-    for (int a = 0; a < numActivities; a++) {
-      if (startTimes[a] != null) {
-        objective.addTerm(isAssigned[a], activityRatings[a]);
-      }
-    }
-    model.maximize(objective.build());
+            startTimes[a] =
+                    model.newIntVarFromDomain(
+                            Domain.fromValues(validStartTimes.stream().mapToLong(i -> i).toArray()), "start_activity_" + a);
+            // Add a buffer of 3 time slots to the duration between activities
+            int duration = activityDurations[a] + 3;
+            endTimes[a] = model.newIntVar(0, (long) numDays * numTimeSlotsPerDay, "end_activity_" + a);
+            isAssigned[a] = model.newBoolVar("is_assigned_" + a);
+            activityIntervals[a] =
+                    model.newOptionalIntervalVar(
+                            startTimes[a], model.newConstant(duration), endTimes[a], isAssigned[a], "interval_activity_" + a);
 
-    CpSolver solver = new CpSolver();
-    CpSolverStatus status = solver.solve(model);
-
-    boolean[][][] finalSchedule = new boolean[numActivities][numDays][numTimeSlots];
-    if (status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE) {
-      for (int a = 0; a < numActivities; a++) {
-        if (startTimes[a] != null && solver.value(isAssigned[a]) == 1) {
-          int scheduledTime = (int) solver.value(startTimes[a]);
-          int scheduledDay = scheduledTime / numTimeSlots;
-          int scheduledSlot = scheduledTime % numTimeSlots;
-          finalSchedule[a][scheduledDay][scheduledSlot] = true;
+            allIntervals.add(activityIntervals[a]);
         }
-      }
-    } else {
-      log.warn("No feasible solution found. Solver status: {}", status);
+
+        model.addNoOverlap(allIntervals);
+
+        // Ensure each activity is scheduled at most once
+        for (int a = 0; a < numActivities; a++) {
+            if (startTimes[a] != null) {
+                model.addLessOrEqual(isAssigned[a], 1);
+            }
+        }
+
+        // Objective: Maximize the sum of activity ratings of assigned activities
+        LinearExprBuilder objective = LinearExpr.newBuilder();
+        for (int a = 0; a < numActivities; a++) {
+            if (startTimes[a] != null) {
+                objective.addTerm(isAssigned[a], activityRatings[a]);
+            }
+        }
+        model.maximize(objective.build());
+
+        CpSolver solver = new CpSolver();
+        CpSolverStatus status = solver.solve(model);
+
+        boolean[][][] finalSchedule = new boolean[numActivities][numDays][numTimeSlots];
+        if (status == CpSolverStatus.OPTIMAL || status == CpSolverStatus.FEASIBLE) {
+            for (int a = 0; a < numActivities; a++) {
+                if (startTimes[a] != null && solver.value(isAssigned[a]) == 1) {
+                    int scheduledTime = (int) solver.value(startTimes[a]);
+                    int scheduledDay = scheduledTime / numTimeSlots;
+                    int scheduledSlot = scheduledTime % numTimeSlots;
+                    finalSchedule[a][scheduledDay][scheduledSlot] = true;
+                }
+            }
+        } else {
+            log.warn("No feasible solution found. Solver status: {}", status);
+        }
+        return finalSchedule;
     }
-    return finalSchedule;
-  }
+
+    private static void validateActivityData(boolean[][][] availabilityMatrix, int[] ratings, int[] durations) {
+        if (ArrayUtils.isEmpty(availabilityMatrix) || ArrayUtils.isEmpty(ratings) || ArrayUtils.isEmpty(durations)) {
+            throw new IllegalArgumentException("ActivityData fields must not be empty");
+        }
+        int numActivities = availabilityMatrix.length;
+        if (ratings.length != numActivities || durations.length != numActivities) {
+            throw new IllegalArgumentException("Inconsistent activity data sizes");
+        }
+    }
+
+    private static List<Integer> getValidStartTimes(int numDays, int numTimeSlotsPerDay, boolean[][][] availabilityMatrix, int activityIndex) {
+        List<Integer> validStartTimes = new ArrayList<>();
+
+        for (int d = 0; d < numDays; d++) {
+            for (int t = 0; t < numTimeSlotsPerDay; t++) {
+                if (availabilityMatrix[activityIndex][d][t]) {
+                    int absoluteSlot = d * numTimeSlotsPerDay + t;
+                    validStartTimes.add(absoluteSlot);
+                }
+            }
+        }
+        return validStartTimes;
+    }
 }
