@@ -49,6 +49,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.google.firebase/firebase-admin -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.4.3</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.google.ortools/ortools-java -->
         <dependency>
             <groupId>com.google.ortools</groupId>
@@ -69,7 +76,7 @@
             <version>8.0.1.Final</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy -->
+        <!-- Modifies byte code to generate validation logic for Records -->
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
