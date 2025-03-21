@@ -22,8 +22,7 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() {
-        try {
-            InputStream credentials = new ByteArrayInputStream(privateKey.getContentAsByteArray());
+        try (InputStream credentials = new ByteArrayInputStream(privateKey.getContentAsByteArray())) {
             FirebaseOptions firebaseOptions = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(credentials))
                     .build();
