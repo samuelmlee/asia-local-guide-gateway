@@ -19,9 +19,9 @@ public class AuthController {
         this.authProviderService = authProviderService;
     }
 
-    @PostMapping("/existing-email")
+    @PostMapping("/check-email")
     public EmailCheckResultDTO isExistingEmail(@RequestBody @Valid EmailCheckDTO emailCheckDTO) {
-        boolean exists = authProviderService.isExistingEmail(emailCheckDTO.email());
+        boolean exists = authProviderService.checkExistingEmail(emailCheckDTO.email());
 
         return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
 

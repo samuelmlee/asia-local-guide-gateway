@@ -19,7 +19,7 @@ public class FirebaseAuthProviderService implements AuthProviderService {
         this.firebaseAuth = firebaseAuth;
     }
 
-    public boolean isExistingEmail(String email) {
+    public boolean checkExistingEmail(String email) {
         Objects.requireNonNull(email);
 
         try {

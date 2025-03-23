@@ -30,14 +30,14 @@ class FirebaseAuthProviderServiceTest {
     void existingEmailReturnsTrueWhenUserRecordIsFound() throws Exception {
         UserRecord mockRecord = mock(UserRecord.class);
         when(firebaseAuth.getUserByEmail("valid@example.com")).thenReturn(mockRecord);
-        boolean result = service.isExistingEmail("valid@example.com");
+        boolean result = service.checkExistingEmail("valid@example.com");
         assertTrue(result);
     }
 
     @Test
     void existingEmailReturnsFalseWhenNoUserRecordIsFound() throws Exception {
         when(firebaseAuth.getUserByEmail("unknown@example.com")).thenReturn(null);
-        boolean result = service.isExistingEmail("unknown@example.com");
+        boolean result = service.checkExistingEmail("unknown@example.com");
         assertFalse(result);
     }
 
@@ -54,13 +54,13 @@ class FirebaseAuthProviderServiceTest {
 
         when(firebaseAuth.getUserByEmail("throws@example.com"))
                 .thenThrow(exception);
-        boolean result = service.isExistingEmail("throws@example.com");
+        boolean result = service.checkExistingEmail("throws@example.com");
         assertFalse(result);
     }
 
     @Test
     void existingEmailHandlesNullEmail() {
-        assertThatThrownBy(() -> service.isExistingEmail(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> service.checkExistingEmail(null)).isInstanceOf(NullPointerException.class);
     }
 
 }
