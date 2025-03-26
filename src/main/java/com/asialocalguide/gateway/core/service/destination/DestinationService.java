@@ -63,7 +63,7 @@ public class DestinationService {
 
         LanguageCode languageCode;
         try {
-            languageCode = LanguageCode.from(locale.getCountry());
+            languageCode = LanguageCode.from(locale.getLanguage());
         } catch (Exception e) {
             languageCode = LanguageCode.EN;
         }

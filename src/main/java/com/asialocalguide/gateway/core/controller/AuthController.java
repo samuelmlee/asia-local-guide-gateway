@@ -24,7 +24,6 @@ public class AuthController {
         boolean exists = authProviderService.checkExistingEmail(emailCheckDTO.email());
 
         return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
-
     }
 
 }

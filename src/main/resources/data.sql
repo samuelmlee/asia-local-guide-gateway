@@ -753,3 +753,25 @@ INSERT IGNORE INTO country_translation (country_id, language_code, name) VALUES 
 INSERT IGNORE INTO country_translation (country_id, language_code, name) VALUES (251, 'fr', 'Écosse');
 INSERT IGNORE INTO country_translation (country_id, language_code, name) VALUES (252, 'en', 'Northern Ireland');
 INSERT IGNORE INTO country_translation (country_id, language_code, name) VALUES (252, 'fr', 'Irlande du Nord');
+
+
+-- Initialize activity_tag table
+
+INSERT IGNORE INTO activity_tag (id) VALUES (1);
+INSERT IGNORE INTO activity_tag (id) VALUES (2);
+INSERT IGNORE INTO activity_tag (id) VALUES (3);
+INSERT IGNORE INTO activity_tag (id) VALUES (4);
+INSERT IGNORE INTO activity_tag (id) VALUES (5);
+
+-- Initialize activity_tag_translation table
+
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (1, 'en', 'Art and Culture', 'Visit a museum');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (1, 'fr', 'Art et culture', 'Visiter un musée');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (2, 'en', 'Food and Drink', 'Try a new restaurant');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (2, 'fr', 'Gastronomie', 'Tester un nouveau restaurant');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (3, 'en', 'Sports', 'Go for a hike');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (3, 'fr', 'Activités sportives', 'Faire une randonnée');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (4, 'en', 'Classes and Workshops', 'Learn a new skill' );
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (4, 'fr', 'Cours et ateliers', 'Participer à un atelier');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (5, 'en', 'Tickets and passes', 'Take a city walk');
+INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (5, 'fr', 'Tickets et passes', 'Se promener en ville');
