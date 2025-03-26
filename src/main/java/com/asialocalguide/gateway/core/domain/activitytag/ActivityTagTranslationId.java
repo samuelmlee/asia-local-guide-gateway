@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @NoArgsConstructor
 @Embeddable
 @Getter
@@ -20,5 +22,19 @@ public class ActivityTagTranslationId {
     @Column(name = "language_code")
     @Convert(converter = LanguageCodeConverter.class)
     private LanguageCode languageCode;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ActivityTagTranslationId that = (ActivityTagTranslationId) o;
+        return Objects.equals(activityTagId, that.activityTagId) &&
+                Objects.equals(languageCode, that.languageCode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(activityTagId, languageCode);
+    }
 }
 
