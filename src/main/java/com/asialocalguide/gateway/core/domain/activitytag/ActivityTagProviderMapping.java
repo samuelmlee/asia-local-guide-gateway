@@ -1,4 +1,5 @@
-package com.asialocalguide.gateway.core.domain.destination;
+package com.asialocalguide.gateway.core.domain.activitytag;
+
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
@@ -13,42 +14,42 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 @Getter
-public class DestinationProviderMapping {
+public class ActivityTagProviderMapping {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "destination_id", nullable = false)
+    @JoinColumn(name = "activity_tag_id", nullable = false)
     @Setter
     @NotNull
-    private Destination destination;
+    private ActivityTag activityTag;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
-    @Setter
     @NotNull
+    @Setter
     private BookingProvider provider;
 
     @Setter
     @NotNull
     @NotEmpty
-    private String providerDestinationId;
+    private String providerActivityTagId;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        DestinationProviderMapping mapping = (DestinationProviderMapping) o;
+        ActivityTagProviderMapping that = (ActivityTagProviderMapping) o;
 
-        if (id != null && mapping.id != null) {
-            return Objects.equals(id, mapping.id);
+        if (id != null && that.id != null) {
+            return id.equals(that.id);
         }
 
-        return Objects.equals(provider, mapping.provider) &&
-                Objects.equals(providerDestinationId, mapping.providerDestinationId);
+        return Objects.equals(provider, that.provider) &&
+                Objects.equals(providerActivityTagId, that.providerActivityTagId);
     }
 
     @Override
@@ -57,6 +58,6 @@ public class DestinationProviderMapping {
             return id.hashCode();
         }
 
-        return Objects.hash(provider, providerDestinationId);
+        return Objects.hash(provider, providerActivityTagId);
     }
 }

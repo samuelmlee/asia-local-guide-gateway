@@ -53,6 +53,7 @@ public class ViatorActivityService implements ActivityProvider {
             Map<String, ViatorActivityDTO> idToActivities = fetchValidActivities(request.languageCode(), searchDTO);
             List<ViatorActivityAvailabilityDTO> availabilities = fetchActivityAvailabilities(idToActivities.values());
 
+            // Filter out activities with no availability data
             List<ViatorActivityDTO> activitiesToProcess = filterNoDataActivities(idToActivities, availabilities);
 
             List<CommonActivity> commonActivities = activitiesToProcess.stream().map(ViatorActivityAdapter::toCommon).toList();
