@@ -5,31 +5,25 @@ import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Objects;
 
 @Entity
-@NoArgsConstructor
-@Builder
-@AllArgsConstructor
 @Getter
 public class ActivityTagProviderMapping {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    /* No bidirectional relationship for ActivityTag,
+    it will need to be set manually in ActivityTagProviderMappingId */
+    @EmbeddedId
+    @Setter
+    private ActivityTagProviderMappingId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "activity_tag_id", nullable = false)
-    @Setter
+    @MapsId("bookingProviderId")
+    @JoinColumn(name = "booking_provider_id")
     @NotNull
-    private ActivityTag activityTag;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "provider_id", nullable = false)
-    @NotNull
-    @Setter
     private BookingProvider provider;
 
     @Setter

@@ -2,6 +2,7 @@ package com.asialocalguide.gateway.core.domain.activitytag;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -13,12 +14,14 @@ public class ActivityTag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private Long id;
 
     @OneToMany(mappedBy = "activityTag", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ActivityTagTranslation> activityTagTranslations = new HashSet<>();
 
-    @OneToMany(mappedBy = "activityTag", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "activity_tag_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Set<ActivityTagProviderMapping> activityTagProviderMappings = new HashSet<>();
 
     public Optional<ActivityTagTranslation> getTranslation(LanguageCode languageCode) {
@@ -40,15 +43,18 @@ public class ActivityTag {
     }
 
     public void addProviderMapping(ActivityTagProviderMapping mapping) {
-        mapping.setActivityTag(this);
+        if (mapping == null) {
+            return;
+        }
         activityTagProviderMappings.add(mapping);
     }
 
     public void removeProviderMapping(ActivityTagProviderMapping mapping) {
-        if (mapping != null) {
-            mapping.setActivityTag(null);
-            activityTagProviderMappings.remove(mapping);
+        if (mapping == null) {
+            return;
         }
+        activityTagProviderMappings.remove(mapping);
+
     }
 
     @Override

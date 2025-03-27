@@ -775,3 +775,13 @@ INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, nam
 INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (4, 'fr', 'Cours et ateliers', 'Participer à un atelier');
 INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (5, 'en', 'Tickets and passes', 'Take a city walk');
 INSERT IGNORE INTO activity_tag_translation (activity_tag_id, language_code, name, prompt_text) VALUES (5, 'fr', 'Tickets et passes', 'Se promener en ville');
+
+-- Initialize activity_tag_provider_mapping table
+
+INSERT IGNORE INTO activity_tag_provider_mapping (activity_tag_id, booking_provider_id, provider_activity_tag_id) VALUES (1, 1, 21910);
+INSERT IGNORE INTO activity_tag_provider_mapping (activity_tag_id, booking_provider_id, provider_activity_tag_id) VALUES (2, 1, 21911);
+INSERT IGNORE INTO activity_tag_provider_mapping (activity_tag_id, booking_provider_id, provider_activity_tag_id) VALUES (3, 1, 21909);
+INSERT IGNORE INTO activity_tag_provider_mapping (activity_tag_id, booking_provider_id, provider_activity_tag_id) VALUES (4, 1, 21915);
+INSERT IGNORE INTO activity_tag_provider_mapping (activity_tag_id, booking_provider_id, provider_activity_tag_id) VALUES (5, 1, 21912);
+
+
