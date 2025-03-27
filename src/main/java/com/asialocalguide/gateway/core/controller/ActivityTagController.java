@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.controller;
 
 import com.asialocalguide.gateway.core.dto.ActivityTagDTO;
-import com.asialocalguide.gateway.core.service.ActivityTagService;
+import com.asialocalguide.gateway.core.service.activitytag.ActivityTagService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

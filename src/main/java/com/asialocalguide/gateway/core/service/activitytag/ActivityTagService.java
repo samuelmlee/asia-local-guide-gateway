@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.service;
+package com.asialocalguide.gateway.core.service.activitytag;
 
 import com.asialocalguide.gateway.core.domain.activitytag.ActivityTag;
 import com.asialocalguide.gateway.core.domain.activitytag.ActivityTagTranslation;
