@@ -30,7 +30,7 @@ public class ActivityTagService {
 
         LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
-        List<ActivityTag> activityTags = this.activityTagRepository.findAll();
+        List<ActivityTag> activityTags = this.activityTagRepository.findAllWithTranslations(languageCode);
 
         return activityTags.stream()
                 .map(
