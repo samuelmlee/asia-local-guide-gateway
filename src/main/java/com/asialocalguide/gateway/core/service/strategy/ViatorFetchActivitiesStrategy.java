@@ -1,10 +1,10 @@
 package com.asialocalguide.gateway.core.service.strategy;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
@@ -36,7 +36,7 @@ public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
     }
 
     @Override
-    public ProviderActivityData fetchProviderActivity(PlanningRequestDTO request, SupportedLocale locale) {
+    public ProviderActivityData fetchProviderActivity(PlanningRequestDTO request, LanguageCode languageCode) {
         BookingProvider viatorProvider =
                 bookingProviderRepository
                         .findByName(BookingProviderName.VIATOR)
@@ -51,7 +51,7 @@ public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
         String viatorDestinationId = providerMapping.getProviderDestinationId();
 
         ProviderPlanningRequest providerRequest =
-                new ProviderPlanningRequest(request.startDate(), request.endDate(), request.getDuration(), request.activityTagIds(), viatorDestinationId, locale);
+                new ProviderPlanningRequest(request.startDate(), request.endDate(), request.getDuration(), request.activityTagIds(), viatorDestinationId, languageCode);
 
         return viatorActivityService.fetchProviderActivityData(providerRequest);
     }

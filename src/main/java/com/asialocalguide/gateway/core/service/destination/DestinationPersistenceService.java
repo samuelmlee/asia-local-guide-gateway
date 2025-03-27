@@ -68,7 +68,7 @@ public class DestinationPersistenceService {
                         return;
                     }
 
-                    if (destination.getBookingProviderMapping(provider.getId()) == null) {
+                    if (destination.getBookingProviderMapping(provider.getId()).isEmpty()) {
                         DestinationProviderMapping mapping = new DestinationProviderMapping();
                         mapping.setProvider(provider);
                         mapping.setProviderDestinationId(rawDto.destinationId());
@@ -146,7 +146,8 @@ public class DestinationPersistenceService {
                                 name ->
                                         newDestination.addTranslation(
                                                 new DestinationTranslation(
-                                                        newDestination, LanguageCode.from(name.languageCode()), name.name())));
+                                                        // name.languageCode() passed validation to be non-null
+                                                        newDestination, LanguageCode.from(name.languageCode()).orElse(null), name.name())));
 
                 DestinationProviderMapping mapping = new DestinationProviderMapping();
                 mapping.setProviderDestinationId(rawDto.destinationId());

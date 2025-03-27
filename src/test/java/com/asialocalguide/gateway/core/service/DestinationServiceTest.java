@@ -104,7 +104,7 @@ class DestinationServiceTest {
     @Test
     void getAutocompleteSuggestions_shouldHandleInvalidLocale() {
         // Arrange
-        LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported locale
+        LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported languageCode
 
         Destination destination = createTestDestinationWithTranslations();
         when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.EN, "test"))

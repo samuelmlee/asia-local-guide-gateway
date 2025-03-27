@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.core.service.planning;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
@@ -8,6 +8,7 @@ import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivitiesStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -17,6 +18,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -30,13 +32,16 @@ public class PlanningService {
     }
 
     public List<DayPlanDTO> generateActivityPlanning(PlanningRequestDTO request) {
-        SupportedLocale locale = SupportedLocale.getDefaultLocale();
+
+        Locale locale = LocaleContextHolder.getLocale();
+
+        LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
         List<ProviderActivityData> providerDataList = activitiesStrategies.stream()
                 .map(strategy -> {
 
                     try {
-                        return strategy.fetchProviderActivity(request, locale);
+                        return strategy.fetchProviderActivity(request, languageCode);
                     } catch (Exception e) {
                         log.error("Error during fetching of activities from Provider : {}", strategy.getProviderName(), e);
                         return null;

@@ -28,20 +28,14 @@ public class ActivityTagService {
         // The header Accept-Language should be present in the request
         Locale locale = LocaleContextHolder.getLocale();
 
-        LanguageCode languageCode;
-        try {
-            languageCode = LanguageCode.from(locale.getLanguage());
-        } catch (Exception e) {
-            languageCode = LanguageCode.EN;
-        }
-        final LanguageCode finalLanguageCode = languageCode;
+        LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
         List<ActivityTag> activityTags = this.activityTagRepository.findAll();
 
         return activityTags.stream()
                 .map(
                         activityTag -> {
-                            ActivityTagTranslation translation = activityTag.getTranslation(finalLanguageCode).orElse(null);
+                            ActivityTagTranslation translation = activityTag.getTranslation(languageCode).orElse(null);
 
                             if (translation == null) {
                                 return null;

@@ -1,10 +1,10 @@
 package com.asialocalguide.gateway.core.service.strategy;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
@@ -68,7 +68,7 @@ class ViatorFetchActivitiesStrategyTest {
         when(bookingProviderRepository.findByName(BookingProviderName.VIATOR))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, SupportedLocale.ENGLISH))
+        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Viator BookingProvider not found");
     }
@@ -79,7 +79,7 @@ class ViatorFetchActivitiesStrategyTest {
         when(destinationRepository.findById(validRequest.destinationId()))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, SupportedLocale.ENGLISH))
+        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -93,7 +93,7 @@ class ViatorFetchActivitiesStrategyTest {
         when(destination.getBookingProviderMapping(viator.getId()))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, SupportedLocale.ENGLISH))
+        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Destination BookingProvider Mapping not found");
     }
@@ -130,7 +130,7 @@ class ViatorFetchActivitiesStrategyTest {
         // Execute
         ProviderActivityData result = strategy.fetchProviderActivity(
                 validRequest,
-                SupportedLocale.FRENCH
+                LanguageCode.FR
         );
 
         // Verify
@@ -142,7 +142,7 @@ class ViatorFetchActivitiesStrategyTest {
 
         ProviderPlanningRequest request = captor.getValue();
         assertThat(request.providerDestinationId()).isEqualTo("VIATOR_DEST_123");
-        assertThat(request.locale()).isEqualTo(SupportedLocale.FRENCH);
+        assertThat(request.languageCode()).isEqualTo(LanguageCode.FR);
         assertThat(request.startDate()).isEqualTo(today);
         assertThat(request.endDate()).isEqualTo(tomorrow);
         assertThat(request.activityTags()).containsExactly("adventure");
@@ -162,7 +162,7 @@ class ViatorFetchActivitiesStrategyTest {
         when(viatorActivityService.fetchProviderActivityData(any()))
                 .thenThrow(new RuntimeException("API Failure"));
 
-        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, SupportedLocale.ENGLISH))
+        assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("API Failure");
     }

@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.viator.service;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
@@ -47,7 +47,7 @@ class ViatorActivityServiceTest {
                 2,
                 List.of("123"),
                 "456",
-                SupportedLocale.ENGLISH
+                LanguageCode.EN
         );
     }
 
@@ -59,7 +59,7 @@ class ViatorActivityServiceTest {
                 2,
                 List.of("123"),
                 "invalid", // Non-numeric destination ID
-                SupportedLocale.ENGLISH
+                LanguageCode.EN
         );
 
         assertThrows(IllegalArgumentException.class,
@@ -146,7 +146,7 @@ class ViatorActivityServiceTest {
                 2,
                 List.of("123", "invalid", "456"), // Mixed valid/invalid tags
                 "456",
-                SupportedLocale.ENGLISH
+                LanguageCode.EN
         );
 
         when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
@@ -160,7 +160,7 @@ class ViatorActivityServiceTest {
                 ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 
         verify(viatorClient).getActivitiesByRequestAndLanguage(
-                eq(SupportedLocale.ENGLISH.getCode()),
+                eq(LanguageCode.EN.toString()),
                 searchCaptor.capture()
         );
 
@@ -180,7 +180,7 @@ class ViatorActivityServiceTest {
                 4, // This value is actually ignored in current implementation
                 List.of("123"),
                 "456",
-                SupportedLocale.ENGLISH
+                LanguageCode.EN
         );
 
         when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
@@ -194,7 +194,7 @@ class ViatorActivityServiceTest {
                 ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 
         verify(viatorClient).getActivitiesByRequestAndLanguage(
-                eq(SupportedLocale.ENGLISH.getCode()),
+                eq(LanguageCode.EN.toString()),
                 searchCaptor.capture()
         );
 
@@ -210,7 +210,7 @@ class ViatorActivityServiceTest {
                 2,
                 List.of("123"),
                 "456",
-                SupportedLocale.ENGLISH
+                LanguageCode.EN
         );
 
         assertThrows(IllegalArgumentException.class,
@@ -226,7 +226,7 @@ class ViatorActivityServiceTest {
                 2,
                 null,  // Null tags
                 "456",
-                SupportedLocale.ENGLISH
+                LanguageCode.EN
         );
 
         // When
@@ -236,7 +236,7 @@ class ViatorActivityServiceTest {
                 ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 
         verify(viatorClient).getActivitiesByRequestAndLanguage(
-                eq(SupportedLocale.ENGLISH.getCode()),
+                eq(LanguageCode.EN.toString()),
                 searchCaptor.capture()
         );
 
