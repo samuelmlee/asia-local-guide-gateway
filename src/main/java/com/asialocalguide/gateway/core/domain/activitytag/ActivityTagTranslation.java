@@ -16,7 +16,7 @@ public class ActivityTagTranslation {
     @EmbeddedId
     private ActivityTagTranslationId id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("activityTagId")
     @JoinColumn(name = "activity_tag_id")
     @Setter

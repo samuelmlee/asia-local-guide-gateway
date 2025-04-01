@@ -3,7 +3,7 @@ package com.asialocalguide.gateway.core.service;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.repository.DestinationRepositoryCustom;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import com.asialocalguide.gateway.core.service.destination.DestinationService;
 import com.asialocalguide.gateway.core.service.destination.DestinationSortingService;
@@ -31,13 +31,14 @@ class DestinationServiceTest {
     private DestinationProvider viatorProvider;
 
     @Mock
-    private DestinationRepository destinationRepository;
+    private DestinationRepositoryCustom destinationRepositoryCustom;
 
     @Mock
     private DestinationSortingService destinationSortingService;
 
     @InjectMocks
     private DestinationService destinationService;
+
 
     private final BookingProviderName providerName = BookingProviderName.VIATOR;
     private final String testDestinationId = "DEST-123";
@@ -56,7 +57,7 @@ class DestinationServiceTest {
         when(viatorProvider.getDestinations()).thenReturn(List.of(rawDto));
 
         destinationService =
-                new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
+                new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepositoryCustom);
 
         // Act
         destinationService.syncDestinationsForProvider(BookingProviderName.VIATOR);
@@ -73,7 +74,7 @@ class DestinationServiceTest {
         when(viatorProvider.getDestinations()).thenThrow(new ViatorApiException("API failure"));
 
         destinationService =
-                new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepository);
+                new DestinationService(List.of(viatorProvider), destinationSortingService, destinationRepositoryCustom);
 
         // Act
         Throwable exception =
@@ -90,7 +91,7 @@ class DestinationServiceTest {
         LocaleContextHolder.setLocale(Locale.FRANCE);
         Destination destination = createTestDestinationWithTranslations();
 
-        when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.FR, "paris"))
+        when(destinationRepositoryCustom.findCityOrRegionByNameWithEagerTranslations(LanguageCode.FR, "paris"))
                 .thenReturn(List.of(destination));
 
         // Act
@@ -107,7 +108,7 @@ class DestinationServiceTest {
         LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported languageCode
 
         Destination destination = createTestDestinationWithTranslations();
-        when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.EN, "test"))
+        when(destinationRepositoryCustom.findCityOrRegionByNameWithEagerTranslations(LanguageCode.EN, "test"))
                 .thenReturn(List.of(destination));
 
         // Act

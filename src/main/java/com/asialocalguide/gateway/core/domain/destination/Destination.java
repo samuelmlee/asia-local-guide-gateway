@@ -25,7 +25,7 @@ public class Destination implements Translatable {
     @Setter
     private Country country;
 
-    @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
     @NotEmpty
     private Set<DestinationTranslation> destinationTranslations = new HashSet<>();
 
@@ -35,7 +35,7 @@ public class Destination implements Translatable {
     @Setter
     private DestinationType type;
 
-    @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
     @NotEmpty
     private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 

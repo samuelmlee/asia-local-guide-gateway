@@ -7,7 +7,7 @@ import com.asialocalguide.gateway.core.domain.destination.DestinationIngestionIn
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.repository.DestinationRepositoryCustom;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -25,15 +25,15 @@ public class DestinationService {
 
     private final DestinationSortingService destinationSortingService;
 
-    private final DestinationRepository destinationRepository;
+    private final DestinationRepositoryCustom destinationRepositoryCustom;
 
     public DestinationService(
             List<DestinationProvider> destinationProviders,
             DestinationSortingService destinationSortingService,
-            DestinationRepository destinationRepository) {
+            DestinationRepositoryCustom destinationRepositoryCustom) {
         this.destinationProviders = destinationProviders;
         this.destinationSortingService = destinationSortingService;
-        this.destinationRepository = destinationRepository;
+        this.destinationRepositoryCustom = destinationRepositoryCustom;
     }
 
     public void syncDestinationsForProvider(BookingProviderName providerName) {
@@ -61,10 +61,11 @@ public class DestinationService {
 
         Locale locale = LocaleContextHolder.getLocale();
 
+        // Default to English if the locale is not supported
         LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
         List<Destination> destinations =
-                destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(languageCode, query);
+                destinationRepositoryCustom.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
 
         return destinations.stream()
                 .map(
