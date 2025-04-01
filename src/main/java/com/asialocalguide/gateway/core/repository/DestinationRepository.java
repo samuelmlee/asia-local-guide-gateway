@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public interface DestinationRepository extends JpaRepository<Destination, Long> {
+public interface DestinationRepository extends JpaRepository<Destination, Long>, CustomDestinationRepository {
 
     @Transactional(readOnly = true)
     @Query("SELECT d FROM Destination d WHERE d.country.iso2Code IN :isoCodes")

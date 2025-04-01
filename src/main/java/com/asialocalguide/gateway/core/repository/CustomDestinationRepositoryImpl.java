@@ -8,14 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-public class DestinationRepositoryCustom {
+public class CustomDestinationRepositoryImpl implements CustomDestinationRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public DestinationRepositoryCustom(JPAQueryFactory queryFactory) {
+    public CustomDestinationRepositoryImpl(JPAQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<Destination> findCityOrRegionByNameWithEagerTranslations(LanguageCode languageCode, String name) {
         QDestination destination = QDestination.destination;

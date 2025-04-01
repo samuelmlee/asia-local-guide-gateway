@@ -7,7 +7,7 @@ import com.asialocalguide.gateway.core.domain.destination.DestinationIngestionIn
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
-import com.asialocalguide.gateway.core.repository.DestinationRepositoryCustom;
+import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -25,15 +25,15 @@ public class DestinationService {
 
     private final DestinationSortingService destinationSortingService;
 
-    private final DestinationRepositoryCustom destinationRepositoryCustom;
+    private final DestinationRepository destinationRepository;
 
     public DestinationService(
             List<DestinationProvider> destinationProviders,
             DestinationSortingService destinationSortingService,
-            DestinationRepositoryCustom destinationRepositoryCustom) {
+            DestinationRepository destinationRepository) {
         this.destinationProviders = destinationProviders;
         this.destinationSortingService = destinationSortingService;
-        this.destinationRepositoryCustom = destinationRepositoryCustom;
+        this.destinationRepository = destinationRepository;
     }
 
     public void syncDestinationsForProvider(BookingProviderName providerName) {
@@ -65,7 +65,7 @@ public class DestinationService {
         LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
         List<Destination> destinations =
-                destinationRepositoryCustom.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
+                destinationRepository.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
 
         return destinations.stream()
                 .map(
