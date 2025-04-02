@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.viator.service;
 
-import com.asialocalguide.gateway.core.config.SupportedLocale;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ActivityData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
@@ -50,9 +50,10 @@ public class ViatorActivityService implements ActivityProvider {
 
         try {
             ViatorActivitySearchDTO searchDTO = buildActivitySearchDTO(request);
-            Map<String, ViatorActivityDTO> idToActivities = fetchValidActivities(request.locale(), searchDTO);
+            Map<String, ViatorActivityDTO> idToActivities = fetchValidActivities(request.languageCode(), searchDTO);
             List<ViatorActivityAvailabilityDTO> availabilities = fetchActivityAvailabilities(idToActivities.values());
 
+            // Filter out activities with no availability data
             List<ViatorActivityDTO> activitiesToProcess = filterNoDataActivities(idToActivities, availabilities);
 
             List<CommonActivity> commonActivities = activitiesToProcess.stream().map(ViatorActivityAdapter::toCommon).toList();
@@ -124,9 +125,9 @@ public class ViatorActivityService implements ActivityProvider {
         return new ViatorActivitySearchDTO.Pagination(1, itemsPerPage);
     }
 
-    private Map<String, ViatorActivityDTO> fetchValidActivities(SupportedLocale locale, ViatorActivitySearchDTO searchDTO) {
+    private Map<String, ViatorActivityDTO> fetchValidActivities(LanguageCode languageCode, ViatorActivitySearchDTO searchDTO) {
         return viatorClient.getActivitiesByRequestAndLanguage(
-                        requireNonNull(locale, "Locale must not be null").getCode(),
+                        requireNonNull(languageCode, "Locale must not be null").toString(),
                         requireNonNull(searchDTO, "SearchDTO must not be null"))
                 .stream()
                 // Activities without duration should not be processed

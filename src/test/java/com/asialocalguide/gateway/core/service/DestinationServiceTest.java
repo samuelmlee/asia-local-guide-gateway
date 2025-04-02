@@ -39,6 +39,7 @@ class DestinationServiceTest {
     @InjectMocks
     private DestinationService destinationService;
 
+
     private final BookingProviderName providerName = BookingProviderName.VIATOR;
     private final String testDestinationId = "DEST-123";
     private final String countryIsoCode = "US";
@@ -90,7 +91,7 @@ class DestinationServiceTest {
         LocaleContextHolder.setLocale(Locale.FRANCE);
         Destination destination = createTestDestinationWithTranslations();
 
-        when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.FR, "paris"))
+        when(destinationRepository.findCityOrRegionByNameWithEagerTranslations(LanguageCode.FR, "paris"))
                 .thenReturn(List.of(destination));
 
         // Act
@@ -104,10 +105,10 @@ class DestinationServiceTest {
     @Test
     void getAutocompleteSuggestions_shouldHandleInvalidLocale() {
         // Arrange
-        LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported locale
+        LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported languageCode
 
         Destination destination = createTestDestinationWithTranslations();
-        when(destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(LanguageCode.EN, "test"))
+        when(destinationRepository.findCityOrRegionByNameWithEagerTranslations(LanguageCode.EN, "test"))
                 .thenReturn(List.of(destination));
 
         // Act

@@ -61,21 +61,16 @@ public class DestinationService {
 
         Locale locale = LocaleContextHolder.getLocale();
 
-        LanguageCode languageCode;
-        try {
-            languageCode = LanguageCode.from(locale.getCountry());
-        } catch (Exception e) {
-            languageCode = LanguageCode.EN;
-        }
-        final LanguageCode finalLanguageCode = languageCode;
+        // Default to English if the locale is not supported
+        LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
         List<Destination> destinations =
-                destinationRepository.findCityOrRegionByTranslationsForLanguageCodeAndName(finalLanguageCode, query);
+                destinationRepository.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
 
         return destinations.stream()
                 .map(
                         destination -> {
-                            String translationName = destination.getTranslation(finalLanguageCode).orElse("");
+                            String translationName = destination.getTranslation(languageCode).orElse("");
 
                             if (translationName.isEmpty()) {
                                 return null;
@@ -83,7 +78,7 @@ public class DestinationService {
 
                             String countryName =
                                     destination.getCountry() != null
-                                            ? destination.getCountry().getTranslation(finalLanguageCode).orElse("")
+                                            ? destination.getCountry().getTranslation(languageCode).orElse("")
                                             : "";
 
                             return DestinationDTO.of(destination.getId(), translationName, destination.getType(), countryName);

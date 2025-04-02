@@ -1,33 +1,38 @@
-package com.asialocalguide.gateway.core.domain.destination;
+package com.asialocalguide.gateway.core.domain.activitytag;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Objects;
 
 @Entity
-@Data
 @NoArgsConstructor
-public class CountryTranslation {
+@Getter
+public class ActivityTagTranslation {
 
     @EmbeddedId
-    private CountryTranslationId id;
+    private ActivityTagTranslationId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("countryId")
-    @JoinColumn(name = "country_id")
-    private Country country;
+    @MapsId("activityTagId")
+    @JoinColumn(name = "activity_tag_id")
+    @Setter
+    private ActivityTag activityTag;
 
     @NotEmpty
     private String name;
+
+    @NotEmpty
+    private String promptText;
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
 
-        CountryTranslation that = (CountryTranslation) o;
+        ActivityTagTranslation that = (ActivityTagTranslation) o;
         return Objects.equals(id, that.id);
     }
 
@@ -38,6 +43,6 @@ public class CountryTranslation {
 
     @Override
     public String toString() {
-        return "CountryTranslation{" + ", languageCode='" + id.getLanguageCode() + '\'' + ", name='" + name + '\'' + '}';
+        return "ActivityTagTranslation{" + ", languageCode='" + id.getLanguageCode() + '\'' + ", name='" + name + '\'' + '}';
     }
 }
