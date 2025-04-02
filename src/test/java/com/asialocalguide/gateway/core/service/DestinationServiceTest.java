@@ -91,7 +91,7 @@ class DestinationServiceTest {
         LocaleContextHolder.setLocale(Locale.FRANCE);
         Destination destination = createTestDestinationWithTranslations();
 
-        when(customDestinationRepositoryImpl.findCityOrRegionByNameWithEagerTranslations(LanguageCode.FR, "paris"))
+        when(destinationRepository.findCityOrRegionByNameWithEagerTranslations(LanguageCode.FR, "paris"))
                 .thenReturn(List.of(destination));
 
         // Act
@@ -108,7 +108,7 @@ class DestinationServiceTest {
         LocaleContextHolder.setLocale(Locale.of("xx")); // Unsupported languageCode
 
         Destination destination = createTestDestinationWithTranslations();
-        when(customDestinationRepositoryImpl.findCityOrRegionByNameWithEagerTranslations(LanguageCode.EN, "test"))
+        when(destinationRepository.findCityOrRegionByNameWithEagerTranslations(LanguageCode.EN, "test"))
                 .thenReturn(List.of(destination));
 
         // Act

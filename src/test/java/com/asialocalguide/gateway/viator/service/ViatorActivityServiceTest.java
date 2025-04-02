@@ -1,5 +1,10 @@
 package com.asialocalguide.gateway.viator.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
@@ -7,6 +12,11 @@ import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,258 +25,240 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class ViatorActivityServiceTest {
 
-    @Mock
-    private ViatorClient viatorClient;
+  @Mock private ViatorClient viatorClient;
 
-    @InjectMocks
-    private ViatorActivityService service;
+  @InjectMocks private ViatorActivityService service;
 
-    private ProviderPlanningRequest validRequest;
-    private final LocalDate today = LocalDate.now();
-    private final LocalDate tomorrow = today.plusDays(1);
+  private ProviderPlanningRequest validRequest;
+  private final LocalDate today = LocalDate.now();
+  private final LocalDate tomorrow = today.plusDays(1);
 
-    @BeforeEach
-    void setup() {
-        validRequest = new ProviderPlanningRequest(
-                today,
-                tomorrow,
-                2,
-                List.of("123"),
-                "456",
-                LanguageCode.EN
-        );
-    }
+  @BeforeEach
+  void setup() {
+    validRequest = new ProviderPlanningRequest(today, tomorrow, 2, List.of("123"), "456", LanguageCode.EN);
+  }
 
-    @Test
-    void fetchProviderActivityData_shouldThrowWhenInvalidDestinationId() {
-        ProviderPlanningRequest invalidRequest = new ProviderPlanningRequest(
-                today,
-                tomorrow,
-                2,
-                List.of("123"),
-                "invalid", // Non-numeric destination ID
-                LanguageCode.EN
-        );
+  @Test
+  void fetchProviderActivityData_shouldThrowWhenInvalidDestinationId() {
+    ProviderPlanningRequest invalidRequest =
+        new ProviderPlanningRequest(
+            today,
+            tomorrow,
+            2,
+            List.of("123"),
+            "invalid", // Non-numeric destination ID
+            LanguageCode.EN);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fetchProviderActivityData(invalidRequest));
-    }
+    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivityData(invalidRequest));
+  }
 
-    @Test
-    void fetchProviderActivityData_shouldHandleEmptyActivityList() {
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(Collections.emptyList());
+  @Test
+  void fetchProviderActivityData_shouldHandleEmptyActivityList() {
+    when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(Collections.emptyList());
 
-        ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
 
-        assertTrue(result.activities().isEmpty());
-        assertNotNull(result.activityData());
-    }
+    assertTrue(result.activities().isEmpty());
+    assertNotNull(result.activityData());
+  }
 
-    @Test
-    void fetchProviderActivityData_shouldFilterZeroDurationActivities() {
-        ViatorActivityDTO validActivity = createTestActivity(60);
-        ViatorActivityDTO invalidActivity = createTestActivity(0);
+  @Test
+  void fetchProviderActivityData_shouldFilterZeroDurationActivities() {
+    ViatorActivityDTO validActivity = createTestActivity(60);
+    ViatorActivityDTO invalidActivity = createTestActivity(0);
 
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(List.of(validActivity, invalidActivity));
-        when(viatorClient.getAvailabilityByProductCode(anyString()))
-                .thenReturn(Optional.of(new ViatorActivityAvailabilityDTO(validActivity.productCode(), List.of(new ViatorActivityAvailabilityDTO.BookableItem("opt1", List.of())), "EUR", new ViatorActivityAvailabilityDTO.Summary(50))));
+    ViatorActivityAvailabilityDTO.BookableItem bookableItem =
+        new ViatorActivityAvailabilityDTO.BookableItem(
+            "opt1",
+            List.of(
+                new ViatorActivityAvailabilityDTO.Season(
+                    "2023-01-01",
+                    "2023-12-31",
+                    List.of(
+                        new ViatorActivityAvailabilityDTO.PricingRecord(
+                            List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"),
+                            List.of(new ViatorActivityAvailabilityDTO.TimedEntry("10:00", List.of())))))));
 
-        ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
+        .thenReturn(List.of(validActivity, invalidActivity));
+    when(viatorClient.getAvailabilityByProductCode(anyString()))
+        .thenReturn(
+            Optional.of(
+                new ViatorActivityAvailabilityDTO(
+                    validActivity.productCode(),
+                    List.of(bookableItem),
+                    "EUR",
+                    new ViatorActivityAvailabilityDTO.Summary(50))));
 
-        assertEquals(1, result.activities().size());
-    }
+    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
 
-    @Test
-    void fetchProviderActivityData_shouldHandleAvailabilityFetchErrors() {
-        ViatorActivityDTO activity = createTestActivity(60);
+    assertEquals(1, result.activities().size());
+  }
 
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(List.of(activity));
-        when(viatorClient.getAvailabilityByProductCode(anyString()))
-                .thenReturn(Optional.empty());
+  @Test
+  void fetchProviderActivityData_shouldHandleAvailabilityFetchErrors() {
+    ViatorActivityDTO activity = createTestActivity(60);
 
-        ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
+    when(viatorClient.getAvailabilityByProductCode(anyString())).thenReturn(Optional.empty());
 
-        assertTrue(result.activities().isEmpty());
-    }
+    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
 
-    @Test
-    void fetchProviderActivityData_shouldHandlePartialAvailabilityFailures() {
-        ViatorActivityDTO activity1 = createTestActivity(60);
-        ViatorActivityDTO activity2 = createTestActivity(90);
+    assertTrue(result.activities().isEmpty());
+  }
 
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(List.of(activity1, activity2));
-        when(viatorClient.getAvailabilityByProductCode(activity1.productCode()))
-                .thenReturn(Optional.of(new ViatorActivityAvailabilityDTO(activity1.productCode(), List.of(new ViatorActivityAvailabilityDTO.BookableItem("opt1", List.of())), "EUR", new ViatorActivityAvailabilityDTO.Summary(50))));
-        when(viatorClient.getAvailabilityByProductCode(activity2.productCode()))
-                .thenReturn(Optional.empty());
+  @Test
+  void fetchProviderActivityData_shouldHandlePartialAvailabilityFailures() {
+    ViatorActivityDTO activity1 = createTestActivity(60);
+    ViatorActivityDTO activity2 = createTestActivity(90);
 
-        ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity1, activity2));
+    when(viatorClient.getAvailabilityByProductCode(activity1.productCode()))
+        .thenReturn(
+            Optional.of(
+                new ViatorActivityAvailabilityDTO(
+                    activity1.productCode(),
+                    List.of(
+                        new ViatorActivityAvailabilityDTO.BookableItem(
+                            "opt1",
+                            List.of(
+                                new ViatorActivityAvailabilityDTO.Season(
+                                    "2023-01-01",
+                                    "2023-12-31",
+                                    List.of(
+                                        new ViatorActivityAvailabilityDTO.PricingRecord(
+                                            List.of("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"),
+                                            List.of(
+                                                new ViatorActivityAvailabilityDTO.TimedEntry("10:00", List.of())))))))),
+                    "EUR",
+                    new ViatorActivityAvailabilityDTO.Summary(50))));
+    when(viatorClient.getAvailabilityByProductCode(activity2.productCode())).thenReturn(Optional.empty());
 
-        assertEquals(1, result.activities().size());
-    }
+    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
 
-    @Test
-    void fetchProviderActivityData_shouldHandleAsyncFailures() {
-        ViatorActivityDTO activity = createTestActivity(60);
+    assertEquals(1, result.activities().size());
+  }
 
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(List.of(activity));
-        when(viatorClient.getAvailabilityByProductCode(anyString()))
-                .thenThrow(new RuntimeException("Simulated failure"));
+  @Test
+  void fetchProviderActivityData_shouldHandleAsyncFailures() {
+    ViatorActivityDTO activity = createTestActivity(60);
 
-        ProviderActivityData providerData = service.fetchProviderActivityData(validRequest);
+    when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
+    when(viatorClient.getAvailabilityByProductCode(anyString())).thenThrow(new RuntimeException("Simulated failure"));
 
-        assertNotNull(providerData);
-    }
+    ProviderActivityData providerData = service.fetchProviderActivityData(validRequest);
 
-    @Test
-    void fetchProviderActivityData_shouldFilterAndConvertTags() {
-        // Given
-        ProviderPlanningRequest request = new ProviderPlanningRequest(
-                today,
-                tomorrow,
-                2,
-                List.of("123", "invalid", "456"), // Mixed valid/invalid tags
-                "456",
-                LanguageCode.EN
-        );
+    assertNotNull(providerData);
+  }
 
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(Collections.emptyList());
+  @Test
+  void fetchProviderActivityData_shouldFilterAndConvertTags() {
+    // Given
+    ProviderPlanningRequest request =
+        new ProviderPlanningRequest(
+            today,
+            tomorrow,
+            2,
+            List.of("123", "invalid", "456"), // Mixed valid/invalid tags
+            "456",
+            LanguageCode.EN);
 
-        // When
-        service.fetchProviderActivityData(request);
+    // Fix the stubbing by using specific argument matchers
+    when(viatorClient.getActivitiesByRequestAndLanguage(
+            eq(LanguageCode.EN.toString()), any(ViatorActivitySearchDTO.class)))
+        .thenReturn(Collections.emptyList());
 
-        // Then - Verify tags filtering and conversion
-        ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor =
-                ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
+    // When
+    service.fetchProviderActivityData(request);
 
-        verify(viatorClient).getActivitiesByRequestAndLanguage(
-                eq(LanguageCode.EN.toString()),
-                searchCaptor.capture()
-        );
+    // Then - Verify tags filtering and conversion
+    ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor = ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 
-        ViatorActivitySearchDTO actualSearch = searchCaptor.getValue();
-        assertEquals(List.of(123, 456), actualSearch.filtering().tags());
-    }
+    verify(viatorClient).getActivitiesByRequestAndLanguage(eq(LanguageCode.EN.toString()), searchCaptor.capture());
 
-    @Test
-    void fetchProviderActivityData_shouldCalculatePaginationFromDates() {
-        // Given
-        LocalDate endDate = today.plusDays(3); // 3-day duration
-        int expectedItemsPerPage = 12; // 3 days * 4 activities/day
+    ViatorActivitySearchDTO actualSearch = searchCaptor.getValue();
+    assertEquals(List.of(123, 456), actualSearch.filtering().tags());
+  }
 
-        ProviderPlanningRequest request = new ProviderPlanningRequest(
-                today,
-                endDate,
-                4, // This value is actually ignored in current implementation
-                List.of("123"),
-                "456",
-                LanguageCode.EN
-        );
+  @Test
+  void fetchProviderActivityData_shouldCalculatePaginationFromDates() {
+    // Given
+    LocalDate endDate = today.plusDays(3); // 3-day duration
+    int expectedItemsPerPage = 12; // 3 days * 4 activities/day
 
-        when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any()))
-                .thenReturn(Collections.emptyList());
+    ProviderPlanningRequest request =
+        new ProviderPlanningRequest(
+            today,
+            endDate,
+            4, // This value is actually ignored in current implementation
+            List.of("123"),
+            "456",
+            LanguageCode.EN);
 
-        // When
-        service.fetchProviderActivityData(request);
+    when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(Collections.emptyList());
 
-        // Then - Verify pagination calculation
-        ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor =
-                ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
+    // When
+    service.fetchProviderActivityData(request);
 
-        verify(viatorClient).getActivitiesByRequestAndLanguage(
-                eq(LanguageCode.EN.toString()),
-                searchCaptor.capture()
-        );
+    // Then - Verify pagination calculation
+    ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor = ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 
-        ViatorActivitySearchDTO actualSearch = searchCaptor.getValue();
-        assertEquals(expectedItemsPerPage, actualSearch.pagination().count());
-    }
+    verify(viatorClient).getActivitiesByRequestAndLanguage(eq(LanguageCode.EN.toString()), searchCaptor.capture());
 
-    @Test
-    void validatePlanningRequest_shouldRejectBackwardsDates() {
-        ProviderPlanningRequest invalidRequest = new ProviderPlanningRequest(
-                tomorrow,
-                today,
-                2,
-                List.of("123"),
-                "456",
-                LanguageCode.EN
-        );
+    ViatorActivitySearchDTO actualSearch = searchCaptor.getValue();
+    assertEquals(expectedItemsPerPage, actualSearch.pagination().count());
+  }
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.fetchProviderActivityData(invalidRequest));
-    }
+  @Test
+  void validatePlanningRequest_shouldRejectBackwardsDates() {
+    ProviderPlanningRequest invalidRequest =
+        new ProviderPlanningRequest(tomorrow, today, 2, List.of("123"), "456", LanguageCode.EN);
 
-    @Test
-    void convertActivityTags_shouldHandleNullTags() {
-        // Given
-        ProviderPlanningRequest request = new ProviderPlanningRequest(
-                today,
-                tomorrow,
-                2,
-                null,  // Null tags
-                "456",
-                LanguageCode.EN
-        );
+    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivityData(invalidRequest));
+  }
 
-        // When
-        service.fetchProviderActivityData(request);
+  @Test
+  void convertActivityTags_shouldHandleNullTags() {
+    // Given
+    ProviderPlanningRequest request =
+        new ProviderPlanningRequest(
+            today,
+            tomorrow,
+            2,
+            null, // Null tags
+            "456",
+            LanguageCode.EN);
 
-        ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor =
-                ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
+    // When
+    service.fetchProviderActivityData(request);
 
-        verify(viatorClient).getActivitiesByRequestAndLanguage(
-                eq(LanguageCode.EN.toString()),
-                searchCaptor.capture()
-        );
+    ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor = ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 
-        ViatorActivitySearchDTO actualSearch = searchCaptor.getValue();
-        assertTrue(actualSearch.filtering().tags().isEmpty());
-    }
+    verify(viatorClient).getActivitiesByRequestAndLanguage(eq(LanguageCode.EN.toString()), searchCaptor.capture());
 
-    private ViatorActivityDTO createTestActivity(int durationMinutes) {
-        return new ViatorActivityDTO(
-                "P" + UUID.randomUUID(),
-                "Test Activity",
-                "Description",
-                List.of(),
-                new ViatorActivityDTO.ReviewsDTO(
-                        List.of(new ViatorActivityDTO.ReviewsDTO.SourceDTO("viator", 100, 4.5)),
-                        100,
-                        4.5
-                ),
-                new ViatorActivityDTO.DurationDTO(null, durationMinutes, null),
-                "CONFIRMATION",
-                "ITINERARY",
-                new ViatorActivityDTO.PricingDTO(
-                        new ViatorActivityDTO.PricingDTO.SummaryDTO(50.0, 60.0),
-                        "EUR"
-                ),
-                "http://test.com",
-                List.of(),
-                List.of(123),
-                List.of(),
-                null
-        );
-    }
+    ViatorActivitySearchDTO actualSearch = searchCaptor.getValue();
+    assertTrue(actualSearch.filtering().tags().isEmpty());
+  }
+
+  private ViatorActivityDTO createTestActivity(int durationMinutes) {
+    return new ViatorActivityDTO(
+        "P" + UUID.randomUUID(),
+        "Test Activity",
+        "Description",
+        List.of(),
+        new ViatorActivityDTO.ReviewsDTO(
+            List.of(new ViatorActivityDTO.ReviewsDTO.SourceDTO("viator", 100, 4.5)), 100, 4.5),
+        new ViatorActivityDTO.DurationDTO(null, durationMinutes, null),
+        "CONFIRMATION",
+        "ITINERARY",
+        new ViatorActivityDTO.PricingDTO(new ViatorActivityDTO.PricingDTO.SummaryDTO(50.0, 60.0), "EUR"),
+        "http://test.com",
+        List.of(),
+        List.of(123),
+        List.of(),
+        null);
+  }
 }
