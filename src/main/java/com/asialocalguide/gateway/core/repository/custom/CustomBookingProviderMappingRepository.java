@@ -1,10 +1,9 @@
-package com.asialocalguide.gateway.core.repository;
+package com.asialocalguide.gateway.core.repository.custom;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-
 import java.util.Set;
 
 public interface CustomBookingProviderMappingRepository {
 
-    Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName);
+  Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName);
 }
