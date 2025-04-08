@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.controller;
 
+import com.asialocalguide.gateway.core.domain.user.User;
 import com.asialocalguide.gateway.core.dto.user.CreateUserDTO;
 import com.asialocalguide.gateway.core.service.user.UserService;
 import jakarta.validation.Valid;
@@ -19,7 +20,7 @@ public class UserController {
   }
 
   @PostMapping("/create-user")
-  public void createUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
-    userService.createUser(createUserDTO);
+  public User createUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
+    return userService.createUser(createUserDTO);
   }
 }

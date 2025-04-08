@@ -5,8 +5,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 public class User {
@@ -16,9 +18,14 @@ public class User {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @NotNull @Getter @Email private String email;
+  @NotNull
+  @Getter
+  @Setter
+  @Email
+  @Column(unique = true, nullable = false)
+  private String email;
 
-  @Getter private String name;
+  @Getter @Setter private String name;
 
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<UserAuth> userAuths = new HashSet<>();
@@ -37,6 +44,10 @@ public class User {
     }
     userAuth.setUser(null);
     userAuths.remove(userAuth);
+  }
+
+  public Optional<UserAuth> findUserAuth(AuthProviderName authProviderName) {
+    return userAuths.stream().filter(ua -> ua.getId().getAuthProviderName().equals(authProviderName)).findFirst();
   }
 
   @Override

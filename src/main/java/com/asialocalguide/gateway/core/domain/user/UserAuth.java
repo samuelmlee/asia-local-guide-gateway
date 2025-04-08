@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.domain.user;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,24 +11,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserAuth {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Enumerated(EnumType.STRING)
-  @NotNull
-  private AuthProviderName authProviderName;
+  @EmbeddedId private UserAuthId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("userId")
   @JoinColumn(name = "user_id")
-  @NotNull
   private User user;
 
-  @NotNull private String providerUserId;
+  @NotEmpty private String providerUserId;
 
   public UserAuth(User user, AuthProviderName authProviderName, String providerUserId) {
+    UserAuthId userAuthId = new UserAuthId();
+    userAuthId.setAuthProviderName(authProviderName);
+
+    this.id = userAuthId;
     this.user = user;
-    this.authProviderName = authProviderName;
     this.providerUserId = providerUserId;
   }
 
