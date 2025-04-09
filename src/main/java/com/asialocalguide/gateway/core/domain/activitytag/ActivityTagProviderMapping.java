@@ -36,7 +36,7 @@ public class ActivityTagProviderMapping {
       throw new IllegalArgumentException("BookingProvider cannot be null");
     }
 
-    this.id = new ActivityTagProviderMappingId(activityTag.getId(), provider.getId());
+    this.id = new ActivityTagProviderMappingId();
     this.activityTag = activityTag;
     this.provider = provider;
     this.providerActivityTagId = providerActivityTagId;

@@ -5,9 +5,7 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 @Embeddable
 @Getter
 public class ActivityTagProviderMappingId implements Serializable {
@@ -17,9 +15,8 @@ public class ActivityTagProviderMappingId implements Serializable {
   @Column(name = "booking_provider_id")
   private Long bookingProviderId;
 
-  public ActivityTagProviderMappingId(Long activityTagId, Long bookingProviderId) {
-    this.activityTagId = activityTagId;
-    this.bookingProviderId = bookingProviderId;
+  public ActivityTagProviderMappingId() {
+    // activityTagId and bookingProviderId are set by @MapsId in ActivityTagProviderMapping
   }
 
   @Override
