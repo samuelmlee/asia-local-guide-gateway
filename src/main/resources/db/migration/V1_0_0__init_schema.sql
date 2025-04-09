@@ -78,15 +78,12 @@ CREATE TABLE `destination` (
 -- asia_local_guide_gateway_test.destination_provider_mapping definition
 
 CREATE TABLE `destination_provider_mapping` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `provider_destination_id` varchar(255) NOT NULL,
   `destination_id` bigint NOT NULL,
-  `provider_id` bigint NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_DestinationProviderMapping_Destination` (`destination_id`),
-  KEY `FK_DestinationProviderMapping_BookingProvider` (`provider_id`),
+  `booking_provider_id` bigint NOT NULL,
+  `provider_destination_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`destination_id`, `booking_provider_id`),
   CONSTRAINT `FK_DestinationProviderMapping_Destination` FOREIGN KEY (`destination_id`) REFERENCES `destination` (`id`),
-  CONSTRAINT `FK_DestinationProviderMapping_BookingProvider` FOREIGN KEY (`provider_id`) REFERENCES `booking_provider` (`id`)
+  CONSTRAINT `FK_DestinationProviderMapping_BookingProvider` FOREIGN KEY (`booking_provider_id`) REFERENCES `booking_provider` (`id`)
 );
 
 

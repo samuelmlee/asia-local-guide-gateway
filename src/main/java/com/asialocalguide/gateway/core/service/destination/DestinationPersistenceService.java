@@ -65,9 +65,8 @@ public class DestinationPersistenceService {
           }
 
           if (destination.getBookingProviderMapping(provider.getId()).isEmpty()) {
-            DestinationProviderMapping mapping = new DestinationProviderMapping();
-            mapping.setProvider(provider);
-            mapping.setProviderDestinationId(rawDto.destinationId());
+            DestinationProviderMapping mapping =
+                new DestinationProviderMapping(destination, provider, rawDto.destinationId());
 
             destination.addProviderMapping(mapping);
 
@@ -154,9 +153,8 @@ public class DestinationPersistenceService {
           continue;
         }
 
-        DestinationProviderMapping mapping = new DestinationProviderMapping();
-        mapping.setProviderDestinationId(rawDto.destinationId());
-        mapping.setProvider(provider);
+        DestinationProviderMapping mapping =
+            new DestinationProviderMapping(newDestination, provider, rawDto.destinationId());
 
         newDestination.addProviderMapping(mapping);
 

@@ -2,71 +2,78 @@ package com.asialocalguide.gateway.core.domain.activitytag;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import jakarta.persistence.*;
-import lombok.Getter;
-
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import lombok.Getter;
 
 @Entity
 public class ActivityTag {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Getter
+  private Long id;
 
-    @OneToMany(mappedBy = "activityTag", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ActivityTagTranslation> activityTagTranslations = new HashSet<>();
+  @OneToMany(mappedBy = "activityTag", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<ActivityTagTranslation> activityTagTranslations = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "activity_tag_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private Set<ActivityTagProviderMapping> activityTagProviderMappings = new HashSet<>();
+  @OneToMany(mappedBy = "activityTag", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<ActivityTagProviderMapping> activityTagProviderMappings = new HashSet<>();
 
-    public Optional<ActivityTagTranslation> getTranslation(LanguageCode languageCode) {
-        return activityTagTranslations.stream()
-                .filter(t -> t.getId().getLanguageCode().equals(languageCode))
-                .findFirst();
+  public Optional<ActivityTagTranslation> getTranslation(LanguageCode languageCode) {
+    if (languageCode == null || activityTagTranslations.isEmpty()) {
+      return Optional.empty();
     }
 
-    public void addTranslation(ActivityTagTranslation translation) {
-        translation.setActivityTag(this);
-        activityTagTranslations.add(translation);
-    }
+    return activityTagTranslations.stream()
+        .filter(t -> t.getId() != null && languageCode.equals(t.getId().getLanguageCode()))
+        .findFirst();
+  }
 
-    public void removeTranslation(ActivityTagTranslation translation) {
-        if (activityTagTranslations != null) {
-            translation.setActivityTag(null);
-            activityTagTranslations.remove(translation);
-        }
+  public void addTranslation(ActivityTagTranslation translation) {
+    if (translation == null) {
+      return;
     }
+    translation.setActivityTag(this);
+    activityTagTranslations.add(translation);
+  }
 
-    public void addProviderMapping(ActivityTagProviderMapping mapping) {
-        if (mapping == null) {
-            return;
-        }
-        activityTagProviderMappings.add(mapping);
+  public void removeTranslation(ActivityTagTranslation translation) {
+    if (translation == null) {
+      return;
     }
+    translation.setActivityTag(null);
+    activityTagTranslations.remove(translation);
+  }
 
-    public void removeProviderMapping(ActivityTagProviderMapping mapping) {
-        if (mapping == null) {
-            return;
-        }
-        activityTagProviderMappings.remove(mapping);
-
+  public void addProviderMapping(ActivityTagProviderMapping mapping) {
+    if (mapping == null) {
+      return;
     }
+    mapping.setActivityTag(this);
+    activityTagProviderMappings.add(mapping);
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ActivityTag that = (ActivityTag) o;
-        return Objects.equals(id, that.id);
+  public void removeProviderMapping(ActivityTagProviderMapping mapping) {
+    if (mapping == null) {
+      return;
     }
+    mapping.setActivityTag(null);
+    activityTagProviderMappings.remove(mapping);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ActivityTag that = (ActivityTag) o;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
+  }
 }

@@ -21,6 +21,11 @@ public class UserAuthId implements Serializable {
   @Enumerated(EnumType.STRING)
   private AuthProviderName authProviderName;
 
+  public UserAuthId(AuthProviderName authProviderName) {
+    this.authProviderName = authProviderName;
+    // userId will be set by Hibernate with @MapsId in UserAuth
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;

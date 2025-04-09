@@ -115,9 +115,7 @@ class DestinationPersistenceServiceTest {
 
     Destination existingDestination = mock(Destination.class);
 
-    DestinationProviderMapping existingMapping = new DestinationProviderMapping();
-    existingMapping.setProviderDestinationId("D123");
-    existingMapping.setProvider(provider);
+    DestinationProviderMapping existingMapping = new DestinationProviderMapping(existingDestination, provider, "D123");
     existingDestination.addProviderMapping(existingMapping);
 
     when(existingDestination.getBookingProviderMapping(1L)).thenReturn(Optional.of(existingMapping));

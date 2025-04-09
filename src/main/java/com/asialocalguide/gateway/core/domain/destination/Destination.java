@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
@@ -17,7 +18,7 @@ public class Destination implements Translatable {
   @Getter
   private Long id;
 
-  @ManyToOne(fetch = FetchType.EAGER)
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "country_id")
   @NotNull
   @Getter
@@ -35,29 +36,36 @@ public class Destination implements Translatable {
   private DestinationType type;
 
   @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
-  @NotEmpty
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
   @NotNull @Embedded @Getter @Setter Coordinates centerCoordinates;
 
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
+    if (languageCode == null || destinationTranslations.isEmpty()) {
+      return Optional.empty();
+    }
+
     return destinationTranslations.stream()
-        .filter(t -> t.getId().getLanguageCode().equals(languageCode))
+        .filter(t -> t.getId() != null && languageCode.equals(t.getId().getLanguageCode()))
         .findFirst()
         .map(DestinationTranslation::getName);
   }
 
   public void addTranslation(DestinationTranslation translation) {
+    if (translation == null) {
+      return;
+    }
     translation.setDestination(this);
     destinationTranslations.add(translation);
   }
 
   public void removeTranslation(DestinationTranslation translation) {
-    if (destinationTranslations != null) {
-      translation.setDestination(null);
-      destinationTranslations.remove(translation);
+    if (translation == null) {
+      return;
     }
+    translation.setDestination(null);
+    destinationTranslations.remove(translation);
   }
 
   public int getTranslationCount() {
@@ -68,34 +76,46 @@ public class Destination implements Translatable {
   }
 
   public void addProviderMapping(DestinationProviderMapping mapping) {
+    if (mapping == null) {
+      return;
+    }
     mapping.setDestination(this);
     destinationProviderMappings.add(mapping);
   }
 
   public void removeProviderMapping(DestinationProviderMapping mapping) {
-    if (mapping != null) {
-      mapping.setDestination(null);
-      destinationProviderMappings.remove(mapping);
+    if (mapping == null) {
+      return;
     }
+    mapping.setDestination(null);
+    destinationProviderMappings.remove(mapping);
   }
 
   public Optional<DestinationProviderMapping> getBookingProviderMapping(Long providerId) {
+    if (providerId == null || destinationProviderMappings.isEmpty()) {
+      return Optional.empty();
+    }
+
     return destinationProviderMappings.stream()
-        .filter(mapping -> mapping.getProvider().getId().equals(providerId))
+        .filter(
+            mapping ->
+                mapping.getProvider() != null
+                    && mapping.getProvider().getId() != null
+                    && providerId.equals(mapping.getProvider().getId()))
         .findFirst();
   }
 
   @Override
   public boolean equals(Object o) {
+    if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     Destination that = (Destination) o;
-    return id != null && id.equals(that.id);
+    return Objects.equals(id, that.id);
   }
 
   @Override
   public int hashCode() {
-    return type.hashCode();
+    return Objects.hash(id);
   }
 
   @Override
