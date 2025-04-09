@@ -2,12 +2,14 @@ package com.asialocalguide.gateway.core.controller;
 
 import com.asialocalguide.gateway.core.domain.user.User;
 import com.asialocalguide.gateway.core.dto.user.CreateUserDTO;
+import com.asialocalguide.gateway.core.dto.user.UserDTO;
 import com.asialocalguide.gateway.core.service.user.UserService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.net.URI;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/v1/users")
@@ -19,8 +21,20 @@ public class UserController {
     this.userService = userService;
   }
 
-  @PostMapping("/create-user")
-  public User createUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
-    return userService.createUser(createUserDTO);
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public ResponseEntity<UserDTO> createUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
+
+    User user = userService.createUser(createUserDTO);
+
+    URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(user.getId()).toUri();
+
+    return ResponseEntity.created(location).body(new UserDTO(user.getId()));
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
+    User user = userService.getUserById(id);
+    return ResponseEntity.ok(new UserDTO(user.getId()));
   }
 }

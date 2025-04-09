@@ -23,6 +23,7 @@ public class UserAuth {
   public UserAuth(User user, AuthProviderName authProviderName, String providerUserId) {
     UserAuthId userAuthId = new UserAuthId();
     userAuthId.setAuthProviderName(authProviderName);
+    // userAuthId userId set by Hibernate
 
     this.id = userAuthId;
     this.user = user;
