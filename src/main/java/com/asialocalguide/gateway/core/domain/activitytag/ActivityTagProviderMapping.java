@@ -42,6 +42,10 @@ public class ActivityTagProviderMapping {
     this.providerActivityTagId = providerActivityTagId;
   }
 
+  void setActivityTag(ActivityTag activityTag) {
+    this.activityTag = activityTag;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
