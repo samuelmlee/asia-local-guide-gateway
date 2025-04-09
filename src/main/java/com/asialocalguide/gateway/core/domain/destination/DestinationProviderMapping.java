@@ -9,29 +9,51 @@ import lombok.*;
 
 @Entity
 @NoArgsConstructor
-@Builder
-@AllArgsConstructor
-@Getter
 public class DestinationProviderMapping {
 
-  // TODO: Use composite keys
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @EmbeddedId private DestinationProviderMappingId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("destinationId")
   @JoinColumn(name = "destination_id", nullable = false)
-  @Setter
   @NotNull
+  @Getter
   private Destination destination;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "provider_id", nullable = false)
-  @Setter
+  @MapsId("bookingProviderId")
+  @JoinColumn(name = "booking_provider_id", nullable = false)
   @NotNull
+  @Getter
   private BookingProvider provider;
 
-  @Setter @NotNull @NotEmpty private String providerDestinationId;
+  @NotEmpty @Getter private String providerDestinationId;
+
+  public DestinationProviderMapping(Destination destination, BookingProvider provider, String providerDestinationId) {
+    if (destination == null) {
+      throw new IllegalArgumentException("Destination cannot be null");
+    }
+    if (provider == null) {
+      throw new IllegalArgumentException("BookingProvider cannot be null");
+    }
+
+    this.id = new DestinationProviderMappingId();
+    this.destination = destination;
+    this.provider = provider;
+    this.providerDestinationId = providerDestinationId;
+  }
+
+  void setDestination(Destination destination) {
+    this.destination = destination;
+  }
+
+  void setProvider(BookingProvider provider) {
+    this.provider = provider;
+  }
+
+  void setProviderDestinationId(String providerDestinationId) {
+    this.providerDestinationId = providerDestinationId;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -43,6 +65,6 @@ public class DestinationProviderMapping {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hashCode(id);
   }
 }
