@@ -39,7 +39,7 @@ public class CountryTranslation {
 
   @Override
   public String toString() {
-    return "CountryTranslation{" + ", languageCode='" + id.getLanguageCode() + '\'' + ", name='" + name + '\'' + '}';
+    return "CountryTranslation{" + ", id='" + id + '\'' + ", name='" + name + '\'' + '}';
   }
 
   @Override

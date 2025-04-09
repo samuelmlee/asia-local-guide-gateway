@@ -36,4 +36,9 @@ public class CountryTranslationId implements Serializable {
   public int hashCode() {
     return Objects.hash(countryId, languageCode);
   }
+
+  @Override
+  public String toString() {
+    return "CountryTranslationId{" + "countryId=" + countryId + ", languageCode=" + languageCode + '}';
+  }
 }

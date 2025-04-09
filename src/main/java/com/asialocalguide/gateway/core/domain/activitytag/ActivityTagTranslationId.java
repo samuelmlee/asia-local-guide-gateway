@@ -5,6 +5,7 @@ import com.asialocalguide.gateway.core.domain.destination.LanguageCodeConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
+import java.io.Serializable;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Embeddable
 @Getter
-public class ActivityTagTranslationId {
+public class ActivityTagTranslationId implements Serializable {
   @Column(name = "activity_tag_id")
   private Long activityTagId;
 
