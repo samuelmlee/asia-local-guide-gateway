@@ -47,7 +47,14 @@ public class User {
   }
 
   public Optional<UserAuth> findUserAuth(AuthProviderName authProviderName) {
-    return userAuths.stream().filter(ua -> ua.getId().getAuthProviderName().equals(authProviderName)).findFirst();
+    if (authProviderName == null || userAuths == null) {
+      return Optional.empty();
+    }
+
+    return userAuths.stream()
+        .filter(Objects::nonNull)
+        .filter(ua -> ua.getId() != null && authProviderName.equals(ua.getId().getAuthProviderName()))
+        .findFirst();
   }
 
   @Override
