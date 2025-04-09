@@ -17,7 +17,7 @@ public class Destination implements Translatable {
   @Getter
   private Long id;
 
-  @ManyToOne(fetch = FetchType.EAGER)
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "country_id")
   @NotNull
   @Getter
