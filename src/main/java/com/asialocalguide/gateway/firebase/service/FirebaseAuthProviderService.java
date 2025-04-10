@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.firebase.service;
 
+import com.asialocalguide.gateway.core.exception.AuthProviderException;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -26,6 +27,16 @@ public class FirebaseAuthProviderService implements AuthProviderService {
     } catch (FirebaseAuthException ex) {
       log.info("No user found for email : {}", email);
       return false;
+    }
+  }
+
+  public void deleteUser(String uid) {
+    Objects.requireNonNull(uid);
+
+    try {
+      firebaseAuth.deleteUser(uid);
+    } catch (FirebaseAuthException ex) {
+      throw new AuthProviderException(String.format("Error deleting Firebase user with uid: %s", uid), ex);
     }
   }
 }
