@@ -4,10 +4,8 @@ import com.asialocalguide.gateway.core.dto.auth.EmailCheckDTO;
 import com.asialocalguide.gateway.core.dto.auth.EmailCheckResultDTO;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -24,5 +22,10 @@ public class AuthController {
     boolean exists = authProviderService.checkExistingEmail(emailCheckDTO.email());
 
     return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
+  }
+
+  @DeleteMapping("/{uid}")
+  public void deleteUser(@PathVariable("uid") @NotBlank String uid) {
+    authProviderService.deleteUser(uid);
   }
 }
