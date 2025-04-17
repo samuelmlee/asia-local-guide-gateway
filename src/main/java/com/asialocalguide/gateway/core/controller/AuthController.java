@@ -4,7 +4,7 @@ import com.asialocalguide.gateway.core.dto.auth.EmailCheckDTO;
 import com.asialocalguide.gateway.core.dto.auth.EmailCheckResultDTO;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,8 +24,10 @@ public class AuthController {
     return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
   }
 
-  @DeleteMapping("/{uid}")
-  public void deleteUser(@PathVariable("uid") @NotBlank String uid) {
+  @DeleteMapping
+  public void deleteUser(Authentication authentication) {
+    String uid = authentication.getName();
+
     authProviderService.deleteUser(uid);
   }
 }
