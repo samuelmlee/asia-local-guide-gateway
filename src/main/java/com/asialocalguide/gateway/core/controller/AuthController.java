@@ -4,6 +4,7 @@ import com.asialocalguide.gateway.core.dto.auth.EmailCheckDTO;
 import com.asialocalguide.gateway.core.dto.auth.EmailCheckResultDTO;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class AuthController {
   }
 
   @DeleteMapping
-  public void deleteUser(Authentication authentication) {
+  public void deleteUser(@NotNull Authentication authentication) {
     String uid = authentication.getName();
 
     authProviderService.deleteUser(uid);

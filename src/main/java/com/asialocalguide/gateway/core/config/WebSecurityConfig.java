@@ -3,7 +3,6 @@ package com.asialocalguide.gateway.core.config;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -12,6 +11,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class WebSecurityConfig {
+
+  private final JwtConverterProvider jwtConverterProvider;
+
+  public WebSecurityConfig(JwtConverterProvider jwtConverterProvider) {
+    this.jwtConverterProvider = jwtConverterProvider;
+  }
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -33,7 +38,10 @@ public class WebSecurityConfig {
                     .anyRequest()
                     // TODO: Create API to add admin role
                     .authenticated())
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        .oauth2ResourceServer(
+            oauth2 ->
+                oauth2.jwt(
+                    jwt -> jwt.jwtAuthenticationConverter(jwtConverterProvider.getJwtAuthenticationConverter())));
 
     return http.build();
   }
