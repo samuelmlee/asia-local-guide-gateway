@@ -32,7 +32,7 @@ public class FirebaseAuthProviderService implements AuthProviderService {
   }
 
   @Override
-  public void deleteUser(String uid) {
+  public void deleteProviderUser(String uid) {
     Objects.requireNonNull(uid);
 
     try {

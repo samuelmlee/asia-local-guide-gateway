@@ -61,19 +61,19 @@ class FirebaseAuthProviderServiceTest {
   }
 
   @Test
-  void deleteUser_shouldCallFirebaseDeleteUser() throws Exception {
+  void deleteUser_shouldCallFirebaseDeleteProviderUser() throws Exception {
     // Arrange
     String testUid = "test-user-id";
 
     // Act
-    service.deleteUser(testUid);
+    service.deleteProviderUser(testUid);
 
     // Assert
     verify(firebaseAuth, times(1)).deleteUser(testUid);
   }
 
   @Test
-  void deleteUser_shouldHandleFirebaseAuthException() throws Exception {
+  void deleteProviderUser_shouldHandleFirebaseAuthException() throws Exception {
     // Arrange
     String testUid = "error-user-id";
     FirebaseAuthException exception =
@@ -86,15 +86,15 @@ class FirebaseAuthProviderServiceTest {
     doThrow(exception).when(firebaseAuth).deleteUser(testUid);
 
     // Act & Assert - should not throw exception
-    assertThatThrownBy(() -> service.deleteUser(testUid)).isInstanceOf(AuthProviderException.class);
+    assertThatThrownBy(() -> service.deleteProviderUser(testUid)).isInstanceOf(AuthProviderException.class);
 
     verify(firebaseAuth).deleteUser(testUid);
   }
 
   @Test
-  void deleteUser_shouldThrowNullPointerException_whenUidIsNull() {
+  void deleteProviderUser_shouldThrowNullPointerException_whenUidIsNull() {
     // Act & Assert
-    assertThatThrownBy(() -> service.deleteUser(null)).isInstanceOf(NullPointerException.class);
+    assertThatThrownBy(() -> service.deleteProviderUser(null)).isInstanceOf(NullPointerException.class);
 
     verifyNoInteractions(firebaseAuth);
   }
