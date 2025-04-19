@@ -25,6 +25,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
   }
 
+  @ExceptionHandler(UserDeletionException.class)
+  public ProblemDetail handleUserDeletionException(UserDeletionException e) {
+
+    if (UserDeletionException.Type.VALIDATION.equals(e.getType())) {
+      log.error("Invalid request parameters: {}", e.getMessage(), e);
+      return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+    } else {
+      log.error("User deletion operation failed: {}", e.getMessage(), e);
+      return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
   @ExceptionHandler(AuthProviderException.class)
   public ProblemDetail handleAuthProviderException(AuthProviderException e) {
     HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;

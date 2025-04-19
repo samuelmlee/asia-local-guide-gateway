@@ -18,6 +18,7 @@ public class FirebaseAuthProviderService implements AuthProviderService {
     this.firebaseAuth = firebaseAuth;
   }
 
+  @Override
   public boolean checkExistingEmail(String email) {
     Objects.requireNonNull(email);
 
@@ -30,7 +31,8 @@ public class FirebaseAuthProviderService implements AuthProviderService {
     }
   }
 
-  public void deleteUser(String uid) {
+  @Override
+  public void deleteProviderUser(String uid) {
     Objects.requireNonNull(uid);
 
     try {
