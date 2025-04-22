@@ -44,6 +44,17 @@ public class UserService {
         .orElseThrow(() -> new UserNotFoundException(String.format("User not found with id: %d", id)));
   }
 
+  /**
+   * This method is used to get a reference to the user entity to efficiently set the user in a Many To One
+   * relationship. Using getReferenceById fetches the User lazily and requires a transaction to be open
+   *
+   * @param id The ID of the user.
+   * @return An Optional containing the user reference if it exists, or an empty Optional if it doesn't.
+   */
+  public Optional<User> getUserReferenceById(Long id) {
+    return Optional.of(userRepository.getReferenceById(id));
+  }
+
   private User persistNewUser(CreateUserDTO createUserDTO) {
     User user = new User();
     user.setEmail(createUserDTO.email());
