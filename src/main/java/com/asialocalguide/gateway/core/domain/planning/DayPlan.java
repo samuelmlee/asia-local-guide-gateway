@@ -28,6 +28,13 @@ public class DayPlan {
   @OneToMany(mappedBy = "dayPlan", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<DayActivity> dayActivities = new HashSet<>();
 
+  public DayPlan(LocalDate date) {
+    if (date == null) {
+      throw new IllegalArgumentException("Date and planning cannot be null");
+    }
+    this.date = date;
+  }
+
   void setPlanning(Planning planning) {
     this.planning = planning;
   }

@@ -32,11 +32,12 @@ public class Planning {
   @NotEmpty
   private Set<DayPlan> dayPlans = new HashSet<>();
 
-  public Planning(User user) {
-    if (user == null) {
-      throw new IllegalArgumentException("User cannot be null");
+  public Planning(User user, String name) {
+    if (user == null || name == null) {
+      throw new IllegalArgumentException("User or Name cannot be null");
     }
     this.user = user;
+    this.name = name;
   }
 
   public void addDayPlan(DayPlan dayPlan) {
@@ -64,6 +65,6 @@ public class Planning {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hash(id);
   }
 }
