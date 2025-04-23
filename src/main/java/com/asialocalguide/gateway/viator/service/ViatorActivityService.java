@@ -2,9 +2,9 @@ package com.asialocalguide.gateway.viator.service;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
@@ -27,169 +27,161 @@ import static java.util.Objects.requireNonNull;
 @Slf4j
 public class ViatorActivityService implements ActivityProvider {
 
-    public static final BookingProviderName providerName = BookingProviderName.VIATOR;
+  public static final BookingProviderName providerName = BookingProviderName.VIATOR;
 
-    private static final String DEFAULT_CURRENCY = "EUR";
-    private static final int MIN_RATING = 4;
-    private static final int MAX_RATING = 5;
+  private static final String DEFAULT_CURRENCY = "EUR";
+  private static final int MIN_RATING = 4;
+  private static final int MAX_RATING = 5;
 
-    private final ViatorClient viatorClient;
+  private final ViatorClient viatorClient;
 
-    public ViatorActivityService(ViatorClient viatorClient) {
-        this.viatorClient = viatorClient;
+  public ViatorActivityService(ViatorClient viatorClient) {
+    this.viatorClient = viatorClient;
+  }
+
+  @Override
+  public BookingProviderName getProviderName() {
+    return providerName;
+  }
+
+  @Override
+  public ProviderActivityPlanningData fetchProviderActivityData(ProviderPlanningRequest request) {
+    validatePlanningRequest(request);
+
+    try {
+      ViatorActivitySearchDTO searchDTO = buildActivitySearchDTO(request);
+      Map<String, ViatorActivityDTO> idToActivities = fetchValidActivities(request.languageCode(), searchDTO);
+      List<ViatorActivityAvailabilityDTO> availabilities = fetchActivityAvailabilities(idToActivities.values());
+
+      // Filter out activities with no availability data
+      List<ViatorActivityDTO> activitiesToProcess = filterNoDataActivities(idToActivities, availabilities);
+
+      List<CommonActivity> commonActivities =
+          activitiesToProcess.stream().map(ViatorActivityAdapter::toCommon).toList();
+
+      return new ProviderActivityPlanningData(
+          commonActivities, mapToActivityData(activitiesToProcess, availabilities, request), request.startDate());
+    } catch (Exception e) {
+      throw new ViatorActivityServiceException("Failed to fetch activity data", e);
+    }
+  }
+
+  private void validatePlanningRequest(ProviderPlanningRequest request) {
+    Objects.requireNonNull(request);
+
+    if (request.startDate().isAfter(request.endDate())) {
+      throw new IllegalArgumentException("Start date must be before end date");
     }
 
-    @Override
-    public BookingProviderName getProviderName() {
-        return providerName;
+    if (!NumberUtils.isParsable(request.providerDestinationId())) {
+      throw new IllegalArgumentException("Invalid Viator destination ID format");
+    }
+  }
+
+  private ViatorActivitySearchDTO buildActivitySearchDTO(ProviderPlanningRequest request) {
+    List<Integer> activityTagIds = convertActivityTags(request.activityTags());
+
+    return new ViatorActivitySearchDTO(
+        new ViatorActivitySearchDTO.Filtering(
+            Long.parseLong(request.providerDestinationId()),
+            activityTagIds,
+            request.startDate(),
+            request.endDate(),
+            new ViatorActivitySearchDTO.Range(MIN_RATING, MAX_RATING)),
+        new ViatorActivitySearchDTO.Sorting(
+            ViatorActivitySortingType.TRAVELER_RATING, ViatorActivitySortingOrder.DESCENDING),
+        createPagination(request),
+        DEFAULT_CURRENCY);
+  }
+
+  private List<Integer> convertActivityTags(List<String> tags) {
+    return Optional.ofNullable(tags).orElse(Collections.emptyList()).stream()
+        .map(this::parseActivityTag)
+        .filter(Objects::nonNull)
+        .toList();
+  }
+
+  private Integer parseActivityTag(String tag) {
+    try {
+      return Integer.valueOf(tag);
+    } catch (NumberFormatException e) {
+      log.warn("Invalid activity tag format: {}", tag);
+      return null;
+    }
+  }
+
+  private ViatorActivitySearchDTO.Pagination createPagination(ProviderPlanningRequest request) {
+    int durationDays = (int) ChronoUnit.DAYS.between(request.startDate(), request.endDate());
+    // Fetch 4 activities per day
+    int itemsPerPage = Math.max(durationDays, 1) * 4;
+    return new ViatorActivitySearchDTO.Pagination(1, itemsPerPage);
+  }
+
+  private Map<String, ViatorActivityDTO> fetchValidActivities(
+      LanguageCode languageCode, ViatorActivitySearchDTO searchDTO) {
+    return viatorClient
+        .getActivitiesByRequestAndLanguage(
+            requireNonNull(languageCode, "Locale must not be null").toString(),
+            requireNonNull(searchDTO, "SearchDTO must not be null"))
+        .stream()
+        // Activities without duration should not be processed
+        .filter(dto -> dto.getDurationMinutes() > 0)
+        .collect(Collectors.toMap(ViatorActivityDTO::productCode, Function.identity()));
+  }
+
+  private List<ViatorActivityAvailabilityDTO> fetchActivityAvailabilities(Collection<ViatorActivityDTO> activities) {
+    if (activities == null || activities.isEmpty()) {
+      return List.of();
     }
 
-    @Override
-    public ProviderActivityData fetchProviderActivityData(ProviderPlanningRequest request) {
-        validatePlanningRequest(request);
+    List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures = createAvailabilityFutures(activities);
 
-        try {
-            ViatorActivitySearchDTO searchDTO = buildActivitySearchDTO(request);
-            Map<String, ViatorActivityDTO> idToActivities = fetchValidActivities(request.languageCode(), searchDTO);
-            List<ViatorActivityAvailabilityDTO> availabilities = fetchActivityAvailabilities(idToActivities.values());
+    var futureArray = futures.toArray(new CompletableFuture[0]);
 
-            // Filter out activities with no availability data
-            List<ViatorActivityDTO> activitiesToProcess = filterNoDataActivities(idToActivities, availabilities);
+    return CompletableFuture.allOf(futureArray)
+        .thenApply(
+            ignored ->
+                futures.stream().map(CompletableFuture::join).filter(Optional::isPresent).map(Optional::get).toList())
+        .join();
+  }
 
-            List<CommonActivity> commonActivities = activitiesToProcess.stream().map(ViatorActivityAdapter::toCommon).toList();
+  private List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
+      Collection<ViatorActivityDTO> activities) {
 
-            return new ProviderActivityData(
-                    commonActivities,
-                    mapToActivityData(activitiesToProcess, availabilities, request),
-                    request.startDate()
-            );
-        } catch (Exception e) {
-            throw new ViatorActivityServiceException("Failed to fetch activity data", e);
-        }
-    }
+    return activities.stream()
+        .map(
+            activity -> {
+              String productCode = requireNonNull(activity.productCode());
 
-    private void validatePlanningRequest(ProviderPlanningRequest request) {
-        Objects.requireNonNull(request);
-
-        if (request.startDate().isAfter(request.endDate())) {
-            throw new IllegalArgumentException("Start date must be before end date");
-        }
-
-        if (!NumberUtils.isParsable(request.providerDestinationId())) {
-            throw new IllegalArgumentException("Invalid Viator destination ID format");
-        }
-    }
-
-    private ViatorActivitySearchDTO buildActivitySearchDTO(ProviderPlanningRequest request) {
-        List<Integer> activityTagIds = convertActivityTags(request.activityTags());
-
-        return new ViatorActivitySearchDTO(
-                new ViatorActivitySearchDTO.Filtering(
-                        Long.parseLong(request.providerDestinationId()),
-                        activityTagIds,
-                        request.startDate(),
-                        request.endDate(),
-                        new ViatorActivitySearchDTO.Range(MIN_RATING, MAX_RATING)
-                ),
-                new ViatorActivitySearchDTO.Sorting(
-                        ViatorActivitySortingType.TRAVELER_RATING,
-                        ViatorActivitySortingOrder.DESCENDING
-                ),
-                createPagination(request),
-                DEFAULT_CURRENCY
-        );
-    }
-
-    private List<Integer> convertActivityTags(List<String> tags) {
-        return Optional.ofNullable(tags)
-                .orElse(Collections.emptyList())
-                .stream()
-                .map(this::parseActivityTag)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private Integer parseActivityTag(String tag) {
-        try {
-            return Integer.valueOf(tag);
-        } catch (NumberFormatException e) {
-            log.warn("Invalid activity tag format: {}", tag);
-            return null;
-        }
-    }
-
-    private ViatorActivitySearchDTO.Pagination createPagination(ProviderPlanningRequest request) {
-        int durationDays = (int) ChronoUnit.DAYS.between(request.startDate(), request.endDate());
-        // Fetch 4 activities per day
-        int itemsPerPage = Math.max(durationDays, 1) * 4;
-        return new ViatorActivitySearchDTO.Pagination(1, itemsPerPage);
-    }
-
-    private Map<String, ViatorActivityDTO> fetchValidActivities(LanguageCode languageCode, ViatorActivitySearchDTO searchDTO) {
-        return viatorClient.getActivitiesByRequestAndLanguage(
-                        requireNonNull(languageCode, "Locale must not be null").toString(),
-                        requireNonNull(searchDTO, "SearchDTO must not be null"))
-                .stream()
-                // Activities without duration should not be processed
-                .filter(dto -> dto.getDurationMinutes() > 0)
-                .collect(Collectors.toMap(ViatorActivityDTO::productCode, Function.identity()));
-
-    }
-
-    private List<ViatorActivityAvailabilityDTO> fetchActivityAvailabilities(Collection<ViatorActivityDTO> activities) {
-        if (activities == null || activities.isEmpty()) {
-            return List.of();
-        }
-
-        List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures =
-                createAvailabilityFutures(activities);
-
-        var futureArray = futures.toArray(new CompletableFuture[0]);
-
-        return CompletableFuture.allOf(futureArray)
-                .thenApply(ignored -> futures.stream()
-                        .map(CompletableFuture::join)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .toList())
-                .join();
-    }
-
-    private List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
-            Collection<ViatorActivityDTO> activities) {
-
-        return activities.stream().map(activity -> {
-            String productCode = requireNonNull(activity.productCode());
-
-            return CompletableFuture
-                    .supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
-                    .exceptionally(ex -> {
+              return CompletableFuture.supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
+                  .exceptionally(
+                      ex -> {
                         log.warn("Error while fetching Activity Availability for product code : {}", productCode);
                         return Optional.empty();
-                    });
-        }).toList();
-    }
+                      });
+            })
+        .toList();
+  }
 
-    private List<ViatorActivityDTO> filterNoDataActivities(Map<String, ViatorActivityDTO> idToActivities, List<ViatorActivityAvailabilityDTO> availabilities) {
+  private List<ViatorActivityDTO> filterNoDataActivities(
+      Map<String, ViatorActivityDTO> idToActivities, List<ViatorActivityAvailabilityDTO> availabilities) {
 
-        return availabilities.stream().map(availability -> idToActivities.get(availability.productCode()))
-                .filter(Objects::nonNull)
-                .toList();
-    }
+    return availabilities.stream()
+        .map(availability -> idToActivities.get(availability.productCode()))
+        .filter(Objects::nonNull)
+        .toList();
+  }
 
-    private ActivityData mapToActivityData(List<ViatorActivityDTO> activities,
-                                           List<ViatorActivityAvailabilityDTO> availabilities,
-                                           ProviderPlanningRequest request) {
-        try {
-            return ViatorActivityAvailabilityMapper.mapToActivityData(
-                    activities,
-                    availabilities,
-                    request.startDate(),
-                    request.endDate()
-            );
-        } catch (Exception e) {
-            log.error("Failed to map activity data: {}", e.getMessage());
-            throw new ViatorActivityServiceException("Activity data mapping failed", e);
-        }
+  private ActivityPlanningData mapToActivityData(
+      List<ViatorActivityDTO> activities,
+      List<ViatorActivityAvailabilityDTO> availabilities,
+      ProviderPlanningRequest request) {
+    try {
+      return ViatorActivityAvailabilityMapper.mapToActivityData(
+          activities, availabilities, request.startDate(), request.endDate());
+    } catch (Exception e) {
+      log.error("Failed to map activity data: {}", e.getMessage());
+      throw new ViatorActivityServiceException("Activity data mapping failed", e);
     }
+  }
 }

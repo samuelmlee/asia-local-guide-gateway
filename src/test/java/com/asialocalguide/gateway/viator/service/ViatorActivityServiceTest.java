@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
@@ -59,10 +59,10 @@ class ViatorActivityServiceTest {
   void fetchProviderActivityData_shouldHandleEmptyActivityList() {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(Collections.emptyList());
 
-    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
 
     assertTrue(result.activities().isEmpty());
-    assertNotNull(result.activityData());
+    assertNotNull(result.activityPlanningData());
   }
 
   @Test
@@ -93,7 +93,7 @@ class ViatorActivityServiceTest {
                     "EUR",
                     new ViatorActivityAvailabilityDTO.Summary(50))));
 
-    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
 
     assertEquals(1, result.activities().size());
   }
@@ -105,7 +105,7 @@ class ViatorActivityServiceTest {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
     when(viatorClient.getAvailabilityByProductCode(anyString())).thenReturn(Optional.empty());
 
-    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
 
     assertTrue(result.activities().isEmpty());
   }
@@ -137,7 +137,7 @@ class ViatorActivityServiceTest {
                     new ViatorActivityAvailabilityDTO.Summary(50))));
     when(viatorClient.getAvailabilityByProductCode(activity2.productCode())).thenReturn(Optional.empty());
 
-    ProviderActivityData result = service.fetchProviderActivityData(validRequest);
+    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
 
     assertEquals(1, result.activities().size());
   }
@@ -149,7 +149,7 @@ class ViatorActivityServiceTest {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
     when(viatorClient.getAvailabilityByProductCode(anyString())).thenThrow(new RuntimeException("Simulated failure"));
 
-    ProviderActivityData providerData = service.fetchProviderActivityData(validRequest);
+    ProviderActivityPlanningData providerData = service.fetchProviderActivityData(validRequest);
 
     assertNotNull(providerData);
   }

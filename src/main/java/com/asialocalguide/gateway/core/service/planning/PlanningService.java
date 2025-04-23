@@ -3,7 +3,7 @@ package com.asialocalguide.gateway.core.service.planning;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.Planning;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
@@ -38,7 +38,7 @@ public class PlanningService {
 
     LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
-    List<ProviderActivityData> providerDataList =
+    List<ProviderActivityPlanningData> providerDataList =
         activitiesStrategies.stream()
             .map(
                 strategy -> {
@@ -57,17 +57,17 @@ public class PlanningService {
     }
 
     // Implement merging of ProviderActivityData when using multiple providers
-    ProviderActivityData result = providerDataList.getFirst();
+    ProviderActivityPlanningData result = providerDataList.getFirst();
 
     // Generate availability 3d array using scheduler
-    boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityData());
+    boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityPlanningData());
 
     return createDayPlans(
         request.startDate(),
         request.getDuration(),
         result.activities(),
         schedule,
-        result.activityData().getValidStartTimes());
+        result.activityPlanningData().getValidStartTimes());
   }
 
   private List<DayPlanDTO> createDayPlans(

@@ -6,9 +6,9 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.planning.ActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
@@ -72,9 +72,9 @@ class PlanningServiceTest {
   void generateActivityPlanning_shouldHandleEmptyActivityData() {
     when(strategy1.fetchProviderActivity(any(), any()))
         .thenReturn(
-            new ProviderActivityData(
+            new ProviderActivityPlanningData(
                 List.of(),
-                new ActivityData(
+                new ActivityPlanningData(
                     new boolean[1][2][24],
                     new String[1][2][24],
                     new int[] {0}, // Use a single element array instead of empty
@@ -94,8 +94,8 @@ class PlanningServiceTest {
     String[][][] startTimes = new String[1][2][24];
 
     // Setup invalid activity data that can't be scheduled
-    ActivityData invalidData =
-        new ActivityData(
+    ActivityPlanningData invalidData =
+        new ActivityPlanningData(
             availability, // Availability
             startTimes, // Start times
             new int[] {1}, // Ratings
@@ -103,7 +103,7 @@ class PlanningServiceTest {
             );
 
     when(strategy1.fetchProviderActivity(any(), any()))
-        .thenReturn(new ProviderActivityData(List.of(createTestActivity(4.5)), invalidData, today));
+        .thenReturn(new ProviderActivityPlanningData(List.of(createTestActivity(4.5)), invalidData, today));
 
     List<DayPlanDTO> result = planningService.generateActivityPlanning(validRequest);
 
@@ -132,8 +132,8 @@ class PlanningServiceTest {
       startTimes[0][day][18] = "18:00";
     }
 
-    ActivityData testData =
-        new ActivityData(
+    ActivityPlanningData testData =
+        new ActivityPlanningData(
             availability,
             startTimes,
             new int[] {5}, // Rating
@@ -141,7 +141,7 @@ class PlanningServiceTest {
 
     when(strategy1.fetchProviderActivity(any(), any()))
         .thenReturn(
-            new ProviderActivityData(
+            new ProviderActivityPlanningData(
                 List.of(createTestActivity(4.5)), // Single activity instance
                 testData,
                 today));
@@ -191,8 +191,8 @@ class PlanningServiceTest {
     startTimes[0][0][9] = "09:00";
     startTimes[1][0][9] = "09:00";
 
-    ActivityData conflictData =
-        new ActivityData(
+    ActivityPlanningData conflictData =
+        new ActivityPlanningData(
             availability,
             startTimes,
             new int[] {4, 5}, // Ratings
@@ -201,7 +201,8 @@ class PlanningServiceTest {
 
     when(strategy1.fetchProviderActivity(any(), any()))
         .thenReturn(
-            new ProviderActivityData(List.of(createTestActivity(4.5), createTestActivity(5)), conflictData, today));
+            new ProviderActivityPlanningData(
+                List.of(createTestActivity(4.5), createTestActivity(5)), conflictData, today));
 
     PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, 1L, List.of("adventure"));
 
@@ -213,7 +214,7 @@ class PlanningServiceTest {
     assertEquals(5, result.getFirst().activities().getFirst().combinedAverageRating());
   }
 
-  private ProviderActivityData createTestProviderData() {
+  private ProviderActivityPlanningData createTestProviderData() {
     // For 2-day request
     boolean[][][] availability = new boolean[1][2][24]; // 1 activity x 2 days x 1 slot
     availability[0][0][8] = true;
@@ -223,9 +224,9 @@ class PlanningServiceTest {
     startTimes[0][0][8] = "09:00";
     startTimes[0][1][13] = "14:00";
 
-    return new ProviderActivityData(
+    return new ProviderActivityPlanningData(
         List.of(createTestActivity(4.5)),
-        new ActivityData(availability, startTimes, new int[] {5}, new int[] {1}),
+        new ActivityPlanningData(availability, startTimes, new int[] {5}, new int[] {1}),
         today);
   }
 

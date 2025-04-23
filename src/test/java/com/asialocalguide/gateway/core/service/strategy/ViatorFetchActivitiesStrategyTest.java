@@ -1,25 +1,17 @@
 package com.asialocalguide.gateway.core.service.strategy;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ActivityData;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +19,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ViatorFetchActivitiesStrategyTest {
@@ -100,13 +101,14 @@ class ViatorFetchActivitiesStrategyTest {
     int[] ratings = {5};
     int[] durations = {1};
 
-    ActivityData activityData = new ActivityData(availability, startTimes, ratings, durations);
-    ProviderActivityData expectedData = new ProviderActivityData(null, activityData, validRequest.startDate());
+    ActivityPlanningData activityPlanningData = new ActivityPlanningData(availability, startTimes, ratings, durations);
+    ProviderActivityPlanningData expectedData =
+        new ProviderActivityPlanningData(null, activityPlanningData, validRequest.startDate());
 
     when(viatorActivityService.fetchProviderActivityData(any())).thenReturn(expectedData);
 
     // Execute
-    ProviderActivityData result = strategy.fetchProviderActivity(validRequest, LanguageCode.FR);
+    ProviderActivityPlanningData result = strategy.fetchProviderActivity(validRequest, LanguageCode.FR);
 
     // Verify
     assertThat(result).isEqualTo(expectedData);
