@@ -1,6 +1,7 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.validation.ValidTimeOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 @AllArgsConstructor
+@ValidTimeOrder
 public class DayActivity {
 
   @Id
@@ -40,8 +42,8 @@ public class DayActivity {
 
   @NotBlank private String description;
 
-  @DecimalMin(value = "0.0", inclusive = true)
-  @DecimalMax(value = "5.0", inclusive = true)
+  @DecimalMin(value = "0.0")
+  @DecimalMax(value = "5.0")
   private Double combinedAverageRating;
 
   @Min(value = 0)
