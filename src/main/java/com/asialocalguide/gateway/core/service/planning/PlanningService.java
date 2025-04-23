@@ -3,12 +3,12 @@ package com.asialocalguide.gateway.core.service.planning;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.Planning;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.service.strategy.FetchActivitiesStrategy;
+import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,10 +26,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class PlanningService {
 
-  List<FetchActivitiesStrategy> activitiesStrategies;
+  List<FetchPlanningDataStrategy> fetchPlanningDataStrategies;
 
-  public PlanningService(List<FetchActivitiesStrategy> activitiesStrategies) {
-    this.activitiesStrategies = activitiesStrategies;
+  public PlanningService(List<FetchPlanningDataStrategy> fetchPlanningDataStrategies) {
+    this.fetchPlanningDataStrategies = fetchPlanningDataStrategies;
   }
 
   public List<DayPlanDTO> generateActivityPlanning(PlanningRequestDTO request) {
@@ -38,12 +38,12 @@ public class PlanningService {
 
     LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
-    List<ProviderActivityPlanningData> providerDataList =
-        activitiesStrategies.stream()
+    List<ProviderPlanningData> providerDataList =
+        fetchPlanningDataStrategies.stream()
             .map(
                 strategy -> {
                   try {
-                    return strategy.fetchProviderActivity(request, languageCode);
+                    return strategy.fetchProviderPlanningData(request, languageCode);
                   } catch (Exception e) {
                     log.error("Error during fetching of activities from Provider : {}", strategy.getProviderName(), e);
                     return null;
@@ -57,7 +57,7 @@ public class PlanningService {
     }
 
     // Implement merging of ProviderActivityData when using multiple providers
-    ProviderActivityPlanningData result = providerDataList.getFirst();
+    ProviderPlanningData result = providerDataList.getFirst();
 
     // Generate availability 3d array using scheduler
     boolean[][][] schedule = ActivitySchedulerWithRatings.scheduleActivities(result.activityPlanningData());

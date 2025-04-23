@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
@@ -42,7 +42,7 @@ class ViatorActivityServiceTest {
   }
 
   @Test
-  void fetchProviderActivityData_shouldThrowWhenInvalidDestinationId() {
+  void fetchProviderPlanningData_shouldThrowWhenInvalidDestinationId() {
     ProviderPlanningRequest invalidRequest =
         new ProviderPlanningRequest(
             today,
@@ -52,21 +52,21 @@ class ViatorActivityServiceTest {
             "invalid", // Non-numeric destination ID
             LanguageCode.EN);
 
-    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivityData(invalidRequest));
+    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderPlanningData(invalidRequest));
   }
 
   @Test
-  void fetchProviderActivityData_shouldHandleEmptyActivityList() {
+  void fetchProviderActivityData_shouldHandleEmptyPlanningList() {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(Collections.emptyList());
 
-    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
+    ProviderPlanningData result = service.fetchProviderPlanningData(validRequest);
 
     assertTrue(result.activities().isEmpty());
     assertNotNull(result.activityPlanningData());
   }
 
   @Test
-  void fetchProviderActivityData_shouldFilterZeroDurationActivities() {
+  void fetchProviderPlanningData_shouldFilterZeroDurationActivities() {
     ViatorActivityDTO validActivity = createTestActivity(60);
     ViatorActivityDTO invalidActivity = createTestActivity(0);
 
@@ -93,7 +93,7 @@ class ViatorActivityServiceTest {
                     "EUR",
                     new ViatorActivityAvailabilityDTO.Summary(50))));
 
-    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
+    ProviderPlanningData result = service.fetchProviderPlanningData(validRequest);
 
     assertEquals(1, result.activities().size());
   }
@@ -105,13 +105,13 @@ class ViatorActivityServiceTest {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
     when(viatorClient.getAvailabilityByProductCode(anyString())).thenReturn(Optional.empty());
 
-    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
+    ProviderPlanningData result = service.fetchProviderPlanningData(validRequest);
 
     assertTrue(result.activities().isEmpty());
   }
 
   @Test
-  void fetchProviderActivityData_shouldHandlePartialAvailabilityFailures() {
+  void fetchProviderPlanningData_shouldHandlePartialAvailabilityFailures() {
     ViatorActivityDTO activity1 = createTestActivity(60);
     ViatorActivityDTO activity2 = createTestActivity(90);
 
@@ -137,25 +137,25 @@ class ViatorActivityServiceTest {
                     new ViatorActivityAvailabilityDTO.Summary(50))));
     when(viatorClient.getAvailabilityByProductCode(activity2.productCode())).thenReturn(Optional.empty());
 
-    ProviderActivityPlanningData result = service.fetchProviderActivityData(validRequest);
+    ProviderPlanningData result = service.fetchProviderPlanningData(validRequest);
 
     assertEquals(1, result.activities().size());
   }
 
   @Test
-  void fetchProviderActivityData_shouldHandleAsyncFailures() {
+  void fetchProviderPlanningData_shouldHandleAsyncFailures() {
     ViatorActivityDTO activity = createTestActivity(60);
 
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
     when(viatorClient.getAvailabilityByProductCode(anyString())).thenThrow(new RuntimeException("Simulated failure"));
 
-    ProviderActivityPlanningData providerData = service.fetchProviderActivityData(validRequest);
+    ProviderPlanningData providerData = service.fetchProviderPlanningData(validRequest);
 
     assertNotNull(providerData);
   }
 
   @Test
-  void fetchProviderActivityData_shouldFilterAndConvertTags() {
+  void fetchProviderPlanningData_shouldFilterAndConvertTags() {
     // Given
     ProviderPlanningRequest request =
         new ProviderPlanningRequest(
@@ -172,7 +172,7 @@ class ViatorActivityServiceTest {
         .thenReturn(Collections.emptyList());
 
     // When
-    service.fetchProviderActivityData(request);
+    service.fetchProviderPlanningData(request);
 
     // Then - Verify tags filtering and conversion
     ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor = ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
@@ -184,7 +184,7 @@ class ViatorActivityServiceTest {
   }
 
   @Test
-  void fetchProviderActivityData_shouldCalculatePaginationFromDates() {
+  void fetchProviderPlanningData_shouldCalculatePaginationFromDates() {
     // Given
     LocalDate endDate = today.plusDays(3); // 3-day duration
     int expectedItemsPerPage = 12; // 3 days * 4 activities/day
@@ -201,7 +201,7 @@ class ViatorActivityServiceTest {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(Collections.emptyList());
 
     // When
-    service.fetchProviderActivityData(request);
+    service.fetchProviderPlanningData(request);
 
     // Then - Verify pagination calculation
     ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor = ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
@@ -217,7 +217,7 @@ class ViatorActivityServiceTest {
     ProviderPlanningRequest invalidRequest =
         new ProviderPlanningRequest(tomorrow, today, 2, List.of("123"), "456", LanguageCode.EN);
 
-    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivityData(invalidRequest));
+    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderPlanningData(invalidRequest));
   }
 
   @Test
@@ -233,7 +233,7 @@ class ViatorActivityServiceTest {
             LanguageCode.EN);
 
     // When
-    service.fetchProviderActivityData(request);
+    service.fetchProviderPlanningData(request);
 
     ArgumentCaptor<ViatorActivitySearchDTO> searchCaptor = ArgumentCaptor.forClass(ViatorActivitySearchDTO.class);
 

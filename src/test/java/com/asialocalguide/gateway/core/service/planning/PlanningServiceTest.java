@@ -8,11 +8,11 @@ import static org.mockito.Mockito.when;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.service.strategy.FetchActivitiesStrategy;
+import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -26,9 +26,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PlanningServiceTest {
 
-  @Mock private FetchActivitiesStrategy strategy1;
+  @Mock private FetchPlanningDataStrategy strategy1;
 
-  @Mock private FetchActivitiesStrategy strategy2;
+  @Mock private FetchPlanningDataStrategy strategy2;
 
   private PlanningService planningService;
 
@@ -58,8 +58,8 @@ class PlanningServiceTest {
     LocalDate endDate = today.plusDays(1);
     PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, 1L, List.of("adventure"));
 
-    when(strategy1.fetchProviderActivity(any(), any())).thenThrow(new RuntimeException("Provider error"));
-    when(strategy2.fetchProviderActivity(any(), any())).thenReturn(createTestProviderData());
+    when(strategy1.fetchProviderPlanningData(any(), any())).thenThrow(new RuntimeException("Provider error"));
+    when(strategy2.fetchProviderPlanningData(any(), any())).thenReturn(createTestProviderData());
 
     List<DayPlanDTO> result = planningService.generateActivityPlanning(request);
 
@@ -70,9 +70,9 @@ class PlanningServiceTest {
 
   @Test
   void generateActivityPlanning_shouldHandleEmptyActivityData() {
-    when(strategy1.fetchProviderActivity(any(), any()))
+    when(strategy1.fetchProviderPlanningData(any(), any()))
         .thenReturn(
-            new ProviderActivityPlanningData(
+            new ProviderPlanningData(
                 List.of(),
                 new ActivityPlanningData(
                     new boolean[1][2][24],
@@ -102,8 +102,8 @@ class PlanningServiceTest {
             new int[] {8} // 8-hour duration
             );
 
-    when(strategy1.fetchProviderActivity(any(), any()))
-        .thenReturn(new ProviderActivityPlanningData(List.of(createTestActivity(4.5)), invalidData, today));
+    when(strategy1.fetchProviderPlanningData(any(), any()))
+        .thenReturn(new ProviderPlanningData(List.of(createTestActivity(4.5)), invalidData, today));
 
     List<DayPlanDTO> result = planningService.generateActivityPlanning(validRequest);
 
@@ -139,9 +139,9 @@ class PlanningServiceTest {
             new int[] {5}, // Rating
             new int[] {60});
 
-    when(strategy1.fetchProviderActivity(any(), any()))
+    when(strategy1.fetchProviderPlanningData(any(), any()))
         .thenReturn(
-            new ProviderActivityPlanningData(
+            new ProviderPlanningData(
                 List.of(createTestActivity(4.5)), // Single activity instance
                 testData,
                 today));
@@ -199,10 +199,9 @@ class PlanningServiceTest {
             new int[] {1, 1} // Durations
             );
 
-    when(strategy1.fetchProviderActivity(any(), any()))
+    when(strategy1.fetchProviderPlanningData(any(), any()))
         .thenReturn(
-            new ProviderActivityPlanningData(
-                List.of(createTestActivity(4.5), createTestActivity(5)), conflictData, today));
+            new ProviderPlanningData(List.of(createTestActivity(4.5), createTestActivity(5)), conflictData, today));
 
     PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, 1L, List.of("adventure"));
 
@@ -214,7 +213,7 @@ class PlanningServiceTest {
     assertEquals(5, result.getFirst().activities().getFirst().combinedAverageRating());
   }
 
-  private ProviderActivityPlanningData createTestProviderData() {
+  private ProviderPlanningData createTestProviderData() {
     // For 2-day request
     boolean[][][] availability = new boolean[1][2][24]; // 1 activity x 2 days x 1 slot
     availability[0][0][8] = true;
@@ -224,7 +223,7 @@ class PlanningServiceTest {
     startTimes[0][0][8] = "09:00";
     startTimes[0][1][13] = "14:00";
 
-    return new ProviderActivityPlanningData(
+    return new ProviderPlanningData(
         List.of(createTestActivity(4.5)),
         new ActivityPlanningData(availability, startTimes, new int[] {5}, new int[] {1}),
         today);

@@ -5,7 +5,7 @@ import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
@@ -14,7 +14,7 @@ import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
+public class ViatorFetchPlanningDataStrategy implements FetchPlanningDataStrategy {
 
   private static final BookingProviderName providerName = BookingProviderName.VIATOR;
 
@@ -24,7 +24,7 @@ public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
 
   private final ViatorActivityService viatorActivityService;
 
-  public ViatorFetchActivitiesStrategy(
+  public ViatorFetchPlanningDataStrategy(
       BookingProviderRepository bookingProviderRepository,
       DestinationRepository destinationRepository,
       ViatorActivityService viatorActivityService) {
@@ -39,7 +39,7 @@ public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
   }
 
   @Override
-  public ProviderActivityPlanningData fetchProviderActivity(PlanningRequestDTO request, LanguageCode languageCode) {
+  public ProviderPlanningData fetchProviderPlanningData(PlanningRequestDTO request, LanguageCode languageCode) {
     BookingProvider viatorProvider =
         bookingProviderRepository
             .findByName(BookingProviderName.VIATOR)
@@ -64,6 +64,6 @@ public class ViatorFetchActivitiesStrategy implements FetchActivitiesStrategy {
             viatorDestinationId,
             languageCode);
 
-    return viatorActivityService.fetchProviderActivityData(providerRequest);
+    return viatorActivityService.fetchProviderPlanningData(providerRequest);
   }
 }

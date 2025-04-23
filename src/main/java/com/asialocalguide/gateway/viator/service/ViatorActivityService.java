@@ -1,27 +1,26 @@
 package com.asialocalguide.gateway.viator.service;
 
+import static java.util.Objects.requireNonNull;
+
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
 import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Service;
-
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.util.Objects.requireNonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -45,7 +44,7 @@ public class ViatorActivityService implements ActivityProvider {
   }
 
   @Override
-  public ProviderActivityPlanningData fetchProviderActivityData(ProviderPlanningRequest request) {
+  public ProviderPlanningData fetchProviderPlanningData(ProviderPlanningRequest request) {
     validatePlanningRequest(request);
 
     try {
@@ -59,7 +58,7 @@ public class ViatorActivityService implements ActivityProvider {
       List<CommonActivity> commonActivities =
           activitiesToProcess.stream().map(ViatorActivityAdapter::toCommon).toList();
 
-      return new ProviderActivityPlanningData(
+      return new ProviderPlanningData(
           commonActivities, mapToActivityData(activitiesToProcess, availabilities, request), request.startDate());
     } catch (Exception e) {
       throw new ViatorActivityServiceException("Failed to fetch activity data", e);
