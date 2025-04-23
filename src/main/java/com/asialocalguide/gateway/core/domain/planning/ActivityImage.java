@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,11 +14,18 @@ import org.hibernate.validator.constraints.URL;
 @Getter
 public class ActivityImage {
 
-  @NotNull private Integer height;
+  @NotNull
+  @Column(name = "activity_image_height")
+  private Integer height;
 
-  @NotNull private Integer width;
+  @NotNull
+  @Column(name = "activity_image_width")
+  private Integer width;
 
-  @NotBlank @URL private String url;
+  @NotBlank
+  @URL
+  @Column(name = "activity_image_url")
+  private String url;
 
   public ActivityImage(Integer height, Integer width, String url) {
     this.height = height;

@@ -14,9 +14,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @Getter
+@ValidTimeOrder
 @Builder
 @AllArgsConstructor
-@ValidTimeOrder
 public class DayActivity {
 
   @Id
