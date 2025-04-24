@@ -10,17 +10,19 @@ public record CommonPersistableActivity(
     @NotNull @NotEmpty List<Translation> title,
     @NotNull @NotEmpty List<Translation> description,
     List<Image> images,
-    Double averageRating,
-    Integer reviewCount,
+    Review review,
     Integer durationInMinutes,
-    Double price,
-    String currency,
+    Pricing pricing,
     String providerUrl,
     List<String> categories,
     BookingProviderName providerName,
     String providerId) {
 
   public record Image(ImageType type, Integer height, Integer width, String url) {}
+
+  public record Review(Double averageRating, Integer reviewCount) {}
+
+  public record Pricing(Double price, String currency) {}
 
   public record Translation(LanguageCode languageCode, String value) {}
 
