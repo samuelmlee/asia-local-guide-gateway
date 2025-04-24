@@ -2,29 +2,34 @@ package com.asialocalguide.gateway.core.domain.planning;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import java.util.List;
+import org.hibernate.validator.constraints.URL;
 
 public record CommonPersistableActivity(
     @NotNull @NotEmpty List<Translation> title,
     @NotNull @NotEmpty List<Translation> description,
     List<Image> images,
-    Review review,
-    Integer durationInMinutes,
-    Pricing pricing,
-    String providerUrl,
+    @NotNull Review review,
+    @NotNull @Positive Integer durationInMinutes,
+    @NotNull Pricing pricing,
+    @URL String providerUrl,
     List<String> categories,
-    BookingProviderName providerName,
-    String providerId) {
+    @NotNull BookingProviderName providerName,
+    @NotNull String providerId) {
 
-  public record Image(ImageType type, Integer height, Integer width, String url) {}
+  public record Image(
+      @NotNull ImageType type,
+      @NotNull @Positive Integer height,
+      @NotNull @Positive Integer width,
+      @NotBlank String url) {}
 
-  public record Review(Double averageRating, Integer reviewCount) {}
+  public record Review(
+      @NotNull @DecimalMin("0.0") @DecimalMax("5.0") Double averageRating, @NotNull @Positive Integer reviewCount) {}
 
-  public record Pricing(Double price, String currency) {}
+  public record Pricing(@NotNull @Positive Double price, @NotNull String currency) {}
 
-  public record Translation(LanguageCode languageCode, String value) {}
+  public record Translation(@NotNull LanguageCode languageCode, @NotBlank String value) {}
 
   public enum ImageType {
     MOBILE,

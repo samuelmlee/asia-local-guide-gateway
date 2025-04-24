@@ -41,14 +41,11 @@ public class Activity {
   @Min(value = 1)
   private Integer durationMinutes;
 
-  @DecimalMin(value = "0.0", inclusive = true)
-  private Double price;
-
   @NotBlank private String currency;
 
   @Embedded @NotNull private ActivityImage mainImage;
 
-  @NotBlank @URL private String providerUrl;
+  @NotBlank @URL private String bookingUrl;
 
   @NotNull private LocalDateTime lastUpdated;
 

@@ -28,12 +28,11 @@ CREATE TABLE `activity` (
   `average_rating` double NOT NULL CHECK (`average_rating` >= 0.0 AND `average_rating` <= 5.0),
   `review_count` int NOT NULL CHECK (`review_count` >= 0),
   `duration_minutes` int NOT NULL CHECK (`duration_minutes` >= 1),
-  `price` double NOT NULL CHECK (`price` >= 0.0),
   `currency` varchar(255) NOT NULL,
   `activity_image_height` int NOT NULL,
   `activity_image_width` int NOT NULL,
   `activity_image_url` varchar(255) NOT NULL,
-  `provider_url` varchar(255) NOT NULL,
+  `booking_url` varchar(255) NOT NULL,
   `last_updated` datetime NOT NULL,
   PRIMARY KEY (`provider_activity_id`, `booking_provider_id`)
 );

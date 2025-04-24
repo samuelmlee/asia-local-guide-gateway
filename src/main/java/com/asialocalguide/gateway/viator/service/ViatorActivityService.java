@@ -67,7 +67,67 @@ public class ViatorActivityService implements ActivityProvider {
     if (activityIds == null || activityIds.isEmpty()) {
       throw new IllegalArgumentException("Activity IDs to fetch Viator Activities cannot be null or empty");
     }
+    log.info("Fetching Viator activities for languages: {}", Arrays.toString(LanguageCode.values()));
+
     return List.of();
+
+    //    List<CompletableFuture<Pair<LanguageCode, List<ViatorActivityDTO>>>> futures =
+    //        Arrays.stream(LanguageCode.values())
+    //            .map(
+    //                language ->
+    //                    CompletableFuture.supplyAsync(
+    //                            () -> {
+    //                              List<ViatorActivityDTO> activities =
+    //                                  viatorClient.getActivitiesByIdAndLanguage(language.toString(), activityIds);
+    //
+    //                              if (activities == null || activities.isEmpty()) {
+    //                                throw new ViatorApiException(
+    //                                    String.format(
+    //                                        "No destinations found for language: %s aborting ingestion.", language));
+    //                              }
+    //                              return Pair.of(language, activities);
+    //                            })
+    //                        .exceptionally(
+    //                            ex -> {
+    //                              throw new ViatorApiException(
+    //                                  String.format(
+    //                                      "API failure for getAllDestinationsForLanguage call for language: %s.",
+    // language),
+    //                                  ex);
+    //                            }))
+    //            .toList();
+    //
+    //    Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations = new EnumMap<>(LanguageCode.class);
+    //
+    //    futures.forEach(
+    //        future -> {
+    //          try {
+    //            Pair<LanguageCode, List<ViatorDestinationDTO>> result = future.join();
+    //            if (!result.getSecond().isEmpty()) {
+    //              languageToDestinations.put(
+    //                  result.getFirst(),
+    //                  result.getSecond().stream()
+    //                      .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
+    //            }
+    //          } catch (Exception e) {
+    //            if (e.getCause() instanceof ViatorApiException viatorApiException) {
+    //              throw viatorApiException;
+    //            } else {
+    //              throw new ViatorApiException("Failed to fetch activities from Viator Provider.", e);
+    //            }
+    //          }
+    //        });
+    //
+    //    // Use English destinations as base for creating RawDestinationDTOs, other languages used
+    //    // for translations
+    //    Map<Long, ViatorDestinationDTO> idToDestinationEnDTOs = languageToDestinations.get(LanguageCode.EN);
+    //
+    //    return idToDestinationEnDTOs.values().stream()
+    //        // The app does not support scheduling activities within a whole country
+    //        .filter(d -> d != null && !"COUNTRY".equals(d.type()))
+    //        .map(dto -> createRawDestinationDTO(dto, languageToDestinations))
+    //        .filter(Objects::nonNull)
+    //        .toList();
   }
 
   private void validatePlanningRequest(ProviderPlanningRequest request) {

@@ -44,11 +44,9 @@ public class ViatorClient {
 
       return Optional.ofNullable(entity.getBody()).map(ViatorDestinationResponseDTO::destinations).orElseGet(List::of);
 
+    } catch (ViatorApiException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof ViatorApiException) {
-        throw e;
-      }
-
       throw new ViatorApiException("Failed to call Destination API: " + e.getMessage(), e);
     }
   }
@@ -75,14 +73,41 @@ public class ViatorClient {
 
       return Optional.ofNullable(entity.getBody()).map(ViatorActivityResponseDTO::products).orElseGet(List::of);
 
+    } catch (ViatorApiException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof ViatorApiException) {
-        throw e;
-      }
-
       throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
     }
   }
+
+  //  public List<ViatorActivityDetailDTO> getActivitiesByIdAndLanguage(String languageIsoCode, String activityId) {
+  //    try {
+  //      ResponseEntity<ViatorActivityResponseDTO> entity =
+  //          viatorRestClient
+  //              .post()
+  //              .uri("/products/{activityId}", activityId)
+  //              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageIsoCode))
+  //              .retrieve()
+  //              .onStatus(
+  //                  // Exclude 404 from errors
+  //                  status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND) ||
+  // status.is5xxServerError(),
+  //                  (req, res) -> handleViatorError(res))
+  //              .toEntity(ViatorActivityResponseDTO.class);
+  //
+  //      if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
+  //        return List.of();
+  //      }
+  //
+  //      return Optional.ofNullable(entity.getBody()).map(ViatorActivityResponseDTO::products).orElseGet(List::of);
+  //
+  // } catch (ViatorApiException e) {
+  //        throw e;
+  //    } catch (Exception e) {
+  //
+  //      throw new ViatorApiException("Failed to call Products by Product Code API: " + e.getMessage(), e);
+  //    }
+  //  }
 
   public Optional<ViatorActivityAvailabilityDTO> getAvailabilityByProductCode(String productCode) {
     try {
@@ -103,11 +128,9 @@ public class ViatorClient {
 
       return Optional.ofNullable(entity.getBody());
 
+    } catch (ViatorApiException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof ViatorApiException) {
-        throw e;
-      }
-
       throw new ViatorApiException("Failed to call Availability Schedules API: " + e.getMessage(), e);
     }
   }
