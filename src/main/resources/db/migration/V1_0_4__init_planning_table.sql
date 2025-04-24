@@ -25,10 +25,10 @@ CREATE TABLE `activity` (
   `booking_provider_id` bigint NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text NOT NULL,
-  `combined_average_rating` double NOT NULL CHECK (`combined_average_rating` >= 0.0 AND `combined_average_rating` <= 5.0),
+  `average_rating` double NOT NULL CHECK (`average_rating` >= 0.0 AND `average_rating` <= 5.0),
   `review_count` int NOT NULL CHECK (`review_count` >= 0),
   `duration_minutes` int NOT NULL CHECK (`duration_minutes` >= 1),
-  `from_price` double NOT NULL CHECK (`from_price` >= 0.0),
+  `price` double NOT NULL CHECK (`price` >= 0.0),
   `currency` varchar(255) NOT NULL,
   `activity_image_height` int NOT NULL,
   `activity_image_width` int NOT NULL,
@@ -40,6 +40,7 @@ CREATE TABLE `activity` (
 
 -- asia_local_guide_gateway.day_activity
 
+-- TODO: MySQL specific datetime used for LocalDateTime, update type when using PostgreSQL
 CREATE TABLE `day_activity` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `day_plan_id` bigint NOT NULL,

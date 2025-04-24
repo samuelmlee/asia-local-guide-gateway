@@ -33,7 +33,7 @@ public class Activity {
 
   @DecimalMin(value = "0.0")
   @DecimalMax(value = "5.0")
-  private Double combinedAverageRating;
+  private Double averageRating;
 
   @Min(value = 0)
   private Integer reviewCount;
@@ -42,7 +42,7 @@ public class Activity {
   private Integer durationMinutes;
 
   @DecimalMin(value = "0.0", inclusive = true)
-  private Double fromPrice;
+  private Double price;
 
   @NotBlank private String currency;
 

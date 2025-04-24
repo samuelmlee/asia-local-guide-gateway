@@ -4,10 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
-import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
+import com.asialocalguide.gateway.core.domain.planning.*;
 import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
@@ -63,6 +60,14 @@ public class ViatorActivityService implements ActivityProvider {
     } catch (Exception e) {
       throw new ViatorActivityServiceException("Failed to fetch activity data", e);
     }
+  }
+
+  @Override
+  public List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds) {
+    if (activityIds == null || activityIds.isEmpty()) {
+      throw new IllegalArgumentException("Activity IDs to fetch Viator Activities cannot be null or empty");
+    }
+    return List.of();
   }
 
   private void validatePlanningRequest(ProviderPlanningRequest request) {
