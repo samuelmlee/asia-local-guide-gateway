@@ -17,6 +17,7 @@ import org.hibernate.validator.constraints.URL;
 @Builder
 @AllArgsConstructor
 public class Activity {
+  // Price and availability of an activity are fetched from the provider on demand
 
   @EmbeddedId @NotNull private ActivityId id;
 
@@ -40,8 +41,6 @@ public class Activity {
 
   @Min(value = 1)
   private Integer durationMinutes;
-
-  @NotBlank private String currency;
 
   @Embedded @NotNull private ActivityImage mainImage;
 

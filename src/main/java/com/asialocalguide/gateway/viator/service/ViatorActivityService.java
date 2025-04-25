@@ -9,6 +9,7 @@ import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -69,65 +70,116 @@ public class ViatorActivityService implements ActivityProvider {
     }
     log.info("Fetching Viator activities for languages: {}", Arrays.toString(LanguageCode.values()));
 
-    return List.of();
+    Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> futuresByLanguage =
+        new EnumMap<>(LanguageCode.class);
 
-    //    List<CompletableFuture<Pair<LanguageCode, List<ViatorActivityDTO>>>> futures =
-    //        Arrays.stream(LanguageCode.values())
-    //            .map(
-    //                language ->
-    //                    CompletableFuture.supplyAsync(
-    //                            () -> {
-    //                              List<ViatorActivityDTO> activities =
-    //                                  viatorClient.getActivitiesByIdAndLanguage(language.toString(), activityIds);
-    //
-    //                              if (activities == null || activities.isEmpty()) {
-    //                                throw new ViatorApiException(
-    //                                    String.format(
-    //                                        "No destinations found for language: %s aborting ingestion.", language));
-    //                              }
-    //                              return Pair.of(language, activities);
-    //                            })
-    //                        .exceptionally(
-    //                            ex -> {
-    //                              throw new ViatorApiException(
-    //                                  String.format(
-    //                                      "API failure for getAllDestinationsForLanguage call for language: %s.",
-    // language),
-    //                                  ex);
-    //                            }))
-    //            .toList();
-    //
-    //    Map<LanguageCode, Map<Long, ViatorDestinationDTO>> languageToDestinations = new EnumMap<>(LanguageCode.class);
-    //
-    //    futures.forEach(
-    //        future -> {
-    //          try {
-    //            Pair<LanguageCode, List<ViatorDestinationDTO>> result = future.join();
-    //            if (!result.getSecond().isEmpty()) {
-    //              languageToDestinations.put(
-    //                  result.getFirst(),
-    //                  result.getSecond().stream()
-    //                      .collect(Collectors.toMap(ViatorDestinationDTO::destinationId, Function.identity())));
-    //            }
-    //          } catch (Exception e) {
-    //            if (e.getCause() instanceof ViatorApiException viatorApiException) {
-    //              throw viatorApiException;
-    //            } else {
-    //              throw new ViatorApiException("Failed to fetch activities from Viator Provider.", e);
-    //            }
-    //          }
-    //        });
-    //
-    //    // Use English destinations as base for creating RawDestinationDTOs, other languages used
-    //    // for translations
-    //    Map<Long, ViatorDestinationDTO> idToDestinationEnDTOs = languageToDestinations.get(LanguageCode.EN);
-    //
-    //    return idToDestinationEnDTOs.values().stream()
-    //        // The app does not support scheduling activities within a whole country
-    //        .filter(d -> d != null && !"COUNTRY".equals(d.type()))
-    //        .map(dto -> createRawDestinationDTO(dto, languageToDestinations))
-    //        .filter(Objects::nonNull)
-    //        .toList();
+    for (LanguageCode language : LanguageCode.values()) {
+      List<CompletableFuture<Optional<ViatorActivityDetailDTO>>> languageFutures =
+          activityIds.stream()
+              .map(
+                  id ->
+                      CompletableFuture.supplyAsync(
+                              () -> viatorClient.getActivityByIdAndLanguage(language.toString(), id))
+                          .exceptionally(
+                              ex -> {
+                                log.warn(
+                                    "Failed to fetch Viator activity {} for language {}: {}",
+                                    id,
+                                    language,
+                                    ex.getMessage());
+                                return Optional.empty();
+                              }))
+              .toList();
+
+      futuresByLanguage.put(language, languageFutures);
+    }
+
+    // Process results by language
+    Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities = new EnumMap<>(LanguageCode.class);
+
+    futuresByLanguage.forEach(
+        (language, futures) -> {
+          try {
+            // Wait for all futures of the language to complete
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            // Process results
+            Map<String, ViatorActivityDetailDTO> activityMap =
+                futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toMap(ViatorActivityDetailDTO::productCode, Function.identity()));
+
+            if (!activityMap.isEmpty()) {
+              languageToActivities.put(language, activityMap);
+            } else {
+              log.warn("No activities found for language: {}", language);
+            }
+          } catch (Exception e) {
+            log.error("Error processing activities for language {}: {}", language, e.getMessage());
+            throw new ViatorApiException(String.format("Failed to process activities for language: %s", language), e);
+          }
+        });
+
+    // Use English destinations as base for creating CommonPersistableActivity, other languages used
+    // for translations
+    Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
+
+    return idToActivitiesEnDTOs.values().stream()
+        .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
+        .filter(Objects::nonNull)
+        .toList();
+  }
+
+  private CommonPersistableActivity createCommonPersistableActivity(
+      ViatorActivityDetailDTO dto, Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities) {
+
+    if (dto == null) {
+      log.warn("Skipping null ViatorActivityDetailDTO in createCommonPersistableActivity.");
+      return null;
+    }
+
+    return new CommonPersistableActivity(
+        resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::title),
+        resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::description),
+        List.of(),
+        new CommonPersistableActivity.Review(5.0, 1),
+        dto.getDurationMinutes(),
+        new CommonPersistableActivity.Pricing(0.0, DEFAULT_CURRENCY),
+        dto.productUrl(),
+        List.of(),
+        BookingProviderName.VIATOR,
+        dto.productCode());
+  }
+
+  private List<CommonPersistableActivity.Translation> resolveTranslations(
+      String productCode,
+      Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities,
+      Function<ViatorActivityDetailDTO, String> mapper) {
+
+    return languageToActivities.entrySet().stream()
+        .map(
+            entry -> {
+              Map<String, ViatorActivityDetailDTO> idToActivities = entry.getValue();
+
+              if (idToActivities == null) {
+                log.debug(
+                    "No idToActivities Map found for language: {} while processing productCode: {}",
+                    entry.getKey(),
+                    productCode);
+                return null;
+              }
+
+              ViatorActivityDetailDTO dto = idToActivities.get(productCode);
+              if (dto == null) {
+                log.debug("No translation found for productCode: {} in language: {}", productCode, entry.getKey());
+                return null;
+              }
+              return new CommonPersistableActivity.Translation(entry.getKey(), mapper.apply(dto));
+            })
+        .filter(Objects::nonNull)
+        .toList();
   }
 
   private void validatePlanningRequest(ProviderPlanningRequest request) {
