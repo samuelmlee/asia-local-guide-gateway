@@ -9,7 +9,6 @@ import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
-import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -80,6 +79,10 @@ public class ViatorActivityService implements ActivityProvider {
     // languages used for translations
     Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
 
+    if (idToActivitiesEnDTOs == null || idToActivitiesEnDTOs.isEmpty()) {
+      throw new ViatorActivityServiceException("Failed to process any activities for English language");
+    }
+
     return idToActivitiesEnDTOs.values().stream()
         .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
         .filter(Objects::nonNull)
@@ -131,7 +134,6 @@ public class ViatorActivityService implements ActivityProvider {
             }
           } catch (Exception e) {
             log.error("Error processing activities for language {}: {}", language, e.getMessage());
-            throw new ViatorApiException(String.format("Failed to process activities for language: %s", language), e);
           }
         });
     return languageToActivities;
