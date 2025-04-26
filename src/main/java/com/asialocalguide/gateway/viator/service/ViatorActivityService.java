@@ -70,6 +70,24 @@ public class ViatorActivityService implements ActivityProvider {
     }
     log.info("Fetching Viator activities for languages: {}", Arrays.toString(LanguageCode.values()));
 
+    Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> languageToFutureActivities =
+        buildLanguageToFutureActivities(activityIds);
+
+    Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities =
+        buildLanguageToActivityId(languageToFutureActivities);
+
+    // Use English destinations as base for creating CommonPersistableActivity, Egnlish as default language, other
+    // languages used for translations
+    Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
+
+    return idToActivitiesEnDTOs.values().stream()
+        .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
+        .filter(Objects::nonNull)
+        .toList();
+  }
+
+  private Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> buildLanguageToFutureActivities(
+      Set<String> activityIds) {
     Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> futuresByLanguage =
         new EnumMap<>(LanguageCode.class);
 
@@ -83,7 +101,7 @@ public class ViatorActivityService implements ActivityProvider {
                           .exceptionally(
                               ex -> {
                                 log.warn(
-                                    "Failed to fetch Viator activity {} for language {}: {}",
+                                    "Failed to fetch Viator activity for id {} for language {} : {}",
                                     id,
                                     language,
                                     ex.getMessage());
@@ -93,23 +111,18 @@ public class ViatorActivityService implements ActivityProvider {
 
       futuresByLanguage.put(language, languageFutures);
     }
+    return futuresByLanguage;
+  }
 
+  private static Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> buildLanguageToActivityId(
+      Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> languageToFutureActivities) {
     // Process results by language
     Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities = new EnumMap<>(LanguageCode.class);
 
-    futuresByLanguage.forEach(
+    languageToFutureActivities.forEach(
         (language, futures) -> {
           try {
-            // Wait for all futures of the language to complete
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-            // Process results
-            Map<String, ViatorActivityDetailDTO> activityMap =
-                futures.stream()
-                    .map(CompletableFuture::join)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toMap(ViatorActivityDetailDTO::productCode, Function.identity()));
+            Map<String, ViatorActivityDetailDTO> activityMap = waitAndProcessFutureActivities(futures);
 
             if (!activityMap.isEmpty()) {
               languageToActivities.put(language, activityMap);
@@ -121,15 +134,20 @@ public class ViatorActivityService implements ActivityProvider {
             throw new ViatorApiException(String.format("Failed to process activities for language: %s", language), e);
           }
         });
+    return languageToActivities;
+  }
 
-    // Use English destinations as base for creating CommonPersistableActivity, other languages used
-    // for translations
-    Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
+  private static Map<String, ViatorActivityDetailDTO> waitAndProcessFutureActivities(
+      List<CompletableFuture<Optional<ViatorActivityDetailDTO>>> futures) {
+    // Wait for all futures of the language to complete
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-    return idToActivitiesEnDTOs.values().stream()
-        .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
-        .filter(Objects::nonNull)
-        .toList();
+    // Process results
+    return futures.stream()
+        .map(CompletableFuture::join)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toMap(ViatorActivityDetailDTO::productCode, Function.identity()));
   }
 
   private CommonPersistableActivity createCommonPersistableActivity(
@@ -143,14 +161,46 @@ public class ViatorActivityService implements ActivityProvider {
     return new CommonPersistableActivity(
         resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::title),
         resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::description),
-        List.of(),
-        new CommonPersistableActivity.Review(5.0, 1),
+        mapActivityDetailImages(dto),
+        mapActivityDetailReview(dto),
         dto.getDurationMinutes(),
-        new CommonPersistableActivity.Pricing(0.0, DEFAULT_CURRENCY),
         dto.productUrl(),
-        List.of(),
         BookingProviderName.VIATOR,
         dto.productCode());
+  }
+
+  private List<CommonPersistableActivity.Image> mapActivityDetailImages(ViatorActivityDetailDTO dto) {
+    List<CommonPersistableActivity.Image> images = new ArrayList<>();
+
+    dto.getCoverImage(variant -> variant.width() == 480 && variant.height() == 320)
+        .ifPresent(
+            variant ->
+                images.add(
+                    new CommonPersistableActivity.Image(
+                        CommonPersistableActivity.ImageType.MOBILE, variant.height(), variant.width(), variant.url())));
+
+    dto.getCoverImage(variant -> variant.width() == 720 && variant.height() == 480)
+        .ifPresent(
+            variant ->
+                images.add(
+                    new CommonPersistableActivity.Image(
+                        CommonPersistableActivity.ImageType.DESKTOP,
+                        variant.height(),
+                        variant.width(),
+                        variant.url())));
+
+    return images;
+  }
+
+  private CommonPersistableActivity.Review mapActivityDetailReview(ViatorActivityDetailDTO dto) {
+    if (dto.reviews() == null) {
+      return new CommonPersistableActivity.Review(1.0, 1);
+    }
+
+    double averageRating = dto.reviews().combinedAverageRating();
+    int reviewCount = dto.reviews().totalReviews();
+
+    return new CommonPersistableActivity.Review(averageRating, reviewCount);
   }
 
   private List<CommonPersistableActivity.Translation> resolveTranslations(

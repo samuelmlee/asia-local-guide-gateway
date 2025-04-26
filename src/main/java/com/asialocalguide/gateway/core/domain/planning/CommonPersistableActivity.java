@@ -12,9 +12,7 @@ public record CommonPersistableActivity(
     List<Image> images,
     @NotNull Review review,
     @NotNull @Positive Integer durationInMinutes,
-    @NotNull Pricing pricing,
     @URL String providerUrl,
-    List<String> categories,
     @NotNull BookingProviderName providerName,
     @NotNull String providerId) {
 
@@ -26,8 +24,6 @@ public record CommonPersistableActivity(
 
   public record Review(
       @NotNull @DecimalMin("0.0") @DecimalMax("5.0") Double averageRating, @NotNull @Positive Integer reviewCount) {}
-
-  public record Pricing(@NotNull @Positive Double price, @NotNull String currency) {}
 
   public record Translation(@NotNull LanguageCode languageCode, @NotBlank String value) {}
 
