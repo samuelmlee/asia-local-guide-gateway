@@ -28,7 +28,8 @@ public record ViatorActivityDetailDTO(
   public record DurationDTO(
       Integer variableDurationFromMinutes, Integer variableDurationToMinutes, Integer fixedDurationInMinutes) {}
 
-  public record ReviewsDTO(List<ReviewCountTotalDTO> reviewCountTotals, int totalReviews, int combinedAverageRating) {}
+  public record ReviewsDTO(
+      List<ReviewCountTotalDTO> reviewCountTotals, int totalReviews, double combinedAverageRating) {}
 
   public record ReviewCountTotalDTO(int rating, int count) {}
 

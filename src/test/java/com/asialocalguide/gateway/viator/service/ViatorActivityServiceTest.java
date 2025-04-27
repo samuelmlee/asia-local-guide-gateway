@@ -6,17 +6,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -260,5 +259,260 @@ class ViatorActivityServiceTest {
         List.of(123),
         List.of(),
         null);
+  }
+
+  @Test
+  void fetchProviderActivities_shouldFetchAndMapActivitiesSuccessfully() {
+    // Given
+    Set<String> activityIds = Set.of("product1", "product2");
+
+    // Mock English responses (required)
+    ViatorActivityDetailDTO enDto1 = createDetailDTO("product1", "en", "Activity 1", "Description 1");
+    ViatorActivityDetailDTO enDto2 = createDetailDTO("product2", "en", "Activity 2", "Description 2");
+
+    // Mock French responses
+    ViatorActivityDetailDTO frDto1 = createDetailDTO("product1", "fr", "Activité 1", "Description en français");
+    ViatorActivityDetailDTO frDto2 = createDetailDTO("product2", "fr", "Activité 2", "Description en français");
+
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(enDto1));
+    when(viatorClient.getActivityByIdAndLanguage("en", "product2")).thenReturn(Optional.of(enDto2));
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.of(frDto1));
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product2")).thenReturn(Optional.of(frDto2));
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(2, result.size());
+
+    // Verify product1
+    CommonPersistableActivity activity1 = findActivityById(result, "product1");
+    assertNotNull(activity1);
+
+    assertEquals(2, activity1.title().size()); // EN and FR
+    assertTrue(hasTranslation(activity1.title(), LanguageCode.EN, "Activity 1"));
+    assertTrue(hasTranslation(activity1.title(), LanguageCode.FR, "Activité 1"));
+
+    // Verify product2
+    CommonPersistableActivity activity2 = findActivityById(result, "product2");
+    assertNotNull(activity2);
+    assertEquals(2, activity2.title().size()); // EN and FR
+    assertTrue(hasTranslation(activity2.title(), LanguageCode.EN, "Activity 2"));
+    assertTrue(hasTranslation(activity2.title(), LanguageCode.FR, "Activité 2"));
+  }
+
+  @Test
+  void fetchProviderActivities_shouldHandleIndividualLanguageFailures() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Mock English success
+    ViatorActivityDetailDTO enDto = createDetailDTO("product1", "en", "Activity", "Description");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(enDto));
+
+    // Mock French to throw exception
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenThrow(new RuntimeException("API error"));
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+    assertEquals(1, result.get(0).title().size()); // Only English translation
+    assertEquals(LanguageCode.EN, result.get(0).title().get(0).languageCode());
+  }
+
+  @Test
+  void fetchProviderActivities_shouldMapImagesCorrectly() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Create DTO with images - must include English version
+    ViatorActivityDetailDTO dto = createDetailDTOWithImages("product1", "en");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(dto));
+
+    // Mock French to return empty to avoid interference
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.empty());
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+
+    // Verify images
+    List<CommonPersistableActivity.Image> images = result.get(0).images();
+    assertEquals(2, images.size());
+
+    // Verify mobile image
+    Optional<CommonPersistableActivity.Image> mobileImage =
+        images.stream().filter(img -> img.type() == CommonPersistableActivity.ImageType.MOBILE).findFirst();
+    assertTrue(mobileImage.isPresent());
+    assertEquals(320, mobileImage.get().height());
+    assertEquals(480, mobileImage.get().width());
+
+    // Verify desktop image
+    Optional<CommonPersistableActivity.Image> desktopImage =
+        images.stream().filter(img -> img.type() == CommonPersistableActivity.ImageType.DESKTOP).findFirst();
+    assertTrue(desktopImage.isPresent());
+    assertEquals(480, desktopImage.get().height());
+    assertEquals(720, desktopImage.get().width());
+  }
+
+  @Test
+  void fetchProviderActivities_shouldHandleNullImagesGracefully() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Create DTO with null images - must include English version
+    ViatorActivityDetailDTO dto = createDetailDTOWithNullImages("product1", "en");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(dto));
+
+    // Mock French to return empty to avoid interference
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.empty());
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+    assertTrue(result.get(0).images().isEmpty());
+  }
+
+  @Test
+  void fetchProviderActivities_shouldMapReviewsCorrectly() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Create DTO with reviews - must include English version
+    ViatorActivityDetailDTO dto = createDetailDTOWithReviews("product1", "en", 4.5, 100);
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(dto));
+
+    // Mock French to return empty to avoid interference
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.empty());
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+    CommonPersistableActivity.Review review = result.get(0).review();
+    assertEquals(4.5, review.averageRating()); // Using the actual rating value
+    assertEquals(100, review.reviewCount());
+  }
+
+  @Test
+  void fetchProviderActivities_shouldHandleNullReviews() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Create DTO with null reviews - must include English version
+    ViatorActivityDetailDTO dto = createDetailDTOWithNullReviews("product1", "en");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(dto));
+
+    // Mock French to return empty to avoid interference
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.empty());
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+    assertEquals(1.0, result.get(0).review().averageRating()); // Default value
+    assertEquals(1, result.get(0).review().reviewCount()); // Default value
+  }
+
+  private ViatorActivityDetailDTO createDetailDTO(
+      String productCode, String language, String title, String description) {
+    return new ViatorActivityDetailDTO(
+        productCode,
+        language,
+        title,
+        description,
+        List.of(), // empty images
+        List.of(), // empty tags
+        List.of(), // empty destinations
+        new ViatorActivityDetailDTO.ItineraryDTO(
+            "STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60) // 60 minute duration
+            ),
+        "http://viator.com/activity/" + productCode, // URL with product code
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5) // Default reviews
+        );
+  }
+
+  private CommonPersistableActivity findActivityById(List<CommonPersistableActivity> result, String id) {
+    return result.stream().filter(activity -> activity.providerId().equals(id)).findFirst().orElse(null);
+  }
+
+  private boolean hasTranslation(
+      List<CommonPersistableActivity.Translation> translations, LanguageCode lang, String value) {
+    return translations.stream().anyMatch(t -> t.languageCode() == lang && t.value().equals(value));
+  }
+
+  private ViatorActivityDetailDTO createDetailDTOWithImages(String productCode, String language) {
+    List<ViatorActivityDetailDTO.ImageVariantDTO> variants =
+        List.of(
+            new ViatorActivityDetailDTO.ImageVariantDTO(320, 480, "http://test.com/image_mobile.jpg"),
+            new ViatorActivityDetailDTO.ImageVariantDTO(480, 720, "http://test.com/image_desktop.jpg"));
+
+    ViatorActivityDetailDTO.ImageDTO coverImage =
+        new ViatorActivityDetailDTO.ImageDTO("viator", "Test caption", true, variants);
+
+    return new ViatorActivityDetailDTO(
+        productCode,
+        language,
+        "Test Activity",
+        "Test Description",
+        List.of(coverImage), // Include the cover image
+        List.of(),
+        List.of(),
+        new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
+        "http://viator.com/activity/" + productCode,
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5));
+  }
+
+  private ViatorActivityDetailDTO createDetailDTOWithNullImages(String productCode, String language) {
+    return new ViatorActivityDetailDTO(
+        productCode,
+        language,
+        "Test Activity",
+        "Test Description",
+        null, // Null images
+        List.of(),
+        List.of(),
+        new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
+        "http://viator.com/activity/" + productCode,
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5));
+  }
+
+  private ViatorActivityDetailDTO createDetailDTOWithReviews(
+      String productCode, String language, double rating, int count) {
+    return new ViatorActivityDetailDTO(
+        productCode,
+        language,
+        "Test Activity",
+        "Test Description",
+        List.of(),
+        List.of(),
+        List.of(),
+        new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
+        "http://viator.com/activity/" + productCode,
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), count, rating) // Convert to integer representation
+        );
+  }
+
+  private ViatorActivityDetailDTO createDetailDTOWithNullReviews(String productCode, String language) {
+    return new ViatorActivityDetailDTO(
+        productCode,
+        language,
+        "Test Activity",
+        "Test Description",
+        List.of(),
+        List.of(),
+        List.of(),
+        new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
+        "http://viator.com/activity/" + productCode,
+        null // Null reviews
+        );
   }
 }
