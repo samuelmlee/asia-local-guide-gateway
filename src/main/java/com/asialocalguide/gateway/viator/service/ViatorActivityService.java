@@ -75,7 +75,7 @@ public class ViatorActivityService implements ActivityProvider {
     Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities =
         buildLanguageToActivityId(languageToFutureActivities);
 
-    // Use English destinations as base for creating CommonPersistableActivity, Egnlish as default language, other
+    // Use English language activities as base for creating CommonPersistableActivity, other
     // languages used for translations
     Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
 
@@ -87,6 +87,125 @@ public class ViatorActivityService implements ActivityProvider {
         .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
         .filter(Objects::nonNull)
         .toList();
+  }
+
+  private void validatePlanningRequest(ProviderPlanningRequest request) {
+    Objects.requireNonNull(request);
+
+    if (request.startDate().isAfter(request.endDate())) {
+      throw new IllegalArgumentException("Start date must be before end date");
+    }
+
+    if (!NumberUtils.isParsable(request.providerDestinationId())) {
+      throw new IllegalArgumentException("Invalid Viator destination ID format");
+    }
+  }
+
+  private ViatorActivitySearchDTO buildActivitySearchDTO(ProviderPlanningRequest request) {
+    List<Integer> activityTagIds = convertActivityTags(request.activityTags());
+
+    return new ViatorActivitySearchDTO(
+        new ViatorActivitySearchDTO.Filtering(
+            Long.parseLong(request.providerDestinationId()),
+            activityTagIds,
+            request.startDate(),
+            request.endDate(),
+            new ViatorActivitySearchDTO.Range(MIN_RATING, MAX_RATING)),
+        new ViatorActivitySearchDTO.Sorting(
+            ViatorActivitySortingType.TRAVELER_RATING, ViatorActivitySortingOrder.DESCENDING),
+        createPagination(request),
+        DEFAULT_CURRENCY);
+  }
+
+  private List<Integer> convertActivityTags(List<String> tags) {
+    return Optional.ofNullable(tags).orElse(Collections.emptyList()).stream()
+        .map(this::parseActivityTag)
+        .filter(Objects::nonNull)
+        .toList();
+  }
+
+  private Integer parseActivityTag(String tag) {
+    try {
+      return Integer.valueOf(tag);
+    } catch (NumberFormatException e) {
+      log.warn("Invalid activity tag format: {}", tag);
+      return null;
+    }
+  }
+
+  private ViatorActivitySearchDTO.Pagination createPagination(ProviderPlanningRequest request) {
+    int durationDays = (int) ChronoUnit.DAYS.between(request.startDate(), request.endDate());
+    // Fetch 4 activities per day
+    int itemsPerPage = Math.max(durationDays, 1) * 4;
+    return new ViatorActivitySearchDTO.Pagination(1, itemsPerPage);
+  }
+
+  private Map<String, ViatorActivityDTO> fetchValidActivities(
+      LanguageCode languageCode, ViatorActivitySearchDTO searchDTO) {
+    return viatorClient
+        .getActivitiesByRequestAndLanguage(
+            requireNonNull(languageCode, "Locale must not be null").toString(),
+            requireNonNull(searchDTO, "SearchDTO must not be null"))
+        .stream()
+        // Activities without duration should not be processed
+        .filter(dto -> dto.getDurationMinutes() > 0)
+        .collect(Collectors.toMap(ViatorActivityDTO::productCode, Function.identity()));
+  }
+
+  private List<ViatorActivityAvailabilityDTO> fetchActivityAvailabilities(Collection<ViatorActivityDTO> activities) {
+    if (activities == null || activities.isEmpty()) {
+      return List.of();
+    }
+
+    List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures = createAvailabilityFutures(activities);
+
+    var futureArray = futures.toArray(new CompletableFuture[0]);
+
+    return CompletableFuture.allOf(futureArray)
+        .thenApply(
+            ignored ->
+                futures.stream().map(CompletableFuture::join).filter(Optional::isPresent).map(Optional::get).toList())
+        .join();
+  }
+
+  private List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
+      Collection<ViatorActivityDTO> activities) {
+
+    return activities.stream()
+        .map(
+            activity -> {
+              String productCode = requireNonNull(activity.productCode());
+
+              return CompletableFuture.supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
+                  .exceptionally(
+                      ex -> {
+                        log.warn("Error while fetching Activity Availability for product code : {}", productCode);
+                        return Optional.empty();
+                      });
+            })
+        .toList();
+  }
+
+  private List<ViatorActivityDTO> filterNoDataActivities(
+      Map<String, ViatorActivityDTO> idToActivities, List<ViatorActivityAvailabilityDTO> availabilities) {
+
+    return availabilities.stream()
+        .map(availability -> idToActivities.get(availability.productCode()))
+        .filter(Objects::nonNull)
+        .toList();
+  }
+
+  private ActivityPlanningData mapToActivityData(
+      List<ViatorActivityDTO> activities,
+      List<ViatorActivityAvailabilityDTO> availabilities,
+      ProviderPlanningRequest request) {
+    try {
+      return ViatorActivityAvailabilityMapper.mapToActivityData(
+          activities, availabilities, request.startDate(), request.endDate());
+    } catch (Exception e) {
+      log.error("Failed to map activity data: {}", e.getMessage());
+      throw new ViatorActivityServiceException("Activity data mapping failed", e);
+    }
   }
 
   private Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> buildLanguageToFutureActivities(
@@ -232,124 +351,5 @@ public class ViatorActivityService implements ActivityProvider {
             })
         .filter(Objects::nonNull)
         .toList();
-  }
-
-  private void validatePlanningRequest(ProviderPlanningRequest request) {
-    Objects.requireNonNull(request);
-
-    if (request.startDate().isAfter(request.endDate())) {
-      throw new IllegalArgumentException("Start date must be before end date");
-    }
-
-    if (!NumberUtils.isParsable(request.providerDestinationId())) {
-      throw new IllegalArgumentException("Invalid Viator destination ID format");
-    }
-  }
-
-  private ViatorActivitySearchDTO buildActivitySearchDTO(ProviderPlanningRequest request) {
-    List<Integer> activityTagIds = convertActivityTags(request.activityTags());
-
-    return new ViatorActivitySearchDTO(
-        new ViatorActivitySearchDTO.Filtering(
-            Long.parseLong(request.providerDestinationId()),
-            activityTagIds,
-            request.startDate(),
-            request.endDate(),
-            new ViatorActivitySearchDTO.Range(MIN_RATING, MAX_RATING)),
-        new ViatorActivitySearchDTO.Sorting(
-            ViatorActivitySortingType.TRAVELER_RATING, ViatorActivitySortingOrder.DESCENDING),
-        createPagination(request),
-        DEFAULT_CURRENCY);
-  }
-
-  private List<Integer> convertActivityTags(List<String> tags) {
-    return Optional.ofNullable(tags).orElse(Collections.emptyList()).stream()
-        .map(this::parseActivityTag)
-        .filter(Objects::nonNull)
-        .toList();
-  }
-
-  private Integer parseActivityTag(String tag) {
-    try {
-      return Integer.valueOf(tag);
-    } catch (NumberFormatException e) {
-      log.warn("Invalid activity tag format: {}", tag);
-      return null;
-    }
-  }
-
-  private ViatorActivitySearchDTO.Pagination createPagination(ProviderPlanningRequest request) {
-    int durationDays = (int) ChronoUnit.DAYS.between(request.startDate(), request.endDate());
-    // Fetch 4 activities per day
-    int itemsPerPage = Math.max(durationDays, 1) * 4;
-    return new ViatorActivitySearchDTO.Pagination(1, itemsPerPage);
-  }
-
-  private Map<String, ViatorActivityDTO> fetchValidActivities(
-      LanguageCode languageCode, ViatorActivitySearchDTO searchDTO) {
-    return viatorClient
-        .getActivitiesByRequestAndLanguage(
-            requireNonNull(languageCode, "Locale must not be null").toString(),
-            requireNonNull(searchDTO, "SearchDTO must not be null"))
-        .stream()
-        // Activities without duration should not be processed
-        .filter(dto -> dto.getDurationMinutes() > 0)
-        .collect(Collectors.toMap(ViatorActivityDTO::productCode, Function.identity()));
-  }
-
-  private List<ViatorActivityAvailabilityDTO> fetchActivityAvailabilities(Collection<ViatorActivityDTO> activities) {
-    if (activities == null || activities.isEmpty()) {
-      return List.of();
-    }
-
-    List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures = createAvailabilityFutures(activities);
-
-    var futureArray = futures.toArray(new CompletableFuture[0]);
-
-    return CompletableFuture.allOf(futureArray)
-        .thenApply(
-            ignored ->
-                futures.stream().map(CompletableFuture::join).filter(Optional::isPresent).map(Optional::get).toList())
-        .join();
-  }
-
-  private List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
-      Collection<ViatorActivityDTO> activities) {
-
-    return activities.stream()
-        .map(
-            activity -> {
-              String productCode = requireNonNull(activity.productCode());
-
-              return CompletableFuture.supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
-                  .exceptionally(
-                      ex -> {
-                        log.warn("Error while fetching Activity Availability for product code : {}", productCode);
-                        return Optional.empty();
-                      });
-            })
-        .toList();
-  }
-
-  private List<ViatorActivityDTO> filterNoDataActivities(
-      Map<String, ViatorActivityDTO> idToActivities, List<ViatorActivityAvailabilityDTO> availabilities) {
-
-    return availabilities.stream()
-        .map(availability -> idToActivities.get(availability.productCode()))
-        .filter(Objects::nonNull)
-        .toList();
-  }
-
-  private ActivityPlanningData mapToActivityData(
-      List<ViatorActivityDTO> activities,
-      List<ViatorActivityAvailabilityDTO> availabilities,
-      ProviderPlanningRequest request) {
-    try {
-      return ViatorActivityAvailabilityMapper.mapToActivityData(
-          activities, availabilities, request.startDate(), request.endDate());
-    } catch (Exception e) {
-      log.error("Failed to map activity data: {}", e.getMessage());
-      throw new ViatorActivityServiceException("Activity data mapping failed", e);
-    }
   }
 }
