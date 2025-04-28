@@ -1,10 +1,12 @@
 package com.asialocalguide.gateway.core.controller;
 
 import com.asialocalguide.gateway.core.domain.planning.Planning;
+import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningResponseDTO;
+import com.asialocalguide.gateway.core.service.auth.AuthService;
 import com.asialocalguide.gateway.core.service.planning.PlanningService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -21,8 +23,11 @@ public class PlanningController {
 
   private final PlanningService planningService;
 
-  public PlanningController(PlanningService planningService) {
+  private final AuthService authService;
+
+  public PlanningController(PlanningService planningService, AuthService authService) {
     this.planningService = planningService;
+    this.authService = authService;
   }
 
   @PostMapping("/generate")
@@ -35,7 +40,13 @@ public class PlanningController {
   public ResponseEntity<PlanningResponseDTO> savePlanning(
       @Valid PlanningCreateRequestDTO planningRequest, Authentication authentication) {
 
-    Planning planningCreated = planningService.savePlanning(planningRequest);
+    AuthProviderName providerName =
+        authService
+            .getProviderFromAuthentication(authentication)
+            .orElseThrow(() -> new SecurityException("Authentication provider not recognized"));
+    String userProviderId = authentication.getName();
+
+    Planning planningCreated = planningService.savePlanning(planningRequest, providerName, userProviderId);
 
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(planningCreated.getId()).toUri();

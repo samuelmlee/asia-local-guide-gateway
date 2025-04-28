@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.service.user;
 
+import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
 import com.asialocalguide.gateway.core.domain.user.User;
 import com.asialocalguide.gateway.core.domain.user.UserAuth;
 import com.asialocalguide.gateway.core.dto.user.CreateUserDTO;
@@ -44,15 +45,8 @@ public class UserService {
         .orElseThrow(() -> new UserNotFoundException(String.format("User not found with id: %d", id)));
   }
 
-  /**
-   * This method is used to get a reference to the user entity to efficiently set the user in a Many To One
-   * relationship. Using getReferenceById fetches the User lazily and requires a transaction to be open
-   *
-   * @param id The ID of the user.
-   * @return An Optional containing the user reference if it exists, or an empty Optional if it doesn't.
-   */
-  public Optional<User> getUserReferenceById(Long id) {
-    return Optional.of(userRepository.getReferenceById(id));
+  public Optional<User> getUserByProviderNameAndProviderUserId(AuthProviderName providerName, String providerUserId) {
+    return userRepository.findUserByProviderNameAndProviderUserId(providerName, providerUserId);
   }
 
   private User persistNewUser(CreateUserDTO createUserDTO) {

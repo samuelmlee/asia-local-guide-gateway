@@ -1,35 +1,48 @@
 package com.asialocalguide.gateway.core.service.planning;
 
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.Planning;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
+import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
+import com.asialocalguide.gateway.core.domain.user.User;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
+import com.asialocalguide.gateway.core.exception.UserNotFoundException;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
+import com.asialocalguide.gateway.core.service.user.UserService;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
 public class PlanningService {
 
-  List<FetchPlanningDataStrategy> fetchPlanningDataStrategies;
+  private final List<FetchPlanningDataStrategy> fetchPlanningDataStrategies;
 
-  public PlanningService(List<FetchPlanningDataStrategy> fetchPlanningDataStrategies) {
+  private final UserService userService;
+
+  private final ActivityService activityService;
+
+  public PlanningService(
+      List<FetchPlanningDataStrategy> fetchPlanningDataStrategies,
+      UserService userService,
+      ActivityService activityService) {
     this.fetchPlanningDataStrategies = fetchPlanningDataStrategies;
+    this.userService = userService;
+    this.activityService = activityService;
   }
 
   public List<DayPlanDTO> generateActivityPlanning(PlanningRequestDTO request) {
@@ -135,8 +148,30 @@ public class PlanningService {
     return date.atTime(time);
   }
 
-  public Planning savePlanning(PlanningCreateRequestDTO planningRequest) {
+  @Transactional
+  public Planning savePlanning(
+      PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName, String userProviderId) {
 
-    return new Planning();
+    User user =
+        userService
+            .getUserByProviderNameAndProviderUserId(authProviderName, userProviderId)
+            .orElseThrow(() -> new UserNotFoundException("User not found for Planning Creation request"));
+
+    List<PlanningCreateRequestDTO.CreateDayActivityDTO> activities =
+        planningRequest.dayPlans().stream().flatMap(dayPlan -> dayPlan.activities().stream()).toList();
+
+    Map<BookingProviderName, Set<String>> providerNameToId =
+        activities.stream()
+            .collect(
+                Collectors.groupingBy(
+                    PlanningCreateRequestDTO.CreateDayActivityDTO::bookingProviderName,
+                    Collectors.mapping(
+                        PlanningCreateRequestDTO.CreateDayActivityDTO::productCode, Collectors.toSet())));
+
+    activityService.persistNewActivitiesByProvider(providerNameToId);
+
+    Planning planning = new Planning(user, planningRequest.name());
+
+    return planning;
   }
 }
