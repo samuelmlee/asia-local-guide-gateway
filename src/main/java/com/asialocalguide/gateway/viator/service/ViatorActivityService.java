@@ -12,7 +12,7 @@ import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceExceptio
 import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -69,11 +69,8 @@ public class ViatorActivityService implements ActivityProvider {
     }
     log.info("Fetching Viator activities for languages: {}", Arrays.toString(LanguageCode.values()));
 
-    Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> languageToFutureActivities =
-        buildLanguageToFutureActivities(activityIds);
-
     Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities =
-        buildLanguageToActivityId(languageToFutureActivities);
+        fetchLanguageToActivities(activityIds);
 
     // Use English language activities as base for creating CommonPersistableActivity, other
     // languages used for translations
@@ -208,67 +205,61 @@ public class ViatorActivityService implements ActivityProvider {
     }
   }
 
-  private Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> buildLanguageToFutureActivities(
-      Set<String> activityIds) {
-    Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> futuresByLanguage =
-        new EnumMap<>(LanguageCode.class);
+  private Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> fetchLanguageToActivities(Set<String> activityIds) {
 
+    Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> result =
+        new ConcurrentHashMap<>(LanguageCode.values().length);
+
+    // Initialize maps for each language
     for (LanguageCode language : LanguageCode.values()) {
-      List<CompletableFuture<Optional<ViatorActivityDetailDTO>>> languageFutures =
-          activityIds.stream()
-              .map(
-                  id ->
-                      CompletableFuture.supplyAsync(
-                              () -> viatorClient.getActivityByIdAndLanguage(language.toString(), id))
-                          .exceptionally(
-                              ex -> {
-                                log.warn(
-                                    "Failed to fetch Viator activity for id {} for language {} : {}",
-                                    id,
-                                    language,
-                                    ex.getMessage());
-                                return Optional.empty();
-                              }))
-              .toList();
-
-      futuresByLanguage.put(language, languageFutures);
+      result.put(language, new ConcurrentHashMap<>());
     }
-    return futuresByLanguage;
-  }
 
-  private static Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> buildLanguageToActivityId(
-      Map<LanguageCode, List<CompletableFuture<Optional<ViatorActivityDetailDTO>>>> languageToFutureActivities) {
-    // Process results by language
-    Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities = new EnumMap<>(LanguageCode.class);
+    List<Future<Void>> futures = new ArrayList<>();
 
-    languageToFutureActivities.forEach(
-        (language, futures) -> {
-          try {
-            Map<String, ViatorActivityDetailDTO> activityMap = waitAndProcessFutureActivities(futures);
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      // Submit tasks for each language and activity ID
+      for (LanguageCode language : LanguageCode.values()) {
+        for (String id : activityIds) {
+          futures.add(
+              executor.submit(
+                  () -> {
+                    try {
+                      Optional<ViatorActivityDetailDTO> activityOpt =
+                          viatorClient.getActivityByIdAndLanguage(language.toString(), id);
 
-            if (!activityMap.isEmpty()) {
-              languageToActivities.put(language, activityMap);
-            } else {
-              log.warn("No activities found for language: {}", language);
-            }
-          } catch (Exception e) {
-            log.error("Error processing activities for language {}: {}", language, e.getMessage());
-          }
-        });
-    return languageToActivities;
-  }
+                      activityOpt.ifPresent(activity -> result.get(language).put(activity.productCode(), activity));
 
-  private static Map<String, ViatorActivityDetailDTO> waitAndProcessFutureActivities(
-      List<CompletableFuture<Optional<ViatorActivityDetailDTO>>> futures) {
-    // Wait for all futures of the language to complete
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                    } catch (Exception ex) {
+                      log.warn(
+                          "Failed to fetch Viator activity for id {} for language {} : {}",
+                          id,
+                          language,
+                          ex.getMessage());
+                    }
+                    return null;
+                  }));
+        }
+      }
 
-    // Process results
-    return futures.stream()
-        .map(CompletableFuture::join)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(Collectors.toMap(ViatorActivityDetailDTO::productCode, Function.identity()));
+      for (Future<Void> future : futures) {
+        try {
+          // Wait for Future to complete
+          future.get();
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          log.warn("Task was interrupted: {}", e.getMessage());
+          // Thread is interrupted, exit loop
+          break;
+        } catch (ExecutionException e) {
+          log.warn("Error during task execution: {}", e.getMessage());
+        } catch (Exception e) {
+          log.warn("Error waiting for task completion: {}", e.getMessage());
+        }
+      }
+
+      return result;
+    }
   }
 
   private CommonPersistableActivity createCommonPersistableActivity(
