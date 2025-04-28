@@ -154,33 +154,45 @@ public class ViatorActivityService implements ActivityProvider {
       return List.of();
     }
 
-    List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> futures = createAvailabilityFutures(activities);
+    List<ViatorActivityAvailabilityDTO> result = new CopyOnWriteArrayList<>();
+    List<Future<Void>> futures = new ArrayList<>();
 
-    var futureArray = futures.toArray(new CompletableFuture[0]);
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      // Submit a task for each activity
+      for (ViatorActivityDTO activity : activities) {
+        String productCode = requireNonNull(activity.productCode());
+        futures.add(
+            executor.submit(
+                () -> {
+                  try {
+                    Optional<ViatorActivityAvailabilityDTO> availabilityOpt =
+                        viatorClient.getAvailabilityByProductCode(productCode);
 
-    return CompletableFuture.allOf(futureArray)
-        .thenApply(
-            ignored ->
-                futures.stream().map(CompletableFuture::join).filter(Optional::isPresent).map(Optional::get).toList())
-        .join();
-  }
+                    availabilityOpt.ifPresent(result::add);
+                  } catch (Exception ex) {
+                    log.warn("Error while fetching Activity Availability for product code: {}", productCode);
+                  }
+                  return null;
+                }));
+      }
 
-  private List<CompletableFuture<Optional<ViatorActivityAvailabilityDTO>>> createAvailabilityFutures(
-      Collection<ViatorActivityDTO> activities) {
+      // Wait for all futures to complete
+      for (Future<Void> future : futures) {
+        try {
+          future.get();
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          log.warn("Task was interrupted: {}", e.getMessage());
+          break;
+        } catch (ExecutionException e) {
+          log.warn("Error during task execution: {}", e.getMessage());
+        } catch (Exception e) {
+          log.warn("Error waiting for task completion: {}", e.getMessage());
+        }
+      }
 
-    return activities.stream()
-        .map(
-            activity -> {
-              String productCode = requireNonNull(activity.productCode());
-
-              return CompletableFuture.supplyAsync(() -> viatorClient.getAvailabilityByProductCode(productCode))
-                  .exceptionally(
-                      ex -> {
-                        log.warn("Error while fetching Activity Availability for product code : {}", productCode);
-                        return Optional.empty();
-                      });
-            })
-        .toList();
+      return result;
+    }
   }
 
   private List<ViatorActivityDTO> filterNoDataActivities(
