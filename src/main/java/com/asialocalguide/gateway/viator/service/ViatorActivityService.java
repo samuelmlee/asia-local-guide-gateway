@@ -160,36 +160,27 @@ public class ViatorActivityService implements ActivityProvider {
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       // Submit a task for each activity
       for (ViatorActivityDTO activity : activities) {
-        String productCode = requireNonNull(activity.productCode());
+        if (activity == null || activity.productCode() == null) {
+          log.warn("Skipping null ViatorActivityDTO in fetchActivityAvailabilities.");
+          continue;
+        }
         futures.add(
             executor.submit(
                 () -> {
                   try {
                     Optional<ViatorActivityAvailabilityDTO> availabilityOpt =
-                        viatorClient.getAvailabilityByProductCode(productCode);
+                        viatorClient.getAvailabilityByProductCode(activity.productCode());
 
                     availabilityOpt.ifPresent(result::add);
                   } catch (Exception ex) {
-                    log.warn("Error while fetching Activity Availability for product code: {}", productCode);
+                    log.warn("Error while fetching Activity Availability for product code: {}", activity.productCode());
                   }
                   return null;
                 }));
       }
 
       // Wait for all futures to complete
-      for (Future<Void> future : futures) {
-        try {
-          future.get();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          log.warn("Task was interrupted: {}", e.getMessage());
-          break;
-        } catch (ExecutionException e) {
-          log.warn("Error during task execution: {}", e.getMessage());
-        } catch (Exception e) {
-          log.warn("Error waiting for task completion: {}", e.getMessage());
-        }
-      }
+      waitForTaskCompletion(futures);
 
       return result;
     }
@@ -254,21 +245,7 @@ public class ViatorActivityService implements ActivityProvider {
         }
       }
 
-      for (Future<Void> future : futures) {
-        try {
-          // Wait for Future to complete
-          future.get();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          log.warn("Task was interrupted: {}", e.getMessage());
-          // Thread is interrupted, exit loop
-          break;
-        } catch (ExecutionException e) {
-          log.warn("Error during task execution: {}", e.getMessage());
-        } catch (Exception e) {
-          log.warn("Error waiting for task completion: {}", e.getMessage());
-        }
-      }
+      waitForTaskCompletion(futures);
 
       return result;
     }
@@ -354,5 +331,21 @@ public class ViatorActivityService implements ActivityProvider {
             })
         .filter(Objects::nonNull)
         .toList();
+  }
+
+  private void waitForTaskCompletion(List<Future<Void>> futures) {
+    for (Future<Void> future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        log.warn("Task was interrupted: {}", e.getMessage());
+        break;
+      } catch (ExecutionException e) {
+        log.warn("Error during task execution: {}", e.getMessage());
+      } catch (Exception e) {
+        log.warn("Error waiting for task completion: {}", e.getMessage());
+      }
+    }
   }
 }
