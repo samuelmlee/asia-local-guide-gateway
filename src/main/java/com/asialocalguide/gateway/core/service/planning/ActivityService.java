@@ -1,15 +1,12 @@
 package com.asialocalguide.gateway.core.service.planning;
 
+import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.planning.Activity;
-import com.asialocalguide.gateway.core.domain.planning.ActivityId;
-import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
+import com.asialocalguide.gateway.core.domain.planning.*;
 import com.asialocalguide.gateway.core.repository.ActivityRepository;
+import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,10 +17,16 @@ public class ActivityService {
 
   private final ActivityRepository activityRepository;
 
+  private final BookingProviderService bookingProviderService;
+
   private final List<FetchActivityStrategy> fetchActivityStrategies;
 
-  public ActivityService(ActivityRepository activityRepository, List<FetchActivityStrategy> fetchActivityStrategies) {
+  public ActivityService(
+      ActivityRepository activityRepository,
+      BookingProviderService bookingProviderService,
+      List<FetchActivityStrategy> fetchActivityStrategies) {
     this.activityRepository = activityRepository;
+    this.bookingProviderService = bookingProviderService;
     this.fetchActivityStrategies = fetchActivityStrategies;
   }
 
@@ -63,15 +66,33 @@ public class ActivityService {
   }
 
   private List<Activity> convertToActivities(List<CommonPersistableActivity> persistableActivities) {
-    return persistableActivities.stream().map(this::toActivity).toList();
+    return persistableActivities.stream().map(this::toActivity).filter(Optional::isPresent).map(Optional::get).toList();
   }
 
-  private Activity toActivity(CommonPersistableActivity persistable) {
-    Activity activity = new Activity();
+  private Optional<Activity> toActivity(CommonPersistableActivity persistable) {
 
     // Set composite ID
-    ActivityId activityId = new ActivityId();
+    ActivityId activityId = new ActivityId(persistable.providerId());
+    Optional<BookingProvider> providerOpt = bookingProviderService.getBookingProviderByName(persistable.providerName());
 
-    return activity;
+    if (providerOpt.isEmpty()) {
+      log.warn(
+          "Provider not found for activity: {}, providerName: {}",
+          persistable.providerId(),
+          persistable.providerName());
+      return Optional.empty();
+    }
+
+    //    Activity activity = new Activity(
+    //              activityId,
+    //            providerOpt.get(),
+    //              List< ActivityTranslation > translations,
+    //              Double averageRating,
+    //              Integer reviewCount,
+    //              Integer durationMinutes,
+    //              List< ActivityImage > coverImages,
+    //              String bookingUrl);
+
+    return Optional.empty();
   }
 }

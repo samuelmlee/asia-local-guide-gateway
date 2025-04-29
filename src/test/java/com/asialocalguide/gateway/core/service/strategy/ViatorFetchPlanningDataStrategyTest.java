@@ -14,8 +14,8 @@ import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
+import com.asialocalguide.gateway.core.service.destination.DestinationService;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -31,9 +31,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ViatorFetchPlanningDataStrategyTest {
 
-  @Mock private BookingProviderRepository bookingProviderRepository;
+  @Mock private BookingProviderService bookingProviderService;
 
-  @Mock private DestinationRepository destinationRepository;
+  @Mock private DestinationService destinationService;
 
   @Mock private ViatorActivityService viatorActivityService;
 
@@ -55,7 +55,7 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderActivity_shouldThrowWhenViatorProviderNotFound() {
-    when(bookingProviderRepository.findByName(BookingProviderName.VIATOR)).thenReturn(Optional.empty());
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
         .isInstanceOf(IllegalStateException.class)
@@ -65,7 +65,7 @@ class ViatorFetchPlanningDataStrategyTest {
   @Test
   void fetchProviderPlanningData_shouldThrowWhenDestinationNotFound() {
     setupViatorProvider();
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.empty());
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
         .isInstanceOf(IllegalArgumentException.class);
@@ -76,7 +76,7 @@ class ViatorFetchPlanningDataStrategyTest {
     BookingProvider viator = setupViatorProvider();
     Destination destination = mock(Destination.class);
 
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.of(destination));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(viator.getId())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
@@ -91,7 +91,7 @@ class ViatorFetchPlanningDataStrategyTest {
     Destination destination = mock(Destination.class);
     DestinationProviderMapping mapping = new DestinationProviderMapping(destination, viator, "VIATOR_DEST_123");
 
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.of(destination));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(viator.getId())).thenReturn(Optional.of(mapping));
 
     // Correct initialization with ActivityData
@@ -129,7 +129,7 @@ class ViatorFetchPlanningDataStrategyTest {
     DestinationProviderMapping mapping =
         new DestinationProviderMapping(destination, new BookingProvider(), "VIATOR_DEST_123");
 
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.of(destination));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
     when(viatorActivityService.fetchProviderPlanningData(any())).thenThrow(new RuntimeException("API Failure"));
 
@@ -142,7 +142,7 @@ class ViatorFetchPlanningDataStrategyTest {
     BookingProvider viator = new BookingProvider();
     viator.setId(1L);
     viator.setName(BookingProviderName.VIATOR);
-    when(bookingProviderRepository.findByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
     return viator;
   }
 }

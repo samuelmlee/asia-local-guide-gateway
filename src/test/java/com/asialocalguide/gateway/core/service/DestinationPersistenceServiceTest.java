@@ -8,9 +8,9 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
 import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.destination.DestinationPersistenceService;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DestinationPersistenceServiceTest {
 
   @Mock private DestinationRepository destinationRepository;
-  @Mock private BookingProviderRepository bookingProviderRepository;
+  @Mock private BookingProviderService bookingProviderService;
   @Mock private CountryRepository countryRepository;
 
   @InjectMocks private DestinationPersistenceService service;
@@ -44,7 +44,7 @@ class DestinationPersistenceServiceTest {
   // Tests for persistExistingDestinations
   @Test
   void persistExistingDestinations_WhenProviderNotFound_ThrowsException() {
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.empty());
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.empty());
 
     CommonDestination destination = mockRawDestinationDTO();
     Map<Long, CommonDestination> input = Map.of(1L, destination);
@@ -62,7 +62,7 @@ class DestinationPersistenceServiceTest {
   void persistExistingDestinations_WithEmptyMap_DoesNothing() {
     service.persistExistingDestinations(providerName, Map.of());
 
-    verify(bookingProviderRepository, never()).findByName(any());
+    verify(bookingProviderService, never()).getBookingProviderByName(any());
     verifyNoInteractions(destinationRepository);
   }
 
@@ -84,7 +84,7 @@ class DestinationPersistenceServiceTest {
     Destination existingDestination = mock(Destination.class);
     when(existingDestination.getId()).thenReturn(destinationId);
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(destinationRepository.findAllById(Set.of(destinationId))).thenReturn(List.of(existingDestination));
 
     // Execute
@@ -121,7 +121,7 @@ class DestinationPersistenceServiceTest {
     when(existingDestination.getBookingProviderMapping(1L)).thenReturn(Optional.of(existingMapping));
     when(existingDestination.getId()).thenReturn(destinationId);
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(destinationRepository.findAllById(Set.of(destinationId))).thenReturn(List.of(existingDestination));
 
     service.persistExistingDestinations(providerName, idToRawDestinations);
@@ -133,7 +133,7 @@ class DestinationPersistenceServiceTest {
   // Tests for persistNewDestinations
   @Test
   void persistNewDestinations_WhenProviderNotFound_ThrowsException() {
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.empty());
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.empty());
 
     CommonDestination destination = mockRawDestinationDTO();
     Map<String, List<CommonDestination>> isoToDestinations = Map.of("US", List.of(destination));
@@ -146,7 +146,7 @@ class DestinationPersistenceServiceTest {
   void persistNewDestinations_WithEmptyMap_DoesNothing() {
     service.persistNewDestinations(providerName, Map.of());
 
-    verify(bookingProviderRepository, never()).findByName(any());
+    verify(bookingProviderService, never()).getBookingProviderByName(any());
     verifyNoInteractions(countryRepository, destinationRepository);
   }
 
@@ -163,7 +163,7 @@ class DestinationPersistenceServiceTest {
             isoCode);
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of());
 
     service.persistNewDestinations(providerName, isoToDtos);
@@ -187,7 +187,7 @@ class DestinationPersistenceServiceTest {
             isoCode);
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
@@ -218,7 +218,7 @@ class DestinationPersistenceServiceTest {
 
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
@@ -231,7 +231,7 @@ class DestinationPersistenceServiceTest {
 
     service.persistExistingDestinations(null, Map.of(1L, mockRawDestinationDTO()));
 
-    verifyNoInteractions(bookingProviderRepository, destinationRepository);
+    verifyNoInteractions(bookingProviderService, destinationRepository);
   }
 
   @Test
@@ -245,7 +245,7 @@ class DestinationPersistenceServiceTest {
     Destination foundDestination = mock(Destination.class);
     when(foundDestination.getId()).thenReturn(foundId);
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(destinationRepository.findAllById(Set.of(foundId, missingId))).thenReturn(List.of(foundDestination));
 
     service.persistExistingDestinations(providerName, input);
@@ -277,7 +277,7 @@ class DestinationPersistenceServiceTest {
   void persistNewDestinations_NullProviderName_ExitsEarly() {
 
     service.persistNewDestinations(null, Map.of("US", List.of(mockRawDestinationDTO())));
-    verifyNoInteractions(bookingProviderRepository, countryRepository, destinationRepository);
+    verifyNoInteractions(bookingProviderService, countryRepository, destinationRepository);
   }
 
   @Test
@@ -291,7 +291,7 @@ class DestinationPersistenceServiceTest {
             validIso, List.of(mockRawDestinationDTO()),
             invalidIso, List.of(mockRawDestinationDTO()));
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(Set.of(validIso, invalidIso))).thenReturn(List.of(validCountry));
 
     service.persistNewDestinations(providerName, input);
@@ -314,7 +314,7 @@ class DestinationPersistenceServiceTest {
 
     Country country = new Country("US");
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
@@ -339,7 +339,7 @@ class DestinationPersistenceServiceTest {
 
     Country country = new Country("US");
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
@@ -365,7 +365,7 @@ class DestinationPersistenceServiceTest {
 
     Country country = new Country("US");
 
-    when(bookingProviderRepository.findByName(providerName)).thenReturn(Optional.of(provider));
+    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
     when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));

@@ -3,12 +3,13 @@ package com.asialocalguide.gateway.core.domain.planning;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Getter
@@ -26,7 +27,7 @@ public class Activity {
   private BookingProvider provider;
 
   @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
-  @NotBlank
+  @NotEmpty
   private List<ActivityTranslation> activityTranslations;
 
   @DecimalMin(value = "0.0")
@@ -39,11 +40,11 @@ public class Activity {
   @Min(value = 1)
   private Integer durationMinutes;
 
-  @Embedded @NotNull private List<ActivityImage> mainImage;
+  @Embedded @NotNull private List<ActivityImage> coverImages;
 
   @NotBlank @URL private String bookingUrl;
 
-  @NotNull private LocalDateTime lastUpdated;
+  @LastModifiedDate private Instant lastUpdated;
 
   public Activity(
       ActivityId id,
@@ -52,9 +53,8 @@ public class Activity {
       Double averageRating,
       Integer reviewCount,
       Integer durationMinutes,
-      List<ActivityImage> mainImage,
-      String bookingUrl,
-      LocalDateTime lastUpdated) {
+      List<ActivityImage> coverImages,
+      String bookingUrl) {
 
     this.id = id;
     this.provider = provider;
@@ -62,9 +62,8 @@ public class Activity {
     this.averageRating = averageRating;
     this.reviewCount = reviewCount;
     this.durationMinutes = durationMinutes;
-    this.mainImage = mainImage;
+    this.coverImages = coverImages;
     this.bookingUrl = bookingUrl;
-    this.lastUpdated = lastUpdated != null ? lastUpdated : LocalDateTime.now();
   }
 
   @Override
