@@ -15,10 +15,16 @@ import org.springframework.data.annotation.LastModifiedDate;
 public class Activity {
   // Price and availability of an activity are fetched from the provider on demand
 
-  @EmbeddedId @NotNull @Getter private ActivityId id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Getter
+  private Long id;
+
+  @Column(name = "provider_activity_id", nullable = false)
+  @Getter
+  private String providerActivityId;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("bookingProviderId")
   @JoinColumn(name = "booking_provider_id", nullable = false)
   @NotNull
   @Getter
@@ -46,14 +52,14 @@ public class Activity {
   @LastModifiedDate private Instant lastUpdated;
 
   public Activity(
-      ActivityId id,
+      String providerActivityId,
       BookingProvider provider,
       Double averageRating,
       Integer reviewCount,
       Integer durationMinutes,
       String bookingUrl) {
 
-    this.id = id;
+    this.providerActivityId = providerActivityId;
     this.provider = provider;
     this.averageRating = averageRating;
     this.reviewCount = reviewCount;

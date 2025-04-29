@@ -22,9 +22,9 @@ public class CustomActivityRepositoryImpl implements CustomActivityRepository {
 
     return Set.copyOf(
         queryFactory
-            .select(activity.id.providerActivityId)
+            .select(activity.providerActivityId)
             .from(activity)
-            .where(activity.provider.name.eq(providerName).and(activity.id.providerActivityId.in(activityIds)))
+            .where(activity.provider.name.eq(providerName).and(activity.providerActivityId.in(activityIds)))
             .fetch());
   }
 
@@ -37,7 +37,7 @@ public class CustomActivityRepositoryImpl implements CustomActivityRepository {
         queryFactory
             .select(activity)
             .from(activity)
-            .where(activity.provider.name.eq(providerName).and(activity.id.providerActivityId.in(activityIds)))
+            .where(activity.provider.name.eq(providerName).and(activity.providerActivityId.in(activityIds)))
             .fetch());
   }
 }

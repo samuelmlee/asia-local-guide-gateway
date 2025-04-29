@@ -28,8 +28,7 @@ public class DayActivity {
   @NotNull private LocalDateTime endTime;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "provider_activity_id", referencedColumnName = "provider_activity_id")
-  @JoinColumn(name = "booking_provider_id", referencedColumnName = "booking_provider_id")
+  @JoinColumn(name = "activity_id", referencedColumnName = "id")
   @NotNull
   private Activity activity;
 

@@ -203,9 +203,7 @@ public class PlanningService {
         (providerName, activityIds) -> {
           Set<Activity> activities = activityService.findActivitiesByProviderNameAndIds(providerName, activityIds);
           Map<String, Activity> providerActivities =
-              activities.stream()
-                  .collect(
-                      Collectors.toMap(activity -> activity.getId().getProviderActivityId(), activity -> activity));
+              activities.stream().collect(Collectors.toMap(Activity::getProviderActivityId, activity -> activity));
           result.put(providerName, providerActivities);
         });
 

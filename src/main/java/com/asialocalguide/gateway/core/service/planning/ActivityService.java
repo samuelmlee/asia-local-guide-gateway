@@ -88,12 +88,9 @@ public class ActivityService {
       return Optional.empty();
     }
 
-    // Set composite ID
-    ActivityId activityId = new ActivityId(persistable.providerId());
-
     Activity activity =
         new Activity(
-            activityId,
+            persistable.providerId(),
             providerOpt.get(),
             persistable.review().averageRating(),
             persistable.review().reviewCount(),
