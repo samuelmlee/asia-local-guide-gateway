@@ -4,20 +4,18 @@ import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
-@Getter
 @NoArgsConstructor
 public class Activity {
   // Price and availability of an activity are fetched from the provider on demand
 
-  @EmbeddedId @NotNull private ActivityId id;
+  @EmbeddedId @NotNull @Getter private ActivityId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("bookingProviderId")
@@ -28,7 +26,10 @@ public class Activity {
 
   @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
   @NotEmpty
-  private List<ActivityTranslation> activityTranslations;
+  private Set<ActivityTranslation> activityTranslations = new HashSet<>();
+
+  @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<ActivityImage> coverImages = new HashSet<>();
 
   @DecimalMin(value = "0.0")
   @DecimalMax(value = "5.0")
@@ -40,8 +41,6 @@ public class Activity {
   @Min(value = 1)
   private Integer durationMinutes;
 
-  @Embedded @NotNull private List<ActivityImage> coverImages;
-
   @NotBlank @URL private String bookingUrl;
 
   @LastModifiedDate private Instant lastUpdated;
@@ -49,21 +48,49 @@ public class Activity {
   public Activity(
       ActivityId id,
       BookingProvider provider,
-      List<ActivityTranslation> translations,
       Double averageRating,
       Integer reviewCount,
       Integer durationMinutes,
-      List<ActivityImage> coverImages,
       String bookingUrl) {
 
     this.id = id;
     this.provider = provider;
-    this.activityTranslations = translations;
     this.averageRating = averageRating;
     this.reviewCount = reviewCount;
     this.durationMinutes = durationMinutes;
-    this.coverImages = coverImages;
     this.bookingUrl = bookingUrl;
+  }
+
+  public void addTranslation(ActivityTranslation translation) {
+    if (translation == null) {
+      return;
+    }
+    translation.setActivity(this);
+    activityTranslations.add(translation);
+  }
+
+  public void removeTranslation(ActivityTranslation translation) {
+    if (translation == null) {
+      return;
+    }
+    translation.setActivity(null);
+    activityTranslations.remove(translation);
+  }
+
+  public void addImage(ActivityImage image) {
+    if (image == null) {
+      return;
+    }
+    image.setActivity(this);
+    coverImages.add(image);
+  }
+
+  public void removeImage(ActivityImage image) {
+    if (image == null) {
+      return;
+    }
+    image.setActivity(null);
+    coverImages.remove(image);
   }
 
   @Override

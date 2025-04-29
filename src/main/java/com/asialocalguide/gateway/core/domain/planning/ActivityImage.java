@@ -1,24 +1,32 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 
-@Embeddable
+@Entity
 @NoArgsConstructor
 @Getter
 public class ActivityImage {
 
+  @Id private Long id;
+
+  @ManyToOne(optional = false, fetch = jakarta.persistence.FetchType.LAZY)
+  @JoinColumn(name = "activity_id", nullable = false)
+  private Activity activity;
+
   @NotNull
+  @Positive
   @Column(name = "activity_image_height")
   private Integer height;
 
   @NotNull
+  @Positive
   @Column(name = "activity_image_width")
   private Integer width;
 
@@ -40,6 +48,10 @@ public class ActivityImage {
 
   public CommonActivity.CommonImage toCommonImage() {
     return new CommonActivity.CommonImage(height, width, url);
+  }
+
+  void setActivity(Activity activity) {
+    this.activity = activity;
   }
 
   @Override

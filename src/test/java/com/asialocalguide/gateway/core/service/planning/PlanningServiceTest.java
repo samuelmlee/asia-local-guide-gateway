@@ -12,7 +12,7 @@ import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
+import com.asialocalguide.gateway.core.repository.PlanningRepository;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
 import com.asialocalguide.gateway.core.service.user.UserService;
 import java.time.LocalDate;
@@ -32,13 +32,11 @@ class PlanningServiceTest {
 
   @Mock private FetchPlanningDataStrategy planningStrategy2;
 
-  @Mock private FetchActivityStrategy activityStrategy1;
-
-  @Mock private FetchActivityStrategy activityStrategy2;
-
   @Mock private UserService userService;
 
   @Mock private ActivityService activityService;
+
+  @Mock private PlanningRepository planningRepository;
 
   private PlanningService planningService;
 
@@ -48,14 +46,16 @@ class PlanningServiceTest {
 
   @BeforeEach
   void setup() {
-    planningService = new PlanningService(List.of(planningStrategy1, planningStrategy2), userService, activityService);
+    planningService =
+        new PlanningService(
+            List.of(planningStrategy1, planningStrategy2), userService, activityService, planningRepository);
 
     validRequest = new PlanningRequestDTO(today, tomorrow, 1L, List.of("adventure"));
   }
 
   @Test
   void generateActivityPlanning_shouldHandleNoProviders() {
-    PlanningService service = new PlanningService(List.of(), userService, activityService);
+    PlanningService service = new PlanningService(List.of(), userService, activityService, planningRepository);
 
     List<DayPlanDTO> result = service.generateActivityPlanning(validRequest);
 

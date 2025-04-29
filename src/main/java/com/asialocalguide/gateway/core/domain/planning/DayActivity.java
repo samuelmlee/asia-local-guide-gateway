@@ -33,7 +33,7 @@ public class DayActivity {
   @NotNull
   private Activity activity;
 
-  public DayActivity(LocalDateTime startTime, LocalDateTime endTime, Activity activity) {
+  public DayActivity(Activity activity, LocalDateTime startTime, LocalDateTime endTime) {
     if (startTime == null || endTime == null || activity == null) {
       throw new IllegalArgumentException("Start time, end time, and activity cannot be null");
     }

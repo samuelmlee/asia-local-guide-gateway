@@ -2,6 +2,7 @@ package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.*;
 import com.asialocalguide.gateway.core.repository.ActivityRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
@@ -30,15 +31,19 @@ public class ActivityService {
     this.fetchActivityStrategies = fetchActivityStrategies;
   }
 
-  public Set<String> findExistingActivityIdsByProviderName(BookingProviderName providerName, Set<String> activityIds) {
-    return activityRepository.findExistingActivityIdsByProviderName(providerName, activityIds);
+  public Set<String> findExistingIdsByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
+    return activityRepository.findExistingIdsByProviderNameAndIds(providerName, activityIds);
+  }
+
+  public Set<Activity> findActivitiesByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
+    return activityRepository.findActivitiesByProviderNameAndIds(providerName, activityIds);
   }
 
   public List<Activity> saveAll(List<Activity> activities) {
     return activityRepository.saveAll(activities);
   }
 
-  public List<Activity> persistNewActivitiesByProvider(Map<BookingProviderName, Set<String>> providerNameToId) {
+  public void persistNewActivitiesByProvider(Map<BookingProviderName, Set<String>> providerNameToId) {
 
     List<CommonPersistableActivity> activitiesToPersist =
         fetchActivityStrategies.stream()
@@ -48,7 +53,7 @@ public class ActivityService {
 
                   Set<String> activityIds = providerNameToId.get(providerName);
 
-                  Set<String> cachedIds = findExistingActivityIdsByProviderName(providerName, activityIds);
+                  Set<String> cachedIds = findExistingIdsByProviderNameAndIds(providerName, activityIds);
                   Set<String> newIds =
                       activityIds.stream().filter(id -> !cachedIds.contains(id)).collect(Collectors.toSet());
 
@@ -62,7 +67,9 @@ public class ActivityService {
             .filter(Objects::nonNull)
             .toList();
 
-    return saveAll(convertToActivities(activitiesToPersist));
+    List<Activity> activities = convertToActivities(activitiesToPersist);
+
+    saveAll(activities);
   }
 
   private List<Activity> convertToActivities(List<CommonPersistableActivity> persistableActivities) {
@@ -71,8 +78,6 @@ public class ActivityService {
 
   private Optional<Activity> toActivity(CommonPersistableActivity persistable) {
 
-    // Set composite ID
-    ActivityId activityId = new ActivityId(persistable.providerId());
     Optional<BookingProvider> providerOpt = bookingProviderService.getBookingProviderByName(persistable.providerName());
 
     if (providerOpt.isEmpty()) {
@@ -83,16 +88,45 @@ public class ActivityService {
       return Optional.empty();
     }
 
-    //    Activity activity = new Activity(
-    //              activityId,
-    //            providerOpt.get(),
-    //              List< ActivityTranslation > translations,
-    //              Double averageRating,
-    //              Integer reviewCount,
-    //              Integer durationMinutes,
-    //              List< ActivityImage > coverImages,
-    //              String bookingUrl);
+    // Set composite ID
+    ActivityId activityId = new ActivityId(persistable.providerId());
 
-    return Optional.empty();
+    Activity activity =
+        new Activity(
+            activityId,
+            providerOpt.get(),
+            persistable.review().averageRating(),
+            persistable.review().reviewCount(),
+            persistable.durationInMinutes(),
+            persistable.providerUrl());
+
+    // Set translations
+    Map<LanguageCode, String> titlesByLanguage =
+        persistable.title().stream()
+            .collect(
+                Collectors.toMap(
+                    CommonPersistableActivity.Translation::languageCode, CommonPersistableActivity.Translation::value));
+
+    Map<LanguageCode, String> descriptionsByLanguage =
+        persistable.description().stream()
+            .collect(
+                Collectors.toMap(
+                    CommonPersistableActivity.Translation::languageCode, CommonPersistableActivity.Translation::value));
+
+    // Title is required
+    titlesByLanguage.forEach(
+        (languageCode, title) -> {
+          String description = descriptionsByLanguage.get(languageCode);
+          activity.addTranslation(new ActivityTranslation(languageCode, title, description));
+        });
+
+    // Set images
+    Optional.ofNullable(persistable.images())
+        .ifPresent(
+            images ->
+                images.forEach(
+                    image -> activity.addImage(new ActivityImage(image.height(), image.width(), image.url()))));
+
+    return Optional.of(activity);
   }
 }
