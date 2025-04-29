@@ -32,6 +32,7 @@ public class WebSecurityConfig {
                         "/v1/activity-tags/**",
                         "/v1/auth/check-email",
                         "/v1/destinations/autocomplete",
+                        "/v1/destinations/sync/**",
                         "/v1/planning/**",
                         "/v1/users/**")
                     .permitAll()

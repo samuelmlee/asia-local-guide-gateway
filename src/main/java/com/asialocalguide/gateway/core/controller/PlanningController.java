@@ -38,7 +38,7 @@ public class PlanningController {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<PlanningResponseDTO> savePlanning(
-      @Valid PlanningCreateRequestDTO planningRequest, Authentication authentication) {
+      @Valid @RequestBody PlanningCreateRequestDTO planningRequest, Authentication authentication) {
 
     AuthProviderName providerName =
         authService

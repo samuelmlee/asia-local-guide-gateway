@@ -15,7 +15,7 @@ public class AuthService {
       Jwt jwt = jwtAuth.getToken();
       String issuer = jwt.getClaimAsString("iss");
 
-      if (issuer != null && issuer.contains("securetoken.google.com")) {
+      if (issuer != null && issuer.contains("securetoken.google.com/asia-local-guide-webapp")) {
         return Optional.of(AuthProviderName.FIREBASE);
       }
     }
