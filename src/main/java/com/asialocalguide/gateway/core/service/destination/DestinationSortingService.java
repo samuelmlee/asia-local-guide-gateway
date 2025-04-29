@@ -4,7 +4,6 @@ import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.CommonDestination;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationIngestionInput;
-import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,17 +15,18 @@ import org.springframework.stereotype.Service;
 public class DestinationSortingService {
 
   private final DestinationRepository destinationRepository;
-  private final CountryRepository countryRepository;
+  private final CountryService countryService;
   private final BookingProviderMappingService bookingProviderMappingService;
   private final DestinationPersistenceService destinationPersistenceService;
 
   public DestinationSortingService(
       DestinationRepository destinationRepository,
-      CountryRepository countryRepository,
+      CountryService countryService,
       BookingProviderMappingService bookingProviderMappingService,
       DestinationPersistenceService destinationPersistenceService) {
     this.destinationRepository = destinationRepository;
-    this.countryRepository = countryRepository;
+    this.countryService = countryService;
+
     this.bookingProviderMappingService = bookingProviderMappingService;
     this.destinationPersistenceService = destinationPersistenceService;
   }
@@ -48,7 +48,7 @@ public class DestinationSortingService {
     Map<String, List<CommonDestination>> isoCodeToRawDestinations = groupRawDestinationsByIso(filteredRawDestinations);
 
     // Get set of ISO codes
-    Set<String> supportedIsoCodes = countryRepository.findAllIso2Codes();
+    Set<String> supportedIsoCodes = countryService.findAllIso2Codes();
 
     // Fetch existing destinations grouped by country
     Map<String, List<Destination>> isoCodeToExistingDestinations =

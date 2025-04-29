@@ -3,7 +3,6 @@ package com.asialocalguide.gateway.core.service.destination;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import java.util.*;
@@ -17,15 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class DestinationPersistenceService {
 
   private final DestinationRepository destinationRepository;
-  private final CountryRepository countryRepository;
+  private final CountryService countryService;
   private final BookingProviderService bookingProviderService;
 
   public DestinationPersistenceService(
       DestinationRepository destinationRepository,
-      CountryRepository countryRepository,
+      CountryService countryService,
       BookingProviderService bookingProviderService) {
     this.destinationRepository = destinationRepository;
-    this.countryRepository = countryRepository;
+    this.countryService = countryService;
     this.bookingProviderService = bookingProviderService;
   }
 
@@ -99,7 +98,7 @@ public class DestinationPersistenceService {
 
     // Fetch all Countries in batch
     Map<String, Country> countryMap =
-        countryRepository.findByIso2CodeIn(isoCodes).stream()
+        countryService.findByIso2CodeIn(isoCodes).stream()
             .collect(Collectors.toMap(Country::getIso2Code, country -> country));
 
     BookingProvider provider =

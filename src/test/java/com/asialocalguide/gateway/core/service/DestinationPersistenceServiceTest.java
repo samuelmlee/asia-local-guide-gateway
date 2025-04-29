@@ -8,9 +8,9 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
+import com.asialocalguide.gateway.core.service.destination.CountryService;
 import com.asialocalguide.gateway.core.service.destination.DestinationPersistenceService;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,7 @@ class DestinationPersistenceServiceTest {
 
   @Mock private DestinationRepository destinationRepository;
   @Mock private BookingProviderService bookingProviderService;
-  @Mock private CountryRepository countryRepository;
+  @Mock private CountryService countryService;
 
   @InjectMocks private DestinationPersistenceService service;
 
@@ -147,7 +147,7 @@ class DestinationPersistenceServiceTest {
     service.persistNewDestinations(providerName, Map.of());
 
     verify(bookingProviderService, never()).getBookingProviderByName(any());
-    verifyNoInteractions(countryRepository, destinationRepository);
+    verifyNoInteractions(countryService, destinationRepository);
   }
 
   @Test
@@ -164,7 +164,7 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of());
+    when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of());
 
     service.persistNewDestinations(providerName, isoToDtos);
 
@@ -188,7 +188,7 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
+    when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
 
@@ -219,7 +219,7 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
+    when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
 
@@ -277,7 +277,7 @@ class DestinationPersistenceServiceTest {
   void persistNewDestinations_NullProviderName_ExitsEarly() {
 
     service.persistNewDestinations(null, Map.of("US", List.of(mockRawDestinationDTO())));
-    verifyNoInteractions(bookingProviderService, countryRepository, destinationRepository);
+    verifyNoInteractions(bookingProviderService, countryService, destinationRepository);
   }
 
   @Test
@@ -292,7 +292,7 @@ class DestinationPersistenceServiceTest {
             invalidIso, List.of(mockRawDestinationDTO()));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(Set.of(validIso, invalidIso))).thenReturn(List.of(validCountry));
+    when(countryService.findByIso2CodeIn(Set.of(validIso, invalidIso))).thenReturn(List.of(validCountry));
 
     service.persistNewDestinations(providerName, input);
 
@@ -315,7 +315,7 @@ class DestinationPersistenceServiceTest {
     Country country = new Country("US");
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
 
@@ -340,7 +340,7 @@ class DestinationPersistenceServiceTest {
     Country country = new Country("US");
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
 
@@ -366,7 +366,7 @@ class DestinationPersistenceServiceTest {
     Country country = new Country("US");
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryRepository.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
+    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
 
