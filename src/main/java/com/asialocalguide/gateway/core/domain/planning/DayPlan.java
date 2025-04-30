@@ -68,6 +68,6 @@ public class DayPlan {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return id != null ? Objects.hash(id) : super.hashCode();
   }
 }

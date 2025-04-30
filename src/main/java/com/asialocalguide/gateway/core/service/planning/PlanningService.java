@@ -179,7 +179,11 @@ public class PlanningService {
                     Collectors.mapping(
                         PlanningCreateRequestDTO.CreateDayActivityDTO::productCode, Collectors.toSet())));
 
-    activityService.persistNewActivitiesByProvider(providerNameToIds);
+    try {
+      activityService.persistNewActivitiesByProvider(providerNameToIds);
+    } catch (Exception ex) {
+      throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
+    }
 
     Map<BookingProviderName, Map<String, Activity>> activityLookupMap = buildActivityLookupMap(providerNameToIds);
 

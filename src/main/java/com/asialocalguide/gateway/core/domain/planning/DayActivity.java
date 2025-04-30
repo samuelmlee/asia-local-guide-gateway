@@ -57,6 +57,6 @@ public class DayActivity {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return id != null ? Objects.hash(id) : super.hashCode();
   }
 }

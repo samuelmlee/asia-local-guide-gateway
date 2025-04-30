@@ -3,7 +3,10 @@ package com.asialocalguide.gateway.core.service.planning;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.*;
+import com.asialocalguide.gateway.core.domain.planning.Activity;
+import com.asialocalguide.gateway.core.domain.planning.ActivityImage;
+import com.asialocalguide.gateway.core.domain.planning.ActivityTranslation;
+import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
 import com.asialocalguide.gateway.core.repository.ActivityRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
@@ -45,7 +48,7 @@ public class ActivityService {
 
   public void persistNewActivitiesByProvider(Map<BookingProviderName, Set<String>> providerNameToId) {
 
-    List<CommonPersistableActivity> activitiesToPersist =
+    List<Activity> activitiesToPersist =
         fetchActivityStrategies.stream()
             .flatMap(
                 strategy -> {
@@ -57,8 +60,10 @@ public class ActivityService {
                   Set<String> newIds =
                       activityIds.stream().filter(id -> !cachedIds.contains(id)).collect(Collectors.toSet());
 
+                  List<CommonPersistableActivity> persistableActivities;
+
                   try {
-                    return strategy.fetchProviderActivities(newIds).stream();
+                    persistableActivities = strategy.fetchProviderActivities(newIds);
                   } catch (Exception e) {
                     log.error(
                         "Error during fetching of activities from Provider : {}, for ActivityIds: {}, while processing"
@@ -69,35 +74,40 @@ public class ActivityService {
                         e);
                     return null;
                   }
+
+                  Optional<BookingProvider> providerOpt = bookingProviderService.getBookingProviderByName(providerName);
+
+                  if (providerOpt.isEmpty()) {
+                    log.warn(
+                        "Provider not found for providerName: {}, processing: activityIds: {}, ",
+                        providerName,
+                        activityIds);
+                    return null;
+                  }
+
+                  return convertToActivities(persistableActivities, providerOpt.get()).stream();
                 })
             .filter(Objects::nonNull)
             .toList();
 
-    List<Activity> activities = convertToActivities(activitiesToPersist);
-
-    saveAll(activities);
+    saveAll(activitiesToPersist);
   }
 
-  private List<Activity> convertToActivities(List<CommonPersistableActivity> persistableActivities) {
-    return persistableActivities.stream().map(this::toActivity).filter(Optional::isPresent).map(Optional::get).toList();
+  private List<Activity> convertToActivities(
+      List<CommonPersistableActivity> persistableActivities, BookingProvider bookingProvider) {
+    return persistableActivities.stream()
+        .map(persistable -> toActivity(persistable, bookingProvider))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .toList();
   }
 
-  private Optional<Activity> toActivity(CommonPersistableActivity persistable) {
-
-    Optional<BookingProvider> providerOpt = bookingProviderService.getBookingProviderByName(persistable.providerName());
-
-    if (providerOpt.isEmpty()) {
-      log.warn(
-          "Provider not found for activity: {}, providerName: {}",
-          persistable.providerId(),
-          persistable.providerName());
-      return Optional.empty();
-    }
+  private Optional<Activity> toActivity(CommonPersistableActivity persistable, BookingProvider bookingProvider) {
 
     Activity activity =
         new Activity(
             persistable.providerId(),
-            providerOpt.get(),
+            bookingProvider,
             persistable.review().averageRating(),
             persistable.review().reviewCount(),
             persistable.durationInMinutes(),

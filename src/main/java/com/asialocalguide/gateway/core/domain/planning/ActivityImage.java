@@ -14,7 +14,9 @@ import org.hibernate.validator.constraints.URL;
 @Getter
 public class ActivityImage {
 
-  @Id private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
   @ManyToOne(optional = false, fetch = jakarta.persistence.FetchType.LAZY)
   @JoinColumn(name = "activity_id", nullable = false)
