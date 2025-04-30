@@ -9,6 +9,7 @@ import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
+import com.asialocalguide.gateway.core.exception.PlanningCreationException;
 import com.asialocalguide.gateway.core.exception.UserNotFoundException;
 import com.asialocalguide.gateway.core.repository.PlanningRepository;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
@@ -210,9 +211,8 @@ public class PlanningService {
               planning.addDayPlan(dayPlan);
             });
 
-    if (planning.getDayPlans().isEmpty()) {
-      log.warn("No valid day plans found for planning request: {}", planningRequest);
-      return null;
+    if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
+      throw new PlanningCreationException("No valid day plans found for the provided request.");
     }
 
     return planningRepository.save(planning);

@@ -86,7 +86,7 @@ public class ViatorClient {
     try {
       ResponseEntity<ViatorActivityDetailDTO> entity =
           viatorRestClient
-              .post()
+              .get()
               .uri("/products/{activityId}", activityId)
               .headers(httpHeaders -> httpHeaders.set(ACCEPT_LANGUAGE_HEADER, languageIsoCode))
               .retrieve()
