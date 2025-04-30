@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -158,7 +159,13 @@ public class PlanningService {
     User user =
         userService
             .getUserByProviderNameAndProviderUserId(authProviderName, userProviderId)
-            .orElseThrow(() -> new UserNotFoundException("User not found for Planning Creation request"));
+            .orElseThrow(
+                () ->
+                    new UserNotFoundException(
+                        String.format(
+                            "User not found for Planning Creation request: %s, AuthProviderName: %s, userProviderId:"
+                                + " %s",
+                            planningRequest, authProviderName, userProviderId)));
 
     List<PlanningCreateRequestDTO.CreateDayActivityDTO> activities =
         planningRequest.dayPlans().stream().flatMap(dayPlan -> dayPlan.activities().stream()).toList();
@@ -181,16 +188,32 @@ public class PlanningService {
         .dayPlans()
         .forEach(
             dayPlanDTO -> {
-              DayPlan dayPlan = new DayPlan(dayPlanDTO.date());
-
               List<PlanningCreateRequestDTO.CreateDayActivityDTO> dayActivitiesDTO = dayPlanDTO.activities();
 
+              // Not persisting empty day plans
+              if (dayActivitiesDTO == null || dayActivitiesDTO.isEmpty()) {
+                log.info("Skipping empty day plan for dayPlan: {}", dayPlanDTO);
+                return;
+              }
+
+              DayPlan dayPlan = new DayPlan(dayPlanDTO.date());
+
               Set<DayActivity> dayActivities = buildDayActivities(dayActivitiesDTO, activityLookupMap);
+
+              if (dayActivities.isEmpty()) {
+                log.info("No valid activities found for DayPlan: {}", dayPlanDTO);
+                return;
+              }
 
               dayActivities.forEach(dayPlan::addDayActivity);
 
               planning.addDayPlan(dayPlan);
             });
+
+    if (planning.getDayPlans().isEmpty()) {
+      log.warn("No valid day plans found for planning request: {}", planningRequest);
+      return null;
+    }
 
     return planningRepository.save(planning);
   }
@@ -203,7 +226,7 @@ public class PlanningService {
         (providerName, activityIds) -> {
           Set<Activity> activities = activityService.findActivitiesByProviderNameAndIds(providerName, activityIds);
           Map<String, Activity> providerActivities =
-              activities.stream().collect(Collectors.toMap(Activity::getProviderActivityId, activity -> activity));
+              activities.stream().collect(Collectors.toMap(Activity::getProviderActivityId, Function.identity()));
           result.put(providerName, providerActivities);
         });
 

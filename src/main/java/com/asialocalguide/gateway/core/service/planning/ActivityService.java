@@ -60,7 +60,13 @@ public class ActivityService {
                   try {
                     return strategy.fetchProviderActivities(newIds).stream();
                   } catch (Exception e) {
-                    log.error("Error during fetching of activities from Provider : {}", strategy.getProviderName(), e);
+                    log.error(
+                        "Error during fetching of activities from Provider : {}, for ActivityIds: {}, while processing"
+                            + " Provider To Id Map: {}",
+                        strategy.getProviderName(),
+                        newIds,
+                        providerNameToId,
+                        e);
                     return null;
                   }
                 })

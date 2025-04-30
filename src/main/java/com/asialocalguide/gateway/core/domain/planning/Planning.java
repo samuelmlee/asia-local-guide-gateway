@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -38,6 +39,10 @@ public class Planning {
     }
     this.user = user;
     this.name = name;
+  }
+
+  public Set<DayPlan> getDayPlans() {
+    return Collections.unmodifiableSet(dayPlans);
   }
 
   public void addDayPlan(DayPlan dayPlan) {
