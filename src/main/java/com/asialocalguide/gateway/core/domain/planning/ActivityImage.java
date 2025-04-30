@@ -20,34 +20,21 @@ public class ActivityImage {
   @JoinColumn(name = "activity_id", nullable = false)
   private Activity activity;
 
-  @NotNull
-  @Positive
-  @Column(name = "activity_image_height")
-  private Integer height;
+  @NotNull @Positive private Integer height;
+
+  @NotNull @Positive private Integer width;
+
+  @NotBlank @URL private String url;
 
   @NotNull
-  @Positive
-  @Column(name = "activity_image_width")
-  private Integer width;
+  @Enumerated(EnumType.STRING)
+  private ImageType type;
 
-  @NotBlank
-  @URL
-  @Column(name = "activity_image_url")
-  private String url;
-
-  public ActivityImage(Integer height, Integer width, String url) {
+  public ActivityImage(Integer height, Integer width, String url, ImageType type) {
     this.height = height;
     this.width = width;
     this.url = url;
-  }
-
-  public static ActivityImage fromCommonImage(CommonActivity.CommonImage image) {
-    if (image == null) return null;
-    return new ActivityImage(image.height(), image.width(), image.url());
-  }
-
-  public CommonActivity.CommonImage toCommonImage() {
-    return new CommonActivity.CommonImage(height, width, url);
+    this.type = type;
   }
 
   void setActivity(Activity activity) {

@@ -128,7 +128,9 @@ public class ActivityService {
         .ifPresent(
             images ->
                 images.forEach(
-                    image -> activity.addImage(new ActivityImage(image.height(), image.width(), image.url()))));
+                    image ->
+                        activity.addImage(
+                            new ActivityImage(image.height(), image.width(), image.url(), image.type()))));
 
     return Optional.of(activity);
   }

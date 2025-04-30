@@ -278,25 +278,19 @@ public class ViatorActivityService implements ActivityProvider {
             variant ->
                 images.add(
                     new CommonPersistableActivity.Image(
-                        CommonPersistableActivity.ImageType.MOBILE, variant.height(), variant.width(), variant.url())));
+                        ImageType.MOBILE, variant.height(), variant.width(), variant.url())));
 
     dto.getCoverImage(variant -> variant.width() == 720 && variant.height() == 480)
         .ifPresent(
             variant ->
                 images.add(
                     new CommonPersistableActivity.Image(
-                        CommonPersistableActivity.ImageType.DESKTOP,
-                        variant.height(),
-                        variant.width(),
-                        variant.url())));
+                        ImageType.DESKTOP, variant.height(), variant.width(), variant.url())));
 
     return images;
   }
 
   private CommonPersistableActivity.Review mapActivityDetailReview(ViatorActivityDetailDTO dto) {
-    if (dto.reviews() == null) {
-      return new CommonPersistableActivity.Review(1.0, 1);
-    }
 
     double averageRating = dto.reviews().combinedAverageRating();
     int reviewCount = dto.reviews().totalReviews();

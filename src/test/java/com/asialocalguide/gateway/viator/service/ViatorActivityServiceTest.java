@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
+import com.asialocalguide.gateway.core.domain.planning.ImageType;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
@@ -323,14 +324,14 @@ class ViatorActivityServiceTest {
 
     // Verify mobile image
     Optional<CommonPersistableActivity.Image> mobileImage =
-        images.stream().filter(img -> img.type() == CommonPersistableActivity.ImageType.MOBILE).findFirst();
+        images.stream().filter(img -> img.type() == ImageType.MOBILE).findFirst();
     assertTrue(mobileImage.isPresent());
     assertEquals(320, mobileImage.get().height());
     assertEquals(480, mobileImage.get().width());
 
     // Verify desktop image
     Optional<CommonPersistableActivity.Image> desktopImage =
-        images.stream().filter(img -> img.type() == CommonPersistableActivity.ImageType.DESKTOP).findFirst();
+        images.stream().filter(img -> img.type() == ImageType.DESKTOP).findFirst();
     assertTrue(desktopImage.isPresent());
     assertEquals(480, desktopImage.get().height());
     assertEquals(720, desktopImage.get().width());

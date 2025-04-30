@@ -26,9 +26,4 @@ public record CommonPersistableActivity(
       @NotNull @DecimalMin("0.0") @DecimalMax("5.0") Double averageRating, @NotNull @Positive Integer reviewCount) {}
 
   public record Translation(@NotNull LanguageCode languageCode, @NotBlank String value) {}
-
-  public enum ImageType {
-    MOBILE,
-    DESKTOP
-  }
 }
