@@ -1,22 +1,17 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor
-public class DayPlan {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+public class DayPlan extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "planning_id")
@@ -39,10 +34,6 @@ public class DayPlan {
     this.planning = planning;
   }
 
-  void setDate(LocalDate date) {
-    this.date = date;
-  }
-
   public void addDayActivity(DayActivity dayActivity) {
     if (dayActivity == null || dayActivities == null) {
       return;
@@ -57,17 +48,5 @@ public class DayPlan {
     }
     dayActivity.setDayPlan(null);
     dayActivities.remove(dayActivity);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    DayPlan dayPlan = (DayPlan) o;
-    return Objects.equals(id, dayPlan.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return id != null ? Objects.hash(id) : super.hashCode();
   }
 }

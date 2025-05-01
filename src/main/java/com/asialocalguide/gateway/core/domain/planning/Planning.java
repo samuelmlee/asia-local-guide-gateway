@@ -1,25 +1,24 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import com.asialocalguide.gateway.core.domain.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @NoArgsConstructor
-public class Planning {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+@EntityListeners(AuditingEntityListener.class)
+public class Planning extends BaseEntity {
 
   @Getter @NotBlank private String name;
 
@@ -32,6 +31,8 @@ public class Planning {
   @OneToMany(mappedBy = "planning", cascade = CascadeType.ALL, orphanRemoval = true)
   @NotEmpty
   private Set<DayPlan> dayPlans = new HashSet<>();
+
+  @CreatedDate @Getter private Instant createdDate;
 
   public Planning(User user, String name) {
     if (user == null || name == null) {
@@ -59,17 +60,5 @@ public class Planning {
     }
     dayPlan.setPlanning(null);
     dayPlans.remove(dayPlan);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    Planning planning = (Planning) o;
-    return Objects.equals(id, planning.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return id != null ? Objects.hash(id) : super.hashCode();
   }
 }

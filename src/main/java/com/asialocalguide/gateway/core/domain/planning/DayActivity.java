@@ -1,10 +1,10 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import com.asialocalguide.gateway.core.validation.ValidTimeOrder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,11 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @ValidTimeOrder
-public class DayActivity {
-
-  @Id
-  @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-  private Long id;
+public class DayActivity extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "day_plan_id")
@@ -46,17 +42,5 @@ public class DayActivity {
       return;
     }
     this.dayPlan = dayPlan;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    DayActivity that = (DayActivity) o;
-    return Objects.equals(id, that.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return id != null ? Objects.hash(id) : super.hashCode();
   }
 }
