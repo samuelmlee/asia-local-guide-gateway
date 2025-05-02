@@ -1,9 +1,10 @@
 -- asia_local_guide_gateway.planning
 
 CREATE TABLE `planning` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` binary(16) NOT NULL,
   `name` varchar(255) NOT NULL,
   `user_id` bigint NOT NULL,
+  `created_date` timestamp(6) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_planning_user` (`user_id`),
   CONSTRAINT `FK_Planning_User` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
@@ -12,8 +13,8 @@ CREATE TABLE `planning` (
 -- asia_local_guide_gateway.day_plan
 
 CREATE TABLE `day_plan` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `planning_id` bigint NOT NULL,
+  `id` binary(16) NOT NULL,
+  `planning_id` binary(16) NOT NULL,
   `date` date NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_day_plan_planning` (`planning_id`),
@@ -24,14 +25,14 @@ CREATE TABLE `day_plan` (
 -- asia_local_guide_gateway.activity
 
 CREATE TABLE `activity` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` binary(16) NOT NULL,
   `provider_activity_id` varchar(255) NOT NULL,
   `booking_provider_id` bigint NOT NULL,
   `average_rating` double DEFAULT NULL CHECK (`average_rating` >= 0.0 AND `average_rating` <= 5.0),
   `review_count` int DEFAULT NULL CHECK (`review_count` >= 0),
   `duration_minutes` int NOT NULL CHECK (`duration_minutes` >= 1),
   `booking_url` varchar(255) NOT NULL,
-  `last_updated` datetime(6) NOT NULL,
+  `last_updated` timestamp(6) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uk_activity_business_key` (`provider_activity_id`, `booking_provider_id`),
   INDEX `idx_activity_provider` (`booking_provider_id`),
@@ -41,7 +42,7 @@ CREATE TABLE `activity` (
 -- asia_local_guide_gateway.activity_translation
 
 CREATE TABLE `activity_translation` (
-  `activity_id` bigint NOT NULL,
+  `activity_id` binary(16) NOT NULL,
   `language_code` varchar(10) NOT NULL,
   `title` varchar(255) NOT NULL,
   `description` text,
@@ -54,8 +55,8 @@ CREATE TABLE `activity_translation` (
 -- asia_local_guide_gateway.activity_image
 
 CREATE TABLE `activity_image` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `activity_id` bigint NOT NULL,
+  `id` binary(16) NOT NULL,
+  `activity_id` binary(16) NOT NULL,
   `activity_image_height` int NOT NULL CHECK (`activity_image_height` > 0),
   `activity_image_width` int NOT NULL CHECK (`activity_image_width` > 0),
   `activity_image_url` varchar(255) NOT NULL,
@@ -68,11 +69,11 @@ CREATE TABLE `activity_image` (
 -- asia_local_guide_gateway.day_activity
 
 CREATE TABLE `day_activity` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `day_plan_id` bigint NOT NULL,
-  `start_time` datetime(6) NOT NULL,
-  `end_time` datetime(6) NOT NULL,
-  `activity_id` bigint NOT NULL,
+  `id` binary(16) NOT NULL,
+  `day_plan_id` binary(16) NOT NULL,
+  `start_time` datetime NOT NULL,
+  `end_time` datetime NOT NULL,
+  `activity_id` binary(16) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `idx_day_activity_day_plan` (`day_plan_id`),
   INDEX `idx_day_activity_activity` (`activity_id`),

@@ -1,3 +1,5 @@
 package com.asialocalguide.gateway.core.dto.planning;
 
-public record PlanningResponseDTO(Long planningId) {}
+import java.util.UUID;
+
+public record PlanningResponseDTO(UUID planningId) {}

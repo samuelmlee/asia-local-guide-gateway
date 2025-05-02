@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -14,13 +15,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class Activity {
+public class Activity extends BaseEntity {
   // Price and availability of an activity are fetched from the provider on demand
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
 
   @Column(name = "provider_activity_id", nullable = false)
   @Getter
@@ -99,17 +95,5 @@ public class Activity {
     }
     image.setActivity(null);
     coverImages.remove(image);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    Activity activity = (Activity) o;
-    return Objects.equals(id, activity.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(id);
   }
 }

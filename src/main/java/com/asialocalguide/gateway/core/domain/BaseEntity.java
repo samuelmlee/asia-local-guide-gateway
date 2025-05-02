@@ -1,29 +1,19 @@
 package com.asialocalguide.gateway.core.domain;
 
+import com.asialocalguide.gateway.core.util.UuidUtils;
 import jakarta.persistence.*;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
+@Getter
 @MappedSuperclass
-@NoArgsConstructor
 public abstract class BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+  @Id @Getter private UUID id;
 
-  @Column(nullable = false, updatable = false, unique = true)
-  @Getter
-  private UUID uuid;
-
-  @PrePersist
-  protected void onCreate() {
-    if (uuid == null) {
-      uuid = UUID.randomUUID();
-    }
+  protected BaseEntity() {
+    this.id = UuidUtils.randomV7();
   }
 
   @Override
@@ -31,11 +21,11 @@ public abstract class BaseEntity {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     BaseEntity that = (BaseEntity) o;
-    return Objects.equals(uuid, that.uuid);
+    return Objects.equals(getId(), that.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(uuid);
+    return Objects.hash(getId());
   }
 }

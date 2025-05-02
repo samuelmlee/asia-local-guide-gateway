@@ -7,6 +7,7 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class ActivityTranslationId implements Serializable {
 
   @Column(name = "activity_id")
-  private Long activityId;
+  private UUID activityId;
 
   @Column(name = "language_code")
   @Convert(converter = LanguageCodeConverter.class)
