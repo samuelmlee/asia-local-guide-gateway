@@ -157,36 +157,33 @@ public class PlanningService {
   public Planning savePlanning(
       PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName, String userProviderId) {
 
-    User user =
-        userService
-            .getUserByProviderNameAndProviderUserId(authProviderName, userProviderId)
-            .orElseThrow(
-                () ->
-                    new UserNotFoundException(
-                        String.format(
-                            "User not found for Planning Creation request: %s, AuthProviderName: %s, userProviderId:"
-                                + " %s",
-                            planningRequest, authProviderName, userProviderId)));
+    validateSavePlanningInput(planningRequest, authProviderName, userProviderId);
 
-    List<PlanningCreateRequestDTO.CreateDayActivityDTO> activities =
-        planningRequest.dayPlans().stream().flatMap(dayPlan -> dayPlan.activities().stream()).toList();
+    Map<BookingProviderName, Set<String>> providerNameToIds = buildProviderNameToActivityIds(planningRequest);
 
-    Map<BookingProviderName, Set<String>> providerNameToIds =
-        activities.stream()
-            .collect(
-                Collectors.groupingBy(
-                    PlanningCreateRequestDTO.CreateDayActivityDTO::bookingProviderName,
-                    Collectors.mapping(
-                        PlanningCreateRequestDTO.CreateDayActivityDTO::productCode, Collectors.toSet())));
+    User user = getUserForPlanning(planningRequest, authProviderName, userProviderId);
 
-    try {
-      activityService.persistNewActivitiesByProvider(providerNameToIds);
-    } catch (Exception ex) {
-      throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
-    }
+    persistNewActivitiesForPlanning(providerNameToIds);
 
     Map<BookingProviderName, Map<String, Activity>> activityLookupMap = buildActivityLookupMap(providerNameToIds);
 
+    if (activityLookupMap.isEmpty()) {
+      throw new PlanningCreationException("Error fetching any activities for the provided planning request.");
+    }
+
+    Planning planning = buildPlanningEntity(planningRequest, user, activityLookupMap);
+
+    if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
+      throw new PlanningCreationException("No valid day plans found for the provided request.");
+    }
+
+    return persistPlanning(planning);
+  }
+
+  private Planning buildPlanningEntity(
+      PlanningCreateRequestDTO planningRequest,
+      User user,
+      Map<BookingProviderName, Map<String, Activity>> activityLookupMap) {
     Planning planning = new Planning(user, planningRequest.name());
 
     planningRequest
@@ -201,25 +198,63 @@ public class PlanningService {
                 return;
               }
 
-              DayPlan dayPlan = new DayPlan(dayPlanDTO.date());
+              Optional<DayPlan> dayPlanOpt = buildDayPlanEntity(dayPlanDTO, dayActivitiesDTO, activityLookupMap);
 
-              Set<DayActivity> dayActivities = buildDayActivities(dayActivitiesDTO, activityLookupMap);
-
-              if (dayActivities.isEmpty()) {
-                log.info("No valid activities found for DayPlan: {}", dayPlanDTO);
-                return;
-              }
-
-              dayActivities.forEach(dayPlan::addDayActivity);
-
-              planning.addDayPlan(dayPlan);
+              dayPlanOpt.ifPresent(planning::addDayPlan);
             });
+    return planning;
+  }
 
-    if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
-      throw new PlanningCreationException("No valid day plans found for the provided request.");
+  private void validateSavePlanningInput(
+      PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName, String userProviderId) {
+
+    if (planningRequest == null || authProviderName == null || userProviderId == null) {
+      throw new PlanningCreationException(
+          "PlanningCreateRequestDTO or AuthProviderName or userProviderId cannot be null");
     }
 
-    return planningRepository.save(planning);
+    if (planningRequest.name() == null || planningRequest.name().isBlank()) {
+      throw new PlanningCreationException("Planning name cannot be null or empty");
+    }
+
+    if (planningRequest.dayPlans() == null || planningRequest.dayPlans().isEmpty()) {
+      throw new PlanningCreationException("Day plans cannot be null or empty");
+    }
+
+    for (PlanningCreateRequestDTO.CreateDayPlanDTO dayPlan : planningRequest.dayPlans()) {
+      if (dayPlan.activities() == null || dayPlan.activities().isEmpty()) {
+        throw new PlanningCreationException("Day plan activities cannot be null or empty");
+      }
+    }
+  }
+
+  private User getUserForPlanning(
+      PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName, String userProviderId) {
+    return userService
+        .getUserByProviderNameAndProviderUserId(authProviderName, userProviderId)
+        .orElseThrow(
+            () ->
+                new UserNotFoundException(
+                    String.format(
+                        "User not found for Planning Creation request: %s, AuthProviderName: %s, userProviderId:"
+                            + " %s",
+                        planningRequest, authProviderName, userProviderId)));
+  }
+
+  private static Map<BookingProviderName, Set<String>> buildProviderNameToActivityIds(
+      PlanningCreateRequestDTO planningRequest) {
+    List<PlanningCreateRequestDTO.CreateDayActivityDTO> activities =
+        planningRequest.dayPlans().stream().flatMap(dayPlan -> dayPlan.activities().stream()).toList();
+
+    if (activities.isEmpty()) {
+      throw new PlanningCreationException("No activities found in the planning request");
+    }
+
+    return activities.stream()
+        .collect(
+            Collectors.groupingBy(
+                PlanningCreateRequestDTO.CreateDayActivityDTO::bookingProviderName,
+                Collectors.mapping(PlanningCreateRequestDTO.CreateDayActivityDTO::productCode, Collectors.toSet())));
   }
 
   private Map<BookingProviderName, Map<String, Activity>> buildActivityLookupMap(
@@ -228,16 +263,47 @@ public class PlanningService {
 
     providerNameToIds.forEach(
         (providerName, activityIds) -> {
-          Set<Activity> activities = activityService.findActivitiesByProviderNameAndIds(providerName, activityIds);
-          Map<String, Activity> providerActivities =
-              activities.stream().collect(Collectors.toMap(Activity::getProviderActivityId, Function.identity()));
-          result.put(providerName, providerActivities);
+          try {
+            Set<Activity> activities = activityService.findActivitiesByProviderNameAndIds(providerName, activityIds);
+            Map<String, Activity> providerActivities =
+                activities.stream().collect(Collectors.toMap(Activity::getProviderActivityId, Function.identity()));
+            result.put(providerName, providerActivities);
+
+          } catch (Exception ex) {
+            log.error(
+                "Error during fetching activities for provider: {}, activityIds: {}", providerName, activityIds, ex);
+          }
         });
 
     return result;
   }
 
-  private Set<DayActivity> buildDayActivities(
+  private void persistNewActivitiesForPlanning(Map<BookingProviderName, Set<String>> providerNameToIds) {
+    try {
+      activityService.persistNewActivitiesByProvider(providerNameToIds);
+    } catch (Exception ex) {
+      throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
+    }
+  }
+
+  private Optional<DayPlan> buildDayPlanEntity(
+      PlanningCreateRequestDTO.CreateDayPlanDTO dayPlanDTO,
+      List<PlanningCreateRequestDTO.CreateDayActivityDTO> dayActivitiesDTO,
+      Map<BookingProviderName, Map<String, Activity>> activityLookupMap) {
+    DayPlan dayPlan = new DayPlan(dayPlanDTO.date());
+
+    Set<DayActivity> dayActivities = buildDayActivityEntities(dayActivitiesDTO, activityLookupMap);
+
+    if (dayActivities.isEmpty()) {
+      log.info("No valid activities found for DayPlan: {}", dayPlanDTO);
+      return Optional.empty();
+    }
+
+    dayActivities.forEach(dayPlan::addDayActivity);
+    return Optional.of(dayPlan);
+  }
+
+  private Set<DayActivity> buildDayActivityEntities(
       List<PlanningCreateRequestDTO.CreateDayActivityDTO> dayActivitiesDTO,
       Map<BookingProviderName, Map<String, Activity>> activityLookupMap) {
 
@@ -250,39 +316,66 @@ public class PlanningService {
 
     for (PlanningCreateRequestDTO.CreateDayActivityDTO activityDTO : dayActivitiesDTO) {
 
-      if (activityDTO == null) {
-        log.warn("Skipping null activity DTO");
+      if (!validateActivity(activityDTO)) {
+        log.warn("Skipping invalid activity data: {}", activityDTO);
         continue;
       }
 
       BookingProviderName providerName = activityDTO.bookingProviderName();
       String activityId = activityDTO.productCode();
 
-      if (providerName == null || activityId == null || activityId.isBlank()) {
-        log.warn("Skipping activity with invalid provider or ID: provider={}, id={}", providerName, activityId);
-        continue;
-      }
-
       Map<String, Activity> providerActivities = activityLookupMap.getOrDefault(providerName, Map.of());
       Activity activity = providerActivities.get(activityId);
 
       if (activity == null) {
-        log.warn("Activity not found for provider: {} and ID: {}", providerName, activityId);
+        log.warn("Activity not found for provider: {}, activityId: {}", providerName, activityId);
         continue;
       }
 
       LocalDateTime startTime = activityDTO.startTime();
       LocalDateTime endTime = activityDTO.endTime();
 
-      if (startTime == null || endTime == null) {
-        log.warn("Invalid time range for activity: provider={}, id={}", providerName, activityId);
-        continue;
-      }
-
       DayActivity dayActivity = new DayActivity(activity, startTime, endTime);
       dayActivities.add(dayActivity);
     }
 
     return dayActivities;
+  }
+
+  private boolean validateActivity(PlanningCreateRequestDTO.CreateDayActivityDTO activity) {
+    if (activity == null) {
+      log.warn("Activity is null");
+      return false;
+    }
+
+    if (activity.bookingProviderName() == null) {
+      log.warn("Activity booking provider name is null");
+      return false;
+    }
+
+    if (activity.productCode() == null || activity.productCode().isBlank()) {
+      log.warn("Activity product code is null or blank");
+      return false;
+    }
+
+    if (activity.startTime() == null || activity.endTime() == null) {
+      log.warn("Activity start or end time is null for {}", activity.productCode());
+      return false;
+    }
+
+    if (activity.startTime().isAfter(activity.endTime())) {
+      log.warn("Activity start time is after end time for {}", activity.productCode());
+      return false;
+    }
+
+    return true;
+  }
+
+  private Planning persistPlanning(Planning planning) {
+    try {
+      return planningRepository.save(planning);
+    } catch (Exception ex) {
+      throw new PlanningCreationException("Error during saving planning", ex);
+    }
   }
 }

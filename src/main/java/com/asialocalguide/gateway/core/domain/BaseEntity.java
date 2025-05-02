@@ -10,7 +10,7 @@ import lombok.Getter;
 @MappedSuperclass
 public abstract class BaseEntity {
 
-  @Id @Getter private UUID id;
+  @Id private UUID id;
 
   protected BaseEntity() {
     this.id = UuidUtils.randomV7();
@@ -19,9 +19,9 @@ public abstract class BaseEntity {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    BaseEntity that = (BaseEntity) o;
-    return Objects.equals(getId(), that.getId());
+    if (o == null) return false;
+    if (!(o instanceof BaseEntity baseEntity)) return false;
+    return Objects.equals(getId(), baseEntity.getId());
   }
 
   @Override
