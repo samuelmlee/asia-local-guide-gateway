@@ -69,21 +69,26 @@ public class ViatorActivityService implements ActivityProvider {
     }
     log.info("Fetching Viator activities for languages: {}", Arrays.toString(LanguageCode.values()));
 
-    Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities =
-        fetchLanguageToActivities(activityIds);
+    try {
 
-    // Use English language activities as base for creating CommonPersistableActivity, other
-    // languages used for translations
-    Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
+      Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities =
+          fetchLanguageToActivities(activityIds);
 
-    if (idToActivitiesEnDTOs == null || idToActivitiesEnDTOs.isEmpty()) {
-      throw new ViatorActivityServiceException("Failed to process any activities for English language");
+      // Use English language activities as base for creating CommonPersistableActivity, other language for translations
+      Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
+
+      if (idToActivitiesEnDTOs == null || idToActivitiesEnDTOs.isEmpty()) {
+        throw new ViatorActivityServiceException("Failed to process any activities for English language");
+      }
+
+      return idToActivitiesEnDTOs.values().stream()
+          .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
+          .flatMap(Optional::stream)
+          .toList();
+    } catch (Exception ex) {
+      throw new ViatorActivityServiceException(
+          String.format("Failed to fetch Viator activities for activityIds : %s", activityIds), ex);
     }
-
-    return idToActivitiesEnDTOs.values().stream()
-        .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
-        .filter(Objects::nonNull)
-        .toList();
   }
 
   private void validatePlanningRequest(ProviderPlanningRequest request) {
@@ -155,7 +160,7 @@ public class ViatorActivityService implements ActivityProvider {
     }
 
     List<ViatorActivityAvailabilityDTO> result = new CopyOnWriteArrayList<>();
-    List<Future<Void>> futures = new ArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
 
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       // Submit a task for each activity
@@ -175,7 +180,6 @@ public class ViatorActivityService implements ActivityProvider {
                   } catch (Exception ex) {
                     log.warn("Error while fetching Activity Availability for product code: {}", activity.productCode());
                   }
-                  return null;
                 }));
       }
 
@@ -213,17 +217,23 @@ public class ViatorActivityService implements ActivityProvider {
     Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> result =
         new ConcurrentHashMap<>(LanguageCode.values().length);
 
-    // Initialize maps for each language
+    // Initialize concurrent maps for each language
     for (LanguageCode language : LanguageCode.values()) {
       result.put(language, new ConcurrentHashMap<>());
     }
 
-    List<Future<Void>> futures = new ArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
 
     try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
       // Submit tasks for each language and activity ID
       for (LanguageCode language : LanguageCode.values()) {
         for (String id : activityIds) {
+
+          if (id == null || id.isBlank()) {
+            log.warn("Skipping null or blank activity ID in fetchLanguageToActivities.");
+            continue;
+          }
+
           futures.add(
               executor.submit(
                   () -> {
@@ -240,7 +250,6 @@ public class ViatorActivityService implements ActivityProvider {
                           language,
                           ex.getMessage());
                     }
-                    return null;
                   }));
         }
       }
@@ -251,23 +260,35 @@ public class ViatorActivityService implements ActivityProvider {
     }
   }
 
-  private CommonPersistableActivity createCommonPersistableActivity(
+  private Optional<CommonPersistableActivity> createCommonPersistableActivity(
       ViatorActivityDetailDTO dto, Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities) {
 
-    if (dto == null) {
-      log.warn("Skipping null ViatorActivityDetailDTO in createCommonPersistableActivity.");
-      return null;
+    if (dto == null || languageToActivities == null || languageToActivities.isEmpty()) {
+      log.warn(
+          "Invalid ViatorActivityDetailDTO or Map<String, ViatorActivityDetailDTO>> in"
+              + " createCommonPersistableActivity.");
+      return Optional.empty();
     }
 
-    return new CommonPersistableActivity(
-        resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::title),
-        resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::description),
-        mapActivityDetailImages(dto),
-        mapActivityDetailReview(dto),
-        dto.getDurationMinutes(),
-        dto.productUrl(),
-        BookingProviderName.VIATOR,
-        dto.productCode());
+    try {
+
+      CommonPersistableActivity activity =
+          new CommonPersistableActivity(
+              resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::title),
+              resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::description),
+              mapActivityDetailImages(dto),
+              mapActivityDetailReview(dto),
+              dto.getDurationMinutes(),
+              dto.productUrl(),
+              BookingProviderName.VIATOR,
+              dto.productCode());
+
+      return Optional.of(activity);
+
+    } catch (Exception e) {
+      log.error("Failed to create CommonPersistableActivity for dto: {}, ", dto, e);
+      return Optional.empty();
+    }
   }
 
   private List<CommonPersistableActivity.Image> mapActivityDetailImages(ViatorActivityDetailDTO dto) {
@@ -327,10 +348,16 @@ public class ViatorActivityService implements ActivityProvider {
         .toList();
   }
 
-  private void waitForTaskCompletion(List<Future<Void>> futures) {
-    for (Future<Void> future : futures) {
+  private void waitForTaskCompletion(List<Future<?>> futures) {
+    for (Future<?> future : futures) {
+
+      if (future == null) {
+        log.warn("Skipping null future in waitForTaskCompletion.");
+        continue;
+      }
+
       try {
-        future.get();
+        future.get(15, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         log.warn("Task was interrupted: {}", e.getMessage());

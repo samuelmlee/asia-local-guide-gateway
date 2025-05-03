@@ -164,8 +164,7 @@ public class ActivityService {
 
     return persistableActivities.stream()
         .map(persistable -> toActivity(persistable, bookingProvider))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(Optional::stream)
         .toList();
   }
 
