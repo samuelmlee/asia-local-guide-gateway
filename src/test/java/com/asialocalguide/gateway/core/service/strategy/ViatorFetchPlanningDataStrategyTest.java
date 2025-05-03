@@ -127,7 +127,7 @@ class ViatorFetchPlanningDataStrategyTest {
     setupViatorProvider();
     Destination destination = mock(Destination.class);
     DestinationProviderMapping mapping =
-        new DestinationProviderMapping(destination, new BookingProvider(), "VIATOR_DEST_123");
+        new DestinationProviderMapping(destination, new BookingProvider(BookingProviderName.VIATOR), "VIATOR_DEST_123");
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
@@ -139,9 +139,7 @@ class ViatorFetchPlanningDataStrategyTest {
   }
 
   private BookingProvider setupViatorProvider() {
-    BookingProvider viator = new BookingProvider();
-    viator.setId(1L);
-    viator.setName(BookingProviderName.VIATOR);
+    BookingProvider viator = new BookingProvider(BookingProviderName.VIATOR);
     when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
     return viator;
   }

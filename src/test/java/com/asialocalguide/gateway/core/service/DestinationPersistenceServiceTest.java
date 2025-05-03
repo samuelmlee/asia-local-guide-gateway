@@ -36,12 +36,10 @@ class DestinationPersistenceServiceTest {
 
   @BeforeEach
   void setUp() {
-    provider = new BookingProvider();
+    provider = new BookingProvider(BookingProviderName.VIATOR);
     provider.setId(providerId);
-    provider.setName(providerName);
   }
 
-  // Tests for persistExistingDestinations
   @Test
   void persistExistingDestinations_WhenProviderNotFound_ThrowsException() {
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.empty());

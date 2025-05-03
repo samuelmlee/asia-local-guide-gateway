@@ -38,14 +38,25 @@ public class ActivityService {
   }
 
   public Set<String> findExistingIdsByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
+    if (providerName == null || activityIds == null || activityIds.isEmpty()) {
+      throw new IllegalArgumentException("Provider name or activity IDs cannot be null or empty");
+    }
     return activityRepository.findExistingIdsByProviderNameAndIds(providerName, activityIds);
   }
 
   public Set<Activity> findActivitiesByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
+    if (providerName == null || activityIds == null || activityIds.isEmpty()) {
+      throw new IllegalArgumentException("Provider name or activity IDs cannot be null or empty");
+    }
+
     return activityRepository.findActivitiesByProviderNameAndIds(providerName, activityIds);
   }
 
   public List<Activity> saveAll(List<Activity> activities) {
+    if (activities == null || activities.isEmpty()) {
+      throw new IllegalArgumentException("Activities cannot be null or empty");
+    }
+
     return activityRepository.saveAll(activities);
   }
 

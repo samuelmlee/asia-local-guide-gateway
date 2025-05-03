@@ -56,7 +56,7 @@ class ViatorActivityServiceTest {
   }
 
   @Test
-  void fetchProviderActivityData_shouldHandleEmptyPlanningList() {
+  void fetchProviderPlanningData_shouldHandleEmptyPlanningList() {
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(Collections.emptyList());
 
     ProviderPlanningData result = service.fetchProviderPlanningData(validRequest);
@@ -99,7 +99,7 @@ class ViatorActivityServiceTest {
   }
 
   @Test
-  void fetchProviderActivityData_shouldHandleAvailabilityFetchErrors() {
+  void fetchProviderPlanningData_shouldHandleAvailabilityFetchErrors() {
     ViatorActivityDTO activity = createTestActivity(60);
 
     when(viatorClient.getActivitiesByRequestAndLanguage(anyString(), any())).thenReturn(List.of(activity));
@@ -277,6 +277,112 @@ class ViatorActivityServiceTest {
     assertEquals(2, activity2.title().size()); // EN and FR
     assertTrue(hasTranslation(activity2.title(), LanguageCode.EN, "Activity 2"));
     assertTrue(hasTranslation(activity2.title(), LanguageCode.FR, "Activité 2"));
+  }
+
+  @Test
+  void fetchProviderActivities_shouldRejectNullActivityIds() {
+    // When/Then
+    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivities(null));
+  }
+
+  @Test
+  void fetchProviderActivities_shouldRejectEmptyActivityIds() {
+    // When/Then
+    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivities(Set.of()));
+  }
+
+  @Test
+  void fetchProviderActivities_shouldThrowExceptionWhenEnglishActivitiesMissing() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Only French data available
+    ViatorActivityDetailDTO frDto = createDetailDTO("product1", "fr", "Activité 1", "Description");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.empty());
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.of(frDto));
+
+    // When/Then
+    assertThrows(Exception.class, () -> service.fetchProviderActivities(activityIds));
+  }
+
+  @Test
+  void fetchProviderActivities_shouldSkipNullActivityIds() {
+    // Given - mix of valid and null IDs
+    Set<String> activityIds = new HashSet<>();
+    activityIds.add("product1");
+    activityIds.add(null);
+
+    ViatorActivityDetailDTO enDto = createDetailDTO("product1", "en", "Activity 1", "Description");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(enDto));
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+    assertEquals("product1", result.get(0).providerId());
+  }
+
+  @Test
+  void fetchProviderActivities_shouldHandleClientExceptions() {
+    // Given
+    Set<String> activityIds = Set.of("product1", "product2");
+
+    // First product works
+    ViatorActivityDetailDTO enDto = createDetailDTO("product1", "en", "Activity 1", "Description");
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(enDto));
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.empty());
+
+    // Second product throws exception
+    when(viatorClient.getActivityByIdAndLanguage(anyString(), eq("product2")))
+        .thenThrow(new RuntimeException("API error"));
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then - should still return the successful product
+    assertEquals(1, result.size());
+    assertEquals("product1", result.get(0).providerId());
+  }
+
+  @Test
+  void fetchProviderActivities_shouldCreateProperTranslations() {
+    // Given
+    Set<String> activityIds = Set.of("product1");
+
+    // Create data for all supported languages
+    ViatorActivityDetailDTO enDto = createDetailDTO("product1", "en", "Activity", "English description");
+    ViatorActivityDetailDTO frDto = createDetailDTO("product1", "fr", "Activité", "Description française");
+
+    when(viatorClient.getActivityByIdAndLanguage("en", "product1")).thenReturn(Optional.of(enDto));
+    when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.of(frDto));
+
+    // When
+    List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
+
+    // Then
+    assertEquals(1, result.size());
+
+    // Verify translations are properly mapped
+    CommonPersistableActivity activity = result.get(0);
+
+    // Title translations
+    assertEquals(2, activity.title().size());
+    assertNotNull(findTranslation(activity.title(), LanguageCode.EN));
+    assertNotNull(findTranslation(activity.title(), LanguageCode.FR));
+    assertEquals("Activity", findTranslation(activity.title(), LanguageCode.EN).value());
+    assertEquals("Activité", findTranslation(activity.title(), LanguageCode.FR).value());
+
+    // Description translations
+    assertEquals(2, activity.description().size());
+    assertEquals("English description", findTranslation(activity.description(), LanguageCode.EN).value());
+    assertEquals("Description française", findTranslation(activity.description(), LanguageCode.FR).value());
+  }
+
+  // Helper method to find a translation for a specific language
+  private CommonPersistableActivity.Translation findTranslation(
+      List<CommonPersistableActivity.Translation> translations, LanguageCode language) {
+    return translations.stream().filter(t -> t.languageCode() == language).findFirst().orElse(null);
   }
 
   @Test
