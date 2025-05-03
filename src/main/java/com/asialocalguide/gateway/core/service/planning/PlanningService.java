@@ -180,31 +180,6 @@ public class PlanningService {
     return persistPlanning(planning);
   }
 
-  private Planning buildPlanningEntity(
-      PlanningCreateRequestDTO planningRequest,
-      User user,
-      Map<BookingProviderName, Map<String, Activity>> activityLookupMap) {
-    Planning planning = new Planning(user, planningRequest.name());
-
-    planningRequest
-        .dayPlans()
-        .forEach(
-            dayPlanDTO -> {
-              List<PlanningCreateRequestDTO.CreateDayActivityDTO> dayActivitiesDTO = dayPlanDTO.activities();
-
-              // Not persisting empty day plans
-              if (dayActivitiesDTO == null || dayActivitiesDTO.isEmpty()) {
-                log.info("Skipping empty day plan for dayPlan: {}", dayPlanDTO);
-                return;
-              }
-
-              Optional<DayPlan> dayPlanOpt = buildDayPlanEntity(dayPlanDTO, dayActivitiesDTO, activityLookupMap);
-
-              dayPlanOpt.ifPresent(planning::addDayPlan);
-            });
-    return planning;
-  }
-
   private void validateSavePlanningInput(
       PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName, String userProviderId) {
 
@@ -278,9 +253,34 @@ public class PlanningService {
     return result;
   }
 
+  private Planning buildPlanningEntity(
+      PlanningCreateRequestDTO planningRequest,
+      User user,
+      Map<BookingProviderName, Map<String, Activity>> activityLookupMap) {
+    Planning planning = new Planning(user, planningRequest.name());
+
+    planningRequest
+        .dayPlans()
+        .forEach(
+            dayPlanDTO -> {
+              List<PlanningCreateRequestDTO.CreateDayActivityDTO> dayActivitiesDTO = dayPlanDTO.activities();
+
+              // Not persisting empty day plans
+              if (dayActivitiesDTO == null || dayActivitiesDTO.isEmpty()) {
+                log.info("Skipping empty day plan for dayPlan: {}", dayPlanDTO);
+                return;
+              }
+
+              Optional<DayPlan> dayPlanOpt = buildDayPlanEntity(dayPlanDTO, dayActivitiesDTO, activityLookupMap);
+
+              dayPlanOpt.ifPresent(planning::addDayPlan);
+            });
+    return planning;
+  }
+
   private void persistNewActivitiesForPlanning(Map<BookingProviderName, Set<String>> providerNameToIds) {
     try {
-      activityService.persistNewActivitiesByProvider(providerNameToIds);
+      activityService.cacheNewActivitiesByProvider(providerNameToIds);
     } catch (Exception ex) {
       throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
     }

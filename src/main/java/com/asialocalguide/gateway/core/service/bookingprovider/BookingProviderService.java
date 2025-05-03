@@ -3,6 +3,7 @@ package com.asialocalguide.gateway.core.service.bookingprovider;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 
@@ -17,5 +18,9 @@ public class BookingProviderService {
 
   public Optional<BookingProvider> getBookingProviderByName(BookingProviderName providerName) {
     return bookingProviderRepository.findByName(providerName);
+  }
+
+  public List<BookingProvider> getAllBookingProviders() {
+    return bookingProviderRepository.findAll();
   }
 }
