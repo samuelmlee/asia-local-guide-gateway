@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ViatorFetchPlanningDataStrategy implements FetchPlanningDataStrategy {
 
-  private static final BookingProviderName providerName = BookingProviderName.VIATOR;
+  private static final BookingProviderName PROVIDER_NAME = BookingProviderName.VIATOR;
 
   private final BookingProviderService bookingProviderService;
 
@@ -35,14 +35,14 @@ public class ViatorFetchPlanningDataStrategy implements FetchPlanningDataStrateg
 
   @Override
   public BookingProviderName getProviderName() {
-    return providerName;
+    return PROVIDER_NAME;
   }
 
   @Override
   public ProviderPlanningData fetchProviderPlanningData(PlanningRequestDTO request, LanguageCode languageCode) {
     BookingProvider viatorProvider =
         bookingProviderService
-            .getBookingProviderByName(BookingProviderName.VIATOR)
+            .getBookingProviderByName(PROVIDER_NAME)
             .orElseThrow(() -> new IllegalStateException("Viator BookingProvider not found"));
 
     Destination destination =
