@@ -10,12 +10,12 @@ import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.Destination;
 import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.ActivityData;
-import com.asialocalguide.gateway.core.domain.planning.ProviderActivityData;
+import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
+import com.asialocalguide.gateway.core.service.destination.DestinationService;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -29,15 +29,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ViatorFetchActivitiesStrategyTest {
+class ViatorFetchPlanningDataStrategyTest {
 
-  @Mock private BookingProviderRepository bookingProviderRepository;
+  @Mock private BookingProviderService bookingProviderService;
 
-  @Mock private DestinationRepository destinationRepository;
+  @Mock private DestinationService destinationService;
 
   @Mock private ViatorActivityService viatorActivityService;
 
-  @InjectMocks private ViatorFetchActivitiesStrategy strategy;
+  @InjectMocks private ViatorFetchPlanningDataStrategy strategy;
 
   private PlanningRequestDTO validRequest;
   private final LocalDate today = LocalDate.now();
@@ -55,43 +55,43 @@ class ViatorFetchActivitiesStrategyTest {
 
   @Test
   void fetchProviderActivity_shouldThrowWhenViatorProviderNotFound() {
-    when(bookingProviderRepository.findByName(BookingProviderName.VIATOR)).thenReturn(Optional.empty());
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
+    assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Viator BookingProvider not found");
   }
 
   @Test
-  void fetchProviderActivity_shouldThrowWhenDestinationNotFound() {
+  void fetchProviderPlanningData_shouldThrowWhenDestinationNotFound() {
     setupViatorProvider();
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.empty());
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
+    assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  void fetchProviderActivity_shouldThrowWhenNoViatorMapping() {
+  void fetchProviderPlanningData_shouldThrowWhenNoViatorMapping() {
     BookingProvider viator = setupViatorProvider();
     Destination destination = mock(Destination.class);
 
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.of(destination));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(viator.getId())).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
+    assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Destination BookingProvider Mapping not found");
   }
 
   @Test
-  void fetchProviderActivity_shouldPassCorrectParametersToService() {
+  void fetchProviderPlanningData_shouldPassCorrectParametersToService() {
     // Setup
     BookingProvider viator = setupViatorProvider();
     Destination destination = mock(Destination.class);
     DestinationProviderMapping mapping = new DestinationProviderMapping(destination, viator, "VIATOR_DEST_123");
 
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.of(destination));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(viator.getId())).thenReturn(Optional.of(mapping));
 
     // Correct initialization with ActivityData
@@ -100,19 +100,19 @@ class ViatorFetchActivitiesStrategyTest {
     int[] ratings = {5};
     int[] durations = {1};
 
-    ActivityData activityData = new ActivityData(availability, startTimes, ratings, durations);
-    ProviderActivityData expectedData = new ProviderActivityData(null, activityData, validRequest.startDate());
+    ActivityPlanningData activityPlanningData = new ActivityPlanningData(availability, startTimes, ratings, durations);
+    ProviderPlanningData expectedData = new ProviderPlanningData(null, activityPlanningData, validRequest.startDate());
 
-    when(viatorActivityService.fetchProviderActivityData(any())).thenReturn(expectedData);
+    when(viatorActivityService.fetchProviderPlanningData(any())).thenReturn(expectedData);
 
     // Execute
-    ProviderActivityData result = strategy.fetchProviderActivity(validRequest, LanguageCode.FR);
+    ProviderPlanningData result = strategy.fetchProviderPlanningData(validRequest, LanguageCode.FR);
 
     // Verify
     assertThat(result).isEqualTo(expectedData);
 
     ArgumentCaptor<ProviderPlanningRequest> captor = ArgumentCaptor.forClass(ProviderPlanningRequest.class);
-    verify(viatorActivityService).fetchProviderActivityData(captor.capture());
+    verify(viatorActivityService).fetchProviderPlanningData(captor.capture());
 
     ProviderPlanningRequest request = captor.getValue();
     assertThat(request.providerDestinationId()).isEqualTo("VIATOR_DEST_123");
@@ -123,26 +123,24 @@ class ViatorFetchActivitiesStrategyTest {
   }
 
   @Test
-  void fetchProviderActivity_shouldHandleServiceExceptions() {
+  void fetchProviderPlanningData_shouldHandleServiceExceptions() {
     setupViatorProvider();
     Destination destination = mock(Destination.class);
     DestinationProviderMapping mapping =
-        new DestinationProviderMapping(destination, new BookingProvider(), "VIATOR_DEST_123");
+        new DestinationProviderMapping(destination, new BookingProvider(BookingProviderName.VIATOR), "VIATOR_DEST_123");
 
-    when(destinationRepository.findById(validRequest.destinationId())).thenReturn(Optional.of(destination));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
     when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
-    when(viatorActivityService.fetchProviderActivityData(any())).thenThrow(new RuntimeException("API Failure"));
+    when(viatorActivityService.fetchProviderPlanningData(any())).thenThrow(new RuntimeException("API Failure"));
 
-    assertThatThrownBy(() -> strategy.fetchProviderActivity(validRequest, LanguageCode.EN))
+    assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
         .isInstanceOf(RuntimeException.class)
         .hasMessageContaining("API Failure");
   }
 
   private BookingProvider setupViatorProvider() {
-    BookingProvider viator = new BookingProvider();
-    viator.setId(1L);
-    viator.setName(BookingProviderName.VIATOR);
-    when(bookingProviderRepository.findByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
+    BookingProvider viator = new BookingProvider(BookingProviderName.VIATOR);
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
     return viator;
   }
 }

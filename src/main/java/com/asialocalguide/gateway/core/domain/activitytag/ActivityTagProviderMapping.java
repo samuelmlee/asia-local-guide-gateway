@@ -6,10 +6,12 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter
+@NoArgsConstructor
 public class ActivityTagProviderMapping {
 
   @EmbeddedId @Setter private ActivityTagProviderMappingId id;

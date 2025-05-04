@@ -3,9 +3,8 @@ package com.asialocalguide.gateway.core.service.destination;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.repository.BookingProviderRepository;
-import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -17,16 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class DestinationPersistenceService {
 
   private final DestinationRepository destinationRepository;
-  private final BookingProviderRepository bookingProviderRepository;
-  private final CountryRepository countryRepository;
+  private final CountryService countryService;
+  private final BookingProviderService bookingProviderService;
 
   public DestinationPersistenceService(
       DestinationRepository destinationRepository,
-      BookingProviderRepository bookingProviderRepository,
-      CountryRepository countryRepository) {
+      CountryService countryService,
+      BookingProviderService bookingProviderService) {
     this.destinationRepository = destinationRepository;
-    this.bookingProviderRepository = bookingProviderRepository;
-    this.countryRepository = countryRepository;
+    this.countryService = countryService;
+    this.bookingProviderService = bookingProviderService;
   }
 
   /**
@@ -47,8 +46,8 @@ public class DestinationPersistenceService {
     log.info("Processing existing destinations for provider: {}", providerName);
 
     BookingProvider provider =
-        bookingProviderRepository
-            .findByName(providerName)
+        bookingProviderService
+            .getBookingProviderByName(providerName)
             .orElseThrow(() -> new IllegalStateException("BookingProvider not found: " + providerName));
 
     // Fetch all existing Destinations in batch
@@ -99,12 +98,12 @@ public class DestinationPersistenceService {
 
     // Fetch all Countries in batch
     Map<String, Country> countryMap =
-        countryRepository.findByIso2CodeIn(isoCodes).stream()
+        countryService.findByIso2CodeIn(isoCodes).stream()
             .collect(Collectors.toMap(Country::getIso2Code, country -> country));
 
     BookingProvider provider =
-        bookingProviderRepository
-            .findByName(providerName)
+        bookingProviderService
+            .getBookingProviderByName(providerName)
             .orElseThrow(() -> new IllegalStateException("BookingProvider not found: " + providerName));
 
     List<Destination> newDestinationList = new ArrayList<>();

@@ -18,6 +18,8 @@ import org.springframework.web.client.RestClient;
 @Component
 public class ViatorClient {
 
+  private static final String ACCEPT_LANGUAGE_HEADER = "Accept-Language";
+
   private final RestClient viatorRestClient;
 
   public ViatorClient(RestClient viatorRestClient) {
@@ -30,7 +32,7 @@ public class ViatorClient {
           viatorRestClient
               .get()
               .uri("/destinations")
-              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageIsoCode))
+              .headers(httpHeaders -> httpHeaders.set(ACCEPT_LANGUAGE_HEADER, languageIsoCode))
               .retrieve()
               .onStatus(
                   // Exclude 404 from errors
@@ -44,11 +46,9 @@ public class ViatorClient {
 
       return Optional.ofNullable(entity.getBody()).map(ViatorDestinationResponseDTO::destinations).orElseGet(List::of);
 
+    } catch (ViatorApiException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof ViatorApiException) {
-        throw e;
-      }
-
       throw new ViatorApiException("Failed to call Destination API: " + e.getMessage(), e);
     }
   }
@@ -60,7 +60,7 @@ public class ViatorClient {
           viatorRestClient
               .post()
               .uri("/products/search")
-              .headers(httpHeaders -> httpHeaders.set("Accept-Language", languageIsoCode))
+              .headers(httpHeaders -> httpHeaders.set(ACCEPT_LANGUAGE_HEADER, languageIsoCode))
               .body(searchDTO)
               .retrieve()
               .onStatus(
@@ -75,12 +75,38 @@ public class ViatorClient {
 
       return Optional.ofNullable(entity.getBody()).map(ViatorActivityResponseDTO::products).orElseGet(List::of);
 
+    } catch (ViatorApiException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof ViatorApiException) {
-        throw e;
+      throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
+    }
+  }
+
+  public Optional<ViatorActivityDetailDTO> getActivityByIdAndLanguage(String languageIsoCode, String activityId) {
+    try {
+      ResponseEntity<ViatorActivityDetailDTO> entity =
+          viatorRestClient
+              .get()
+              .uri("/products/{activityId}", activityId)
+              .headers(httpHeaders -> httpHeaders.set(ACCEPT_LANGUAGE_HEADER, languageIsoCode))
+              .retrieve()
+              .onStatus(
+                  // Exclude 404 from errors
+                  status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND) || status.is5xxServerError(),
+                  (req, res) -> handleViatorError(res))
+              .toEntity(ViatorActivityDetailDTO.class);
+
+      if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return Optional.empty();
       }
 
-      throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
+      return Optional.ofNullable(entity.getBody());
+
+    } catch (ViatorApiException e) {
+      throw e;
+    } catch (Exception e) {
+
+      throw new ViatorApiException("Failed to call Products by Product Code API: " + e.getMessage(), e);
     }
   }
 
@@ -103,11 +129,9 @@ public class ViatorClient {
 
       return Optional.ofNullable(entity.getBody());
 
+    } catch (ViatorApiException e) {
+      throw e;
     } catch (Exception e) {
-      if (e instanceof ViatorApiException) {
-        throw e;
-      }
-
       throw new ViatorApiException("Failed to call Availability Schedules API: " + e.getMessage(), e);
     }
   }

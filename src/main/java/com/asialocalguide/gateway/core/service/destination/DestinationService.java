@@ -9,81 +9,85 @@ import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 public class DestinationService {
 
-    private final List<DestinationProvider> destinationProviders;
+  private final List<DestinationProvider> destinationProviders;
 
-    private final DestinationSortingService destinationSortingService;
+  private final DestinationSortingService destinationSortingService;
 
-    private final DestinationRepository destinationRepository;
+  private final DestinationRepository destinationRepository;
 
-    public DestinationService(
-            List<DestinationProvider> destinationProviders,
-            DestinationSortingService destinationSortingService,
-            DestinationRepository destinationRepository) {
-        this.destinationProviders = destinationProviders;
-        this.destinationSortingService = destinationSortingService;
-        this.destinationRepository = destinationRepository;
+  public DestinationService(
+      List<DestinationProvider> destinationProviders,
+      DestinationSortingService destinationSortingService,
+      DestinationRepository destinationRepository) {
+    this.destinationProviders = destinationProviders;
+    this.destinationSortingService = destinationSortingService;
+    this.destinationRepository = destinationRepository;
+  }
+
+  public Optional<Destination> findDestinationById(Long id) {
+    return destinationRepository.findById(id);
+  }
+
+  public void syncDestinationsForProvider(BookingProviderName providerName) {
+
+    Objects.requireNonNull(providerName);
+
+    DestinationProvider destinationProvider =
+        destinationProviders.stream()
+            .filter(provider -> provider.getProviderName().equals(providerName))
+            .findFirst()
+            .orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
+
+    List<CommonDestination> rawDestinations = destinationProvider.getDestinations();
+
+    DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
+
+    destinationSortingService.triageRawDestinations(input);
+  }
+
+  public List<DestinationDTO> getAutocompleteSuggestions(String query) {
+
+    if (query == null || query.isBlank()) {
+      return List.of();
     }
 
-    public void syncDestinationsForProvider(BookingProviderName providerName) {
+    Locale locale = LocaleContextHolder.getLocale();
 
-        Objects.requireNonNull(providerName);
+    // Default to English if the locale is not supported
+    LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
-        DestinationProvider destinationProvider =
-                destinationProviders.stream()
-                        .filter(provider -> provider.getProviderName().equals(providerName))
-                        .findFirst()
-                        .orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
+    List<Destination> destinations =
+        destinationRepository.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
 
-        List<CommonDestination> rawDestinations = destinationProvider.getDestinations();
+    return destinations.stream()
+        .map(
+            destination -> {
+              String translationName = destination.getTranslation(languageCode).orElse("");
 
-        DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
+              if (translationName.isEmpty()) {
+                return null;
+              }
 
-        destinationSortingService.triageRawDestinations(input);
-    }
+              String countryName =
+                  destination.getCountry() != null
+                      ? destination.getCountry().getTranslation(languageCode).orElse("")
+                      : "";
 
-    public List<DestinationDTO> getAutocompleteSuggestions(String query) {
-
-        if (query == null || query.isBlank()) {
-            return List.of();
-        }
-
-        Locale locale = LocaleContextHolder.getLocale();
-
-        // Default to English if the locale is not supported
-        LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
-
-        List<Destination> destinations =
-                destinationRepository.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
-
-        return destinations.stream()
-                .map(
-                        destination -> {
-                            String translationName = destination.getTranslation(languageCode).orElse("");
-
-                            if (translationName.isEmpty()) {
-                                return null;
-                            }
-
-                            String countryName =
-                                    destination.getCountry() != null
-                                            ? destination.getCountry().getTranslation(languageCode).orElse("")
-                                            : "";
-
-                            return DestinationDTO.of(destination.getId(), translationName, destination.getType(), countryName);
-                        })
-                .filter(Objects::nonNull)
-                .toList();
-    }
+              return DestinationDTO.of(destination.getId(), translationName, destination.getType(), countryName);
+            })
+        .filter(Objects::nonNull)
+        .toList();
+  }
 }
