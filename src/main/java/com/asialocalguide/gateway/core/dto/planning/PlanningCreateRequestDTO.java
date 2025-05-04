@@ -13,7 +13,7 @@ public record PlanningCreateRequestDTO(@NotBlank String name, @NotEmpty List<Cre
 
   public record CreateDayPlanDTO(
       @NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") LocalDate date,
-      List<CreateDayActivityDTO> activities) {}
+      @NotEmpty List<CreateDayActivityDTO> activities) {}
 
   public record CreateDayActivityDTO(
       @NotBlank String productCode,
