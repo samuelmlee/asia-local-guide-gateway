@@ -38,6 +38,7 @@ public class UserService {
     }
   }
 
+  @Transactional(readOnly = true)
   public User getUserById(Long id) {
 
     return userRepository
@@ -45,7 +46,12 @@ public class UserService {
         .orElseThrow(() -> new UserNotFoundException(String.format("User not found with id: %d", id)));
   }
 
+  @Transactional(readOnly = true)
   public Optional<User> getUserByProviderNameAndProviderUserId(AuthProviderName providerName, String providerUserId) {
+    if (providerName == null || providerUserId == null) {
+      return Optional.empty();
+    }
+
     return userRepository.findUserByProviderNameAndProviderUserId(providerName, providerUserId);
   }
 

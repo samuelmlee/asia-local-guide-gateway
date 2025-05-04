@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.core.domain;
 
-import com.asialocalguide.gateway.core.util.UuidUtils;
+import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.*;
 import java.util.Objects;
 import java.util.UUID;
@@ -13,7 +13,8 @@ public abstract class BaseEntity {
   @Id private UUID id;
 
   protected BaseEntity() {
-    this.id = UuidUtils.randomV7();
+    // UUIDv7 See https://github.com/f4b6a3/uuid-creator
+    this.id = UuidCreator.getTimeOrderedEpoch();
   }
 
   @Override
