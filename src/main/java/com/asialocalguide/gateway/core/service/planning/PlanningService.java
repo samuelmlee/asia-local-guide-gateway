@@ -174,7 +174,7 @@ public class PlanningService {
     Planning planning = buildPlanningEntity(planningRequest, user, activityLookupMap);
 
     if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
-      throw new PlanningCreationException("No valid day plans found for the provided request.");
+      throw new PlanningCreationException("Error fetching any activities for the planning request and day plans.");
     }
 
     return persistPlanning(planning);
@@ -253,6 +253,14 @@ public class PlanningService {
     return result;
   }
 
+  private void persistNewActivitiesForPlanning(Map<BookingProviderName, Set<String>> providerNameToIds) {
+    try {
+      activityService.cacheNewActivitiesByProvider(providerNameToIds);
+    } catch (Exception ex) {
+      throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
+    }
+  }
+
   private Planning buildPlanningEntity(
       PlanningCreateRequestDTO planningRequest,
       User user,
@@ -276,14 +284,6 @@ public class PlanningService {
               dayPlanOpt.ifPresent(planning::addDayPlan);
             });
     return planning;
-  }
-
-  private void persistNewActivitiesForPlanning(Map<BookingProviderName, Set<String>> providerNameToIds) {
-    try {
-      activityService.cacheNewActivitiesByProvider(providerNameToIds);
-    } catch (Exception ex) {
-      throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
-    }
   }
 
   private Optional<DayPlan> buildDayPlanEntity(
@@ -375,7 +375,7 @@ public class PlanningService {
     try {
       return planningRepository.save(planning);
     } catch (Exception ex) {
-      throw new PlanningCreationException("Error during saving planning", ex);
+      throw new PlanningCreationException("Error when persisting planning", ex);
     }
   }
 }
