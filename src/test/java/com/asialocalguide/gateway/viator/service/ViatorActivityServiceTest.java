@@ -1,5 +1,7 @@
 package com.asialocalguide.gateway.viator.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
@@ -261,34 +263,34 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(2, result.size());
+    assertThat(result).hasSize(2);
 
     // Verify product1
     CommonPersistableActivity activity1 = findActivityById(result, "product1");
-    assertNotNull(activity1);
+    assertThat(activity1).isNotNull();
 
-    assertEquals(2, activity1.title().size()); // EN and FR
-    assertTrue(hasTranslation(activity1.title(), LanguageCode.EN, "Activity 1"));
-    assertTrue(hasTranslation(activity1.title(), LanguageCode.FR, "Activité 1"));
+    assertThat(activity1.title()).hasSize(2); // EN and FR
+    assertThat(hasTranslation(activity1.title(), LanguageCode.EN, "Activity 1")).isTrue();
+    assertThat(hasTranslation(activity1.title(), LanguageCode.FR, "Activité 1")).isTrue();
 
     // Verify product2
     CommonPersistableActivity activity2 = findActivityById(result, "product2");
-    assertNotNull(activity2);
-    assertEquals(2, activity2.title().size()); // EN and FR
-    assertTrue(hasTranslation(activity2.title(), LanguageCode.EN, "Activity 2"));
-    assertTrue(hasTranslation(activity2.title(), LanguageCode.FR, "Activité 2"));
+    assertThat(activity2).isNotNull();
+    assertThat(activity2.title()).hasSize(2); // EN and FR
+    assertThat(hasTranslation(activity2.title(), LanguageCode.EN, "Activity 2")).isTrue();
+    assertThat(hasTranslation(activity2.title(), LanguageCode.FR, "Activité 2")).isTrue();
   }
 
   @Test
   void fetchProviderActivities_shouldRejectNullActivityIds() {
     // When/Then
-    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivities(null));
+    assertThatThrownBy(() -> service.fetchProviderActivities(null)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void fetchProviderActivities_shouldRejectEmptyActivityIds() {
     // When/Then
-    assertThrows(IllegalArgumentException.class, () -> service.fetchProviderActivities(Set.of()));
+    assertThatThrownBy(() -> service.fetchProviderActivities(Set.of())).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -302,7 +304,7 @@ class ViatorActivityServiceTest {
     when(viatorClient.getActivityByIdAndLanguage("fr", "product1")).thenReturn(Optional.of(frDto));
 
     // When/Then
-    assertThrows(Exception.class, () -> service.fetchProviderActivities(activityIds));
+    assertThatThrownBy(() -> service.fetchProviderActivities(activityIds)).isInstanceOf(Exception.class);
   }
 
   @Test
@@ -319,8 +321,8 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(1, result.size());
-    assertEquals("product1", result.get(0).providerId());
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).providerId()).isEqualTo("product1");
   }
 
   @Test
@@ -341,8 +343,8 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then - should still return the successful product
-    assertEquals(1, result.size());
-    assertEquals("product1", result.get(0).providerId());
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).providerId()).isEqualTo("product1");
   }
 
   @Test
@@ -361,22 +363,22 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(1, result.size());
+    assertThat(result).hasSize(1);
 
     // Verify translations are properly mapped
     CommonPersistableActivity activity = result.get(0);
 
     // Title translations
-    assertEquals(2, activity.title().size());
-    assertNotNull(findTranslation(activity.title(), LanguageCode.EN));
-    assertNotNull(findTranslation(activity.title(), LanguageCode.FR));
-    assertEquals("Activity", findTranslation(activity.title(), LanguageCode.EN).value());
-    assertEquals("Activité", findTranslation(activity.title(), LanguageCode.FR).value());
+    assertThat(activity.title()).hasSize(2); // EN and FR
+    assertThat(findTranslation(activity.title(), LanguageCode.EN)).isNotNull();
+    assertThat(findTranslation(activity.title(), LanguageCode.FR)).isNotNull();
+    assertThat(findTranslation(activity.title(), LanguageCode.EN).value()).isEqualTo("Activity");
+    assertThat(findTranslation(activity.title(), LanguageCode.FR).value()).isEqualTo("Activité");
 
     // Description translations
-    assertEquals(2, activity.description().size());
-    assertEquals("English description", findTranslation(activity.description(), LanguageCode.EN).value());
-    assertEquals("Description française", findTranslation(activity.description(), LanguageCode.FR).value());
+    assertThat(activity.description()).hasSize(2);
+    assertThat(findTranslation(activity.description(), LanguageCode.EN).value()).isEqualTo("English description");
+    assertThat(findTranslation(activity.description(), LanguageCode.FR).value()).isEqualTo("Description française");
   }
 
   // Helper method to find a translation for a specific language
@@ -401,9 +403,9 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(1, result.size());
-    assertEquals(1, result.getFirst().title().size()); // Only English translation
-    assertEquals(LanguageCode.EN, result.getFirst().title().getFirst().languageCode());
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst().title()).hasSize(1); // Only English translation
+    assertThat(result.getFirst().title().getFirst().languageCode()).isEqualTo(LanguageCode.EN);
   }
 
   @Test
@@ -422,25 +424,25 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(1, result.size());
+    assertThat(result).hasSize(1);
 
     // Verify images
     List<CommonPersistableActivity.Image> images = result.getFirst().images();
-    assertEquals(2, images.size());
+    assertThat(images).hasSize(2);
 
     // Verify mobile image
     Optional<CommonPersistableActivity.Image> mobileImage =
         images.stream().filter(img -> img.type() == ImageType.MOBILE).findFirst();
-    assertTrue(mobileImage.isPresent());
-    assertEquals(320, mobileImage.get().height());
-    assertEquals(480, mobileImage.get().width());
+    assertThat(mobileImage).isPresent();
+    assertThat(mobileImage.get().height()).isEqualTo(320);
+    assertThat(mobileImage.get().width()).isEqualTo(480);
 
     // Verify desktop image
     Optional<CommonPersistableActivity.Image> desktopImage =
         images.stream().filter(img -> img.type() == ImageType.DESKTOP).findFirst();
-    assertTrue(desktopImage.isPresent());
-    assertEquals(480, desktopImage.get().height());
-    assertEquals(720, desktopImage.get().width());
+    assertThat(desktopImage).isPresent();
+    assertThat(desktopImage.get().height()).isEqualTo(480);
+    assertThat(desktopImage.get().width()).isEqualTo(720);
   }
 
   @Test
@@ -459,8 +461,8 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(1, result.size());
-    assertTrue(result.getFirst().images().isEmpty());
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst().images()).isEmpty();
   }
 
   @Test
@@ -479,10 +481,10 @@ class ViatorActivityServiceTest {
     List<CommonPersistableActivity> result = service.fetchProviderActivities(activityIds);
 
     // Then
-    assertEquals(1, result.size());
+    assertThat(result).hasSize(1);
     CommonPersistableActivity.Review review = result.getFirst().review();
-    assertEquals(4.5, review.averageRating()); // Using the actual rating value
-    assertEquals(100, review.reviewCount());
+    assertThat(review.averageRating()).isEqualTo(4.5);
+    assertThat(review.reviewCount()).isEqualTo(100);
   }
 
   private CommonPersistableActivity findActivityById(List<CommonPersistableActivity> result, String id) {
