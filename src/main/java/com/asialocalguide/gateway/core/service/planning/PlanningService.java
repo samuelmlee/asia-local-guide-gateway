@@ -167,7 +167,7 @@ public class PlanningService {
 
     Map<BookingProviderName, Map<String, Activity>> activityLookupMap = buildActivityLookupMap(providerNameToIds);
 
-    if (activityLookupMap.isEmpty()) {
+    if (activityLookupMap.isEmpty() || activityLookupMap.values().stream().allMatch(Map::isEmpty)) {
       throw new PlanningCreationException("Error fetching any activities for the provided planning request.");
     }
 
