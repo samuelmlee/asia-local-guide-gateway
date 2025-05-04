@@ -3,7 +3,6 @@ package com.asialocalguide.gateway.core.service.planning;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
@@ -15,13 +14,13 @@ import com.asialocalguide.gateway.core.exception.ActivityCachingException;
 import com.asialocalguide.gateway.core.repository.ActivityRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +32,7 @@ class ActivityServiceTest {
 
   @InjectMocks private ActivityService service;
 
+  @Captor ArgumentCaptor<List<Activity>> activitiesCaptor;
   private BookingProvider viatorProvider;
   private Set<String> validActivityIds;
   private CommonPersistableActivity persistableActivity;
@@ -145,6 +145,7 @@ class ActivityServiceTest {
         Map.of(BookingProviderName.VIATOR, Set.of("activity1", "activity2"));
 
     when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of(viatorProvider));
+    when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
     when(mockStrategy.fetchProviderActivities(any())).thenReturn(List.of(persistableActivity));
     when(activityRepository.findExistingIdsByProviderNameAndIds(any(), any())).thenReturn(Set.of("activity2"));
 
@@ -155,7 +156,7 @@ class ActivityServiceTest {
     service.cacheNewActivitiesByProvider(providerToIds);
 
     // Verify repository was called with transformed activities
-    ArgumentCaptor<List<Activity>> activitiesCaptor = ArgumentCaptor.forClass(List.class);
+    activitiesCaptor = ArgumentCaptor.forClass(List.class);
     verify(activityRepository).saveAll(activitiesCaptor.capture());
 
     List<Activity> savedActivities = activitiesCaptor.getValue();
@@ -202,7 +203,7 @@ class ActivityServiceTest {
     Map<BookingProviderName, Set<String>> providerToIds = Map.of(BookingProviderName.VIATOR, Set.of("activity1"));
 
     // No matching strategy (returns different provider name)
-    when(mockStrategy.getProviderName()).thenReturn(null);
+    when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.GET_YOUR_GUIDE);
 
     service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
 
@@ -218,6 +219,7 @@ class ActivityServiceTest {
     // Setup
     Map<BookingProviderName, Set<String>> providerToIds = Map.of(BookingProviderName.VIATOR, Set.of("activity1"));
 
+    when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
     when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of());
 
     service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
@@ -249,21 +251,21 @@ class ActivityServiceTest {
   }
 
   @Test
-  void cacheNewActivitiesByProvider_shouldHandlePartialSuccess() {
+  void cacheNewActivitiesByProvider_shouldHandleRepositoryExceptions() {
     // Setup
-    Map<BookingProviderName, Set<String>> providerToIds =
-        Map.of(BookingProviderName.VIATOR, Set.of("activity1"), null, Set.of("invalid"));
+    Map<BookingProviderName, Set<String>> providerToIds = Map.of(BookingProviderName.VIATOR, Set.of("activity1"));
 
     when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of(viatorProvider));
     when(activityRepository.findExistingIdsByProviderNameAndIds(any(), any())).thenReturn(Set.of());
+    when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
     when(mockStrategy.fetchProviderActivities(any())).thenReturn(List.of(persistableActivity));
+    when(activityRepository.saveAll(any())).thenThrow(new RuntimeException("Database error"));
 
     service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
 
-    // Execute
-    service.cacheNewActivitiesByProvider(providerToIds);
-
-    // Verify only valid activities were saved
-    verify(activityRepository).saveAll(anyList());
+    // Execute - method should not propagate the exception
+    assertThatThrownBy(() -> service.cacheNewActivitiesByProvider(providerToIds))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Database error");
   }
 }

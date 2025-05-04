@@ -144,7 +144,7 @@ public class ActivityService {
       Set<String> cachedIds = findExistingIdsByProviderNameAndIds(providerName, activityIds);
       if (cachedIds == null || cachedIds.isEmpty()) {
         log.info("No existing activity IDs found for providerName: {} and activityIds:  {}", providerName, activityIds);
-        return Set.of();
+        return activityIds;
       }
 
       return activityIds.stream()
