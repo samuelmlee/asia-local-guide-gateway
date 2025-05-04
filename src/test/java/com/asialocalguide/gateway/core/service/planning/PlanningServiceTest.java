@@ -23,13 +23,12 @@ import com.asialocalguide.gateway.core.service.user.UserService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,6 +46,8 @@ class PlanningServiceTest {
   @Mock private PlanningRepository planningRepository;
 
   private PlanningService planningService;
+
+  @Captor ArgumentCaptor<Planning> planningCaptor;
 
   private PlanningRequestDTO validRequest;
   private final LocalDate today = LocalDate.now();
@@ -274,7 +275,13 @@ class PlanningServiceTest {
 
     verify(activityService).cacheNewActivitiesByProvider(any());
     verify(activityService).findActivitiesByProviderNameAndIds(eq(BookingProviderName.VIATOR), eq(activityIds));
-    verify(planningRepository).save(any(Planning.class));
+
+    // Capture and verify the Planning object passed to save()
+    verify(planningRepository).save(planningCaptor.capture());
+    Planning capturedPlanning = planningCaptor.getValue();
+    assertThat(capturedPlanning.getName()).isEqualTo("Test Planning");
+    assertThat(capturedPlanning.getUser()).isEqualTo(testUser);
+    assertThat(capturedPlanning.getDayPlans()).hasSize(1);
   }
 
   @Test
@@ -381,8 +388,26 @@ class PlanningServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.getName()).isEqualTo("Test Planning");
 
-    // Only the valid activity should be included
-    verify(planningRepository).save(any(Planning.class));
+    // Capture and verify the Planning object passed to save()
+    verify(planningRepository).save(planningCaptor.capture());
+    Planning capturedPlanning = planningCaptor.getValue();
+
+    // Verify planning properties
+    assertThat(capturedPlanning.getName()).isEqualTo("Test Planning");
+    assertThat(capturedPlanning.getUser()).isEqualTo(testUser);
+
+    // Verify day plans
+    assertThat(capturedPlanning.getDayPlans()).hasSize(1);
+
+    // Verify activities in day plan - only the valid one should be included
+    DayPlan capturedDayPlan = capturedPlanning.getDayPlans().iterator().next();
+    assertThat(capturedDayPlan.getDayActivities()).hasSize(1);
+
+    // Verify the activity is the valid one
+    DayActivity capturedActivity = capturedDayPlan.getDayActivities().iterator().next();
+    assertThat(capturedActivity.getActivity()).isEqualTo(testActivity);
+    assertThat(capturedActivity.getStartTime()).isEqualTo(validActivity.startTime());
+    assertThat(capturedActivity.getEndTime()).isEqualTo(validActivity.endTime());
   }
 
   @Test
@@ -447,9 +472,43 @@ class PlanningServiceTest {
     assertThat(result).isNotNull();
     assertThat(result.getName()).isEqualTo("Two-Day Planning");
 
+    // Capture and verify the Planning object passed to save()
+    verify(planningRepository).save(planningCaptor.capture());
+    Planning capturedPlanning = planningCaptor.getValue();
+
+    // Verify Planning properties
+    assertThat(capturedPlanning.getName()).isEqualTo("Two-Day Planning");
+    assertThat(capturedPlanning.getUser()).isEqualTo(testUser);
+    assertThat(capturedPlanning.getDayPlans()).hasSize(2);
+
+    // Get day plans and sort them by date
+    List<DayPlan> sortedDayPlans = new ArrayList<>(capturedPlanning.getDayPlans());
+    sortedDayPlans.sort(Comparator.comparing(DayPlan::getDate));
+
+    // Verify first day plan
+    DayPlan firstDayPlan = sortedDayPlans.get(0);
+    assertThat(firstDayPlan.getDate()).isEqualTo(LocalDate.now());
+    assertThat(firstDayPlan.getDayActivities()).hasSize(1);
+
+    // Verify first day activity
+    DayActivity firstDayActivity = firstDayPlan.getDayActivities().iterator().next();
+    assertThat(firstDayActivity.getActivity()).isEqualTo(testActivity);
+    assertThat(firstDayActivity.getStartTime()).isEqualTo(day1StartTime);
+    assertThat(firstDayActivity.getEndTime()).isEqualTo(day1EndTime);
+
+    // Verify second day plan
+    DayPlan secondDayPlan = sortedDayPlans.get(1);
+    assertThat(secondDayPlan.getDate()).isEqualTo(LocalDate.now().plusDays(1));
+    assertThat(secondDayPlan.getDayActivities()).hasSize(1);
+
+    // Verify second day activity
+    DayActivity secondDayActivity = secondDayPlan.getDayActivities().iterator().next();
+    assertThat(secondDayActivity.getActivity()).isEqualTo(secondActivity);
+    assertThat(secondDayActivity.getStartTime()).isEqualTo(day2StartTime);
+    assertThat(secondDayActivity.getEndTime()).isEqualTo(day2EndTime);
+
     // Verify activities lookup
     verify(activityService).findActivitiesByProviderNameAndIds(eq(BookingProviderName.VIATOR), eq(activityIds));
-    verify(planningRepository).save(any(Planning.class));
   }
 
   private ProviderPlanningData createTestProviderData() {

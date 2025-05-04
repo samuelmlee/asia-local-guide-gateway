@@ -4,6 +4,7 @@ import com.asialocalguide.gateway.core.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
@@ -32,6 +33,10 @@ public class DayPlan extends BaseEntity {
 
   void setPlanning(Planning planning) {
     this.planning = planning;
+  }
+
+  public Set<DayActivity> getDayActivities() {
+    return Collections.unmodifiableSet(dayActivities);
   }
 
   public void addDayActivity(DayActivity dayActivity) {
