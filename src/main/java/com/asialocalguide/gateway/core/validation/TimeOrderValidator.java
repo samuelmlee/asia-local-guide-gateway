@@ -33,7 +33,11 @@ public class TimeOrderValidator implements ConstraintValidator<ValidTimeOrder, O
 
       return startTime.isBefore(endTime) || startTime.isEqual(endTime);
 
-    } catch (NoSuchFieldException | IllegalAccessException ignored) {
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      context.disableDefaultConstraintViolation();
+      context
+          .buildConstraintViolationWithTemplate("Error validating time order: " + e.getMessage())
+          .addConstraintViolation();
       return false;
     }
   }
