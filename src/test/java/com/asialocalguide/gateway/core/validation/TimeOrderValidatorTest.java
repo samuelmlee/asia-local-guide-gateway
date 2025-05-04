@@ -18,6 +18,8 @@ class TimeOrderValidatorTest {
 
   @Mock private ConstraintValidatorContext context;
 
+  @Mock private ConstraintValidatorContext.ConstraintViolationBuilder builder;
+
   @Mock private ValidTimeOrder annotation;
 
   @BeforeEach
@@ -25,6 +27,7 @@ class TimeOrderValidatorTest {
     validator = new TimeOrderValidator();
     when(annotation.startTimeField()).thenReturn("startTime");
     when(annotation.endTimeField()).thenReturn("endTime");
+
     validator.initialize(annotation);
   }
 
@@ -81,6 +84,9 @@ class TimeOrderValidatorTest {
   void shouldHandleMissingFields() {
     // Given
     Object invalidObject = new Object();
+
+    when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+    when(builder.addConstraintViolation()).thenReturn(context);
 
     // When
     boolean result = validator.isValid(invalidObject, context);

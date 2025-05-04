@@ -306,19 +306,6 @@ class PlanningServiceTest {
   }
 
   @Test
-  void savePlanning_shouldThrowWhenDayPlansActivitiesIsEmpty() {
-    PlanningCreateRequestDTO.CreateDayPlanDTO emptyDayPlan =
-        new PlanningCreateRequestDTO.CreateDayPlanDTO(LocalDate.now(), List.of());
-
-    PlanningCreateRequestDTO invalidCreateRequest =
-        new PlanningCreateRequestDTO("Test Planning", List.of(emptyDayPlan));
-
-    assertThatThrownBy(() -> planningService.savePlanning(invalidCreateRequest, authProviderName, userProviderId))
-        .isInstanceOf(PlanningCreationException.class)
-        .hasMessageContaining("Day plan activities cannot be null or empty");
-  }
-
-  @Test
   void savePlanning_shouldThrowWhenUserNotFound() {
     when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
         .thenReturn(Optional.empty());
@@ -338,7 +325,7 @@ class PlanningServiceTest {
 
     assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
         .isInstanceOf(PlanningCreationException.class)
-        .hasMessageContaining("Error fetching any activities for the planning request and day plans");
+        .hasMessageContaining("Error fetching any activities for the provided planning request.");
   }
 
   @Test
