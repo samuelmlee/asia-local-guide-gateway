@@ -38,9 +38,6 @@ public class DayActivity extends BaseEntity {
   }
 
   void setDayPlan(DayPlan dayPlan) {
-    if (dayPlan == null) {
-      return;
-    }
     this.dayPlan = dayPlan;
   }
 }
