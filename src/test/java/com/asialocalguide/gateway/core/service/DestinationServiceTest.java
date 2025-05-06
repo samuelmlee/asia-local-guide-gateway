@@ -127,7 +127,7 @@ class DestinationServiceTest {
   private CommonDestination createTestRawDestination() {
     return new CommonDestination(
         testDestinationId,
-        List.of(new CommonDestination.Translation("EN", "New York")),
+        List.of(new CommonDestination.Translation(LanguageCode.EN, "New York")),
         DestinationType.CITY,
         null,
         providerName,

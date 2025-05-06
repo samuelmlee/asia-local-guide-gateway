@@ -518,7 +518,7 @@ class ViatorActivityServiceTest {
         List.of(), // empty destinations
         new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
         "http://viator.com/activity/" + productCode,
-        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5) // Non-null reviews
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5f) // Non-null reviews
         );
   }
 
@@ -542,6 +542,6 @@ class ViatorActivityServiceTest {
         List.of(),
         new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
         "http://viator.com/activity/" + productCode,
-        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5));
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5f));
   }
 }

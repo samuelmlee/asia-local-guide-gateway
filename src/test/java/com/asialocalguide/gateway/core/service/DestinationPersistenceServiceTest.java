@@ -27,6 +27,7 @@ class DestinationPersistenceServiceTest {
   @Mock private DestinationRepository destinationRepository;
   @Mock private BookingProviderService bookingProviderService;
   @Mock private CountryService countryService;
+  @Mock private LanguageService languageService;
 
   @InjectMocks private DestinationPersistenceService service;
 
@@ -71,7 +72,7 @@ class DestinationPersistenceServiceTest {
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "Paris")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Paris")),
             DestinationType.CITY,
             null,
             providerName,
@@ -104,7 +105,7 @@ class DestinationPersistenceServiceTest {
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "Paris")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Paris")),
             DestinationType.CITY,
             null,
             providerName,
@@ -154,7 +155,7 @@ class DestinationPersistenceServiceTest {
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "New York")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "New York")),
             DestinationType.CITY,
             new Coordinates(),
             providerName,
@@ -174,7 +175,7 @@ class DestinationPersistenceServiceTest {
     String isoCode = "us";
     Country country = new Country(isoCode);
 
-    CommonDestination.Translation translation = new CommonDestination.Translation("en", "New York");
+    CommonDestination.Translation translation = new CommonDestination.Translation(LanguageCode.EN, "New York");
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
@@ -304,7 +305,7 @@ class DestinationPersistenceServiceTest {
     CommonDestination dto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "Test")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
             DestinationType.CITY,
             null, // Null coordinates
             providerName,
@@ -328,8 +329,8 @@ class DestinationPersistenceServiceTest {
         new CommonDestination(
             "D123",
             List.of(
-                new CommonDestination.Translation("en", "Singapore"),
-                new CommonDestination.Translation("fr", "Singapour")),
+                new CommonDestination.Translation(LanguageCode.EN, "Singapore"),
+                new CommonDestination.Translation(LanguageCode.FR, "Singapour")),
             DestinationType.CITY,
             null,
             providerName,
@@ -355,7 +356,7 @@ class DestinationPersistenceServiceTest {
     CommonDestination dto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("invalid1", "Test1")),
+            List.of(new CommonDestination.Translation(null, "Test1")),
             DestinationType.CITY,
             null,
             providerName,
@@ -376,7 +377,7 @@ class DestinationPersistenceServiceTest {
 
     return new CommonDestination(
         "test-id",
-        List.of(new CommonDestination.Translation("en", "Test")),
+        List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
         DestinationType.CITY,
         null,
         BookingProviderName.VIATOR,

@@ -44,7 +44,7 @@ class DestinationSortingServiceTest {
     validRawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "New York")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "New York")),
             DestinationType.CITY,
             new Coordinates(40.7128, -74.0060),
             providerName,
@@ -85,7 +85,7 @@ class DestinationSortingServiceTest {
     CommonDestination newRawDto =
         new CommonDestination(
             "D456",
-            List.of(new CommonDestination.Translation("en", "Los Angeles")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Los Angeles")),
             DestinationType.CITY,
             new Coordinates(34.0522, -118.2437),
             providerName,
@@ -114,7 +114,7 @@ class DestinationSortingServiceTest {
     CommonDestination nullCoordsDto =
         new CommonDestination(
             "D789",
-            List.of(new CommonDestination.Translation("en", "Test")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
             DestinationType.CITY,
             null,
             providerName,

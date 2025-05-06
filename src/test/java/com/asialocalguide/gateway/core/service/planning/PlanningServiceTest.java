@@ -420,7 +420,7 @@ class PlanningServiceTest {
 
     Activity secondActivity =
         new Activity(
-            "activity2", new BookingProvider(BookingProviderName.VIATOR), 4.2, 80, 120, "https://example2.com");
+            "activity2", new BookingProvider(BookingProviderName.VIATOR), 4.2f, 80, 120, "https://example2.com");
 
     Set<String> activityIds = Set.of("activity1", "activity2");
     when(activityService.findActivitiesByProviderNameAndIds(BookingProviderName.VIATOR, activityIds))
@@ -537,7 +537,8 @@ class PlanningServiceTest {
 
   private Activity createTestActivity() {
     testActivity =
-        new Activity("activity1", new BookingProvider(BookingProviderName.VIATOR), 4.5, 100, 60, "https://example.com");
+        new Activity(
+            "activity1", new BookingProvider(BookingProviderName.VIATOR), 4.5f, 100, 60, "https://example.com");
 
     return testActivity;
   }
