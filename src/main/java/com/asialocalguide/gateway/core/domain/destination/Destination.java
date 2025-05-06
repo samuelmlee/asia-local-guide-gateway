@@ -49,7 +49,7 @@ public class Destination implements Translatable {
     }
 
     return destinationTranslations.stream()
-        .filter(t -> t.getId() != null && languageCode.equals(t.getId().getLanguageCode()))
+        .filter(t -> t.getId() != null && languageCode.equals(t.getLanguage().getCode()))
         .findFirst()
         .map(DestinationTranslation::getName);
   }

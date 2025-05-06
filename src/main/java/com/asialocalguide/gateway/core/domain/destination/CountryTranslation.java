@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
+import com.asialocalguide.gateway.core.domain.Language;
 import com.google.common.base.Objects;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -18,18 +19,25 @@ public class CountryTranslation {
   @Getter
   private Country country;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("languageId")
+  @JoinColumn(name = "language_id")
+  @Getter
+  private Language language;
+
   @Getter @NotEmpty private String name;
 
-  public CountryTranslation(Country country, LanguageCode languageCode, String name) {
+  public CountryTranslation(Country country, Language language, String name) {
     if (country == null) {
       throw new IllegalArgumentException("Country cannot be null");
     }
-    if (languageCode == null) {
-      throw new IllegalArgumentException("LanguageCode cannot be null");
+    if (language == null) {
+      throw new IllegalArgumentException("Language cannot be null");
     }
 
-    this.id = new CountryTranslationId(languageCode);
+    this.id = new CountryTranslationId();
     this.country = country;
+    this.language = language;
     this.name = name;
   }
 

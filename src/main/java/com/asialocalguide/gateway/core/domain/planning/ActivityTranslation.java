@@ -14,12 +14,12 @@ public class ActivityTranslation {
 
   @EmbeddedId private ActivityTranslationId id;
 
-  @ManyToOne(optional = false, fetch = jakarta.persistence.FetchType.LAZY)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @MapsId("activityId")
   @JoinColumn(name = "activity_id", nullable = false)
   private Activity activity;
 
-  @ManyToOne(optional = false, fetch = jakarta.persistence.FetchType.LAZY)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @MapsId("languageId")
   @JoinColumn(name = "language_id", nullable = false)
   private Language language;
@@ -46,11 +46,11 @@ public class ActivityTranslation {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     ActivityTranslation that = (ActivityTranslation) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(getId(), that.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(getId());
   }
 }

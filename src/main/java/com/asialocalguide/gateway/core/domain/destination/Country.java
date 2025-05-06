@@ -61,6 +61,9 @@ public class Country implements Translatable {
     countryTranslations.remove(translation);
   }
 
+  /*
+   * Method needs the Language entity in CountryTranslation to be eagerly loaded.
+   */
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
     if (languageCode == null || countryTranslations == null) {
@@ -68,7 +71,7 @@ public class Country implements Translatable {
     }
 
     return countryTranslations.stream()
-        .filter(ct -> ct.getId() != null && languageCode.equals(ct.getId().getLanguageCode()))
+        .filter(ct -> ct.getId() != null && languageCode.equals(ct.getLanguage().getCode()))
         .findFirst()
         .map(CountryTranslation::getName);
   }

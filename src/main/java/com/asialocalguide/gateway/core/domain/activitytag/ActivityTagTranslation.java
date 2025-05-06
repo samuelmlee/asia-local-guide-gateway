@@ -42,6 +42,10 @@ public class ActivityTagTranslation {
     this.promptText = promptText;
   }
 
+  protected void setActivityTag(ActivityTag activityTag) {
+    this.activityTag = activityTag;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;

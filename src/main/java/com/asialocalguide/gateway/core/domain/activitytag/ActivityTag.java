@@ -24,13 +24,16 @@ public class ActivityTag {
   @OneToMany(mappedBy = "activityTag", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<ActivityTagProviderMapping> activityTagProviderMappings = new HashSet<>();
 
+  /*
+   * Method needs the Language entity in ActivityTagTranslation to be eagerly lodged.
+   */
   public Optional<ActivityTagTranslation> getTranslation(LanguageCode languageCode) {
     if (languageCode == null || activityTagTranslations.isEmpty()) {
       return Optional.empty();
     }
 
     return activityTagTranslations.stream()
-        .filter(t -> t.getId() != null && languageCode.equals(t.getId().getLanguageCode()))
+        .filter(t -> t.getId() != null && languageCode.equals(t.getLanguage().getCode()))
         .findFirst();
   }
 
