@@ -1,7 +1,6 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCodeConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;

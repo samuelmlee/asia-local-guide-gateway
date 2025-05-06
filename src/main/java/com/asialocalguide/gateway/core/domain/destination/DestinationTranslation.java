@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
+import com.asialocalguide.gateway.core.domain.Language;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
@@ -19,18 +20,25 @@ public class DestinationTranslation {
   @Getter
   private Destination destination;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("languageId")
+  @JoinColumn(name = "language_id")
+  @Getter
+  private Language language;
+
   @Setter @NotEmpty @Getter private String name;
 
-  public DestinationTranslation(Destination destination, LanguageCode languageCode, String name) {
+  public DestinationTranslation(Destination destination, Language language, String name) {
     if (destination == null) {
       throw new IllegalArgumentException("Destination cannot be null");
     }
-    if (languageCode == null) {
+    if (language == null) {
       throw new IllegalArgumentException("LanguageCode cannot be null");
     }
 
-    this.id = new DestinationTranslationId(languageCode);
+    this.id = new DestinationTranslationId();
     this.destination = destination;
+    this.language = language;
     this.name = name;
   }
 
@@ -43,23 +51,16 @@ public class DestinationTranslation {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     DestinationTranslation that = (DestinationTranslation) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(getId(), that.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(getId());
   }
 
   @Override
   public String toString() {
-    return "DestinationTranslation{"
-        + ", languageCode='"
-        + id.getLanguageCode()
-        + '\''
-        + ", name='"
-        + name
-        + '\''
-        + '}';
+    return "DestinationTranslation{" + ", id='" + id + '\'' + ", name='" + name + '\'' + '}';
   }
 }

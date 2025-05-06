@@ -65,6 +65,14 @@ public class Activity extends BaseEntity {
     this.bookingUrl = bookingUrl;
   }
 
+  public Set<ActivityTranslation> getActivityTranslations() {
+    return Collections.unmodifiableSet(activityTranslations);
+  }
+
+  public Set<ActivityImage> getCoverImages() {
+    return Collections.unmodifiableSet(coverImages);
+  }
+
   public void addTranslation(ActivityTranslation translation) {
     if (translation == null) {
       return;

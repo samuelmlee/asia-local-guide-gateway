@@ -4,7 +4,6 @@ import com.asialocalguide.gateway.core.domain.activitytag.ActivityTag;
 import com.asialocalguide.gateway.core.domain.activitytag.QActivityTag;
 import com.asialocalguide.gateway.core.domain.activitytag.QActivityTagTranslation;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.repository.CustomActivityTagRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import org.springframework.stereotype.Repository;

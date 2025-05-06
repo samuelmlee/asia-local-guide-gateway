@@ -2,6 +2,7 @@ package com.asialocalguide.gateway.core.service.planning;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.Activity;
 import com.asialocalguide.gateway.core.domain.planning.ActivityImage;
@@ -9,6 +10,7 @@ import com.asialocalguide.gateway.core.domain.planning.ActivityTranslation;
 import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
 import com.asialocalguide.gateway.core.exception.ActivityCachingException;
 import com.asialocalguide.gateway.core.repository.ActivityRepository;
+import com.asialocalguide.gateway.core.service.LanguageService;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
 import java.util.*;
@@ -26,14 +28,18 @@ public class ActivityService {
 
   private final BookingProviderService bookingProviderService;
 
+  private final LanguageService languageService;
+
   private final List<FetchActivityStrategy> fetchActivityStrategies;
 
   public ActivityService(
       ActivityRepository activityRepository,
       BookingProviderService bookingProviderService,
+      LanguageService languageService,
       List<FetchActivityStrategy> fetchActivityStrategies) {
     this.activityRepository = activityRepository;
     this.bookingProviderService = bookingProviderService;
+    this.languageService = languageService;
     this.fetchActivityStrategies = fetchActivityStrategies;
   }
 
@@ -65,16 +71,32 @@ public class ActivityService {
 
     validatePersistNewActivitiesInput(providerNameToId, fetchActivityStrategies);
 
-    log.info("Persisting new activities for provider name to ID mapping: {}", providerNameToId);
+    log.info("Caching new activities for provider name to ID mapping: {}", providerNameToId);
 
     List<FetchActivityStrategy> strategiesToUse =
         fetchActivityStrategies.stream()
             .filter(strategy -> providerNameToId.containsKey(strategy.getProviderName()))
             .toList();
 
+    if (strategiesToUse.isEmpty()) {
+      log.warn("No strategies found for provider name to ID mapping: {}", providerNameToId);
+      return;
+    }
+
     Map<BookingProviderName, BookingProvider> nameToProvider =
         bookingProviderService.getAllBookingProviders().stream()
             .collect(Collectors.toMap(BookingProvider::getName, Function.identity()));
+
+    if (nameToProvider.isEmpty()) {
+      throw new ActivityCachingException("No booking providers returned from BookingProviderService");
+    }
+
+    Map<LanguageCode, Language> codeToLanguage =
+        languageService.getAllLanguages().stream().collect(Collectors.toMap(Language::getCode, Function.identity()));
+
+    if (codeToLanguage.isEmpty()) {
+      throw new ActivityCachingException("No Language returned from LanguageService");
+    }
 
     List<Activity> activitiesToPersist = new ArrayList<>();
 
@@ -96,7 +118,7 @@ public class ActivityService {
 
         List<CommonPersistableActivity> fetchedActivities = strategy.fetchProviderActivities(newIds);
 
-        List<Activity> activities = convertToActivities(fetchedActivities, provider);
+        List<Activity> activities = convertToActivities(fetchedActivities, provider, codeToLanguage);
         activitiesToPersist.addAll(activities);
 
       } catch (Exception e) {
@@ -163,7 +185,9 @@ public class ActivityService {
   }
 
   private List<Activity> convertToActivities(
-      List<CommonPersistableActivity> persistableActivities, BookingProvider bookingProvider) {
+      List<CommonPersistableActivity> persistableActivities,
+      BookingProvider bookingProvider,
+      Map<LanguageCode, Language> codeToLanguage) {
 
     if (persistableActivities == null || persistableActivities.isEmpty() || bookingProvider == null) {
       log.warn(
@@ -174,12 +198,15 @@ public class ActivityService {
     }
 
     return persistableActivities.stream()
-        .map(persistable -> toActivity(persistable, bookingProvider))
+        .map(persistable -> toActivity(persistable, bookingProvider, codeToLanguage))
         .flatMap(Optional::stream)
         .toList();
   }
 
-  private Optional<Activity> toActivity(CommonPersistableActivity persistable, BookingProvider bookingProvider) {
+  private Optional<Activity> toActivity(
+      CommonPersistableActivity persistable,
+      BookingProvider bookingProvider,
+      Map<LanguageCode, Language> codeToLanguage) {
 
     if (persistable == null || bookingProvider == null) {
       log.warn("Invalid input in toActivity, persistable: {}, bookingProvider: {}", persistable, bookingProvider);
@@ -200,6 +227,7 @@ public class ActivityService {
       // Set translations
       Map<LanguageCode, String> titlesByLanguage =
           persistable.title().stream()
+              .filter(title -> title.languageCode() != null)
               .collect(
                   Collectors.toMap(
                       CommonPersistableActivity.Translation::languageCode,
@@ -207,6 +235,7 @@ public class ActivityService {
 
       Map<LanguageCode, String> descriptionsByLanguage =
           persistable.description().stream()
+              .filter(translation -> translation.languageCode() != null)
               .collect(
                   Collectors.toMap(
                       CommonPersistableActivity.Translation::languageCode,
@@ -215,8 +244,27 @@ public class ActivityService {
       // Title is required
       titlesByLanguage.forEach(
           (languageCode, title) -> {
-            String description = descriptionsByLanguage.get(languageCode);
-            activity.addTranslation(new ActivityTranslation(languageCode, title, description));
+            try {
+
+              String description = descriptionsByLanguage.get(languageCode);
+              Language language = codeToLanguage.get(languageCode);
+
+              if (language == null) {
+                log.warn("Language not found for code: {}", languageCode);
+                return;
+              }
+
+              activity.addTranslation(new ActivityTranslation(language, title, description));
+
+            } catch (Exception ex) {
+              log.warn(
+                  "Error while adding translation for activity: {}, languageCode: {}, title: {}, description: {}",
+                  activity,
+                  languageCode,
+                  title,
+                  descriptionsByLanguage.get(languageCode),
+                  ex);
+            }
           });
 
       // Set images

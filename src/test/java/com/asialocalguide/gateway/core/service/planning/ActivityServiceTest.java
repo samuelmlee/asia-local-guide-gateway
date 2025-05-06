@@ -7,11 +7,13 @@ import static org.mockito.Mockito.*;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.Activity;
 import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
 import com.asialocalguide.gateway.core.exception.ActivityCachingException;
 import com.asialocalguide.gateway.core.repository.ActivityRepository;
+import com.asialocalguide.gateway.core.service.LanguageService;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
 import java.util.List;
@@ -28,6 +30,7 @@ class ActivityServiceTest {
 
   @Mock private ActivityRepository activityRepository;
   @Mock private BookingProviderService bookingProviderService;
+  @Mock private LanguageService languageService;
   @Mock private FetchActivityStrategy mockStrategy;
 
   @InjectMocks private ActivityService service;
@@ -42,7 +45,7 @@ class ActivityServiceTest {
     viatorProvider = new BookingProvider(BookingProviderName.VIATOR);
     validActivityIds = Set.of("activity1", "activity2");
 
-    CommonPersistableActivity.Review review = new CommonPersistableActivity.Review(4.5, 100);
+    CommonPersistableActivity.Review review = new CommonPersistableActivity.Review(4.5f, 100);
     CommonPersistableActivity.Translation enTitle =
         new CommonPersistableActivity.Translation(LanguageCode.EN, "Activity Title");
     CommonPersistableActivity.Translation enDesc =
@@ -150,7 +153,7 @@ class ActivityServiceTest {
     when(activityRepository.findExistingIdsByProviderNameAndIds(any(), any())).thenReturn(Set.of("activity2"));
 
     // Service has only one strategy
-    service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute
     service.cacheNewActivitiesByProvider(providerToIds);
@@ -162,6 +165,90 @@ class ActivityServiceTest {
     List<Activity> savedActivities = activitiesCaptor.getValue();
     assertThat(savedActivities).hasSize(1);
     assertThat(savedActivities.get(0).getProviderActivityId()).isEqualTo("activity1");
+  }
+
+  @Test
+  void toActivity_shouldAddTranslationsSuccessfully() {
+    // Setup
+    when(languageService.getAllLanguages())
+        .thenReturn(List.of(new Language(1L, LanguageCode.EN), new Language(2L, LanguageCode.FR)));
+
+    CommonPersistableActivity.Translation enTitle =
+        new CommonPersistableActivity.Translation(LanguageCode.EN, "English Title");
+    CommonPersistableActivity.Translation frTitle =
+        new CommonPersistableActivity.Translation(LanguageCode.FR, "French Title");
+    CommonPersistableActivity.Translation enDesc =
+        new CommonPersistableActivity.Translation(LanguageCode.EN, "English Description");
+    CommonPersistableActivity.Translation frDesc =
+        new CommonPersistableActivity.Translation(LanguageCode.FR, "French Description");
+
+    CommonPersistableActivity activity =
+        new CommonPersistableActivity(
+            List.of(enTitle, frTitle),
+            List.of(enDesc, frDesc),
+            List.of(),
+            new CommonPersistableActivity.Review(4.5f, 100),
+            60,
+            "https://example.com",
+            BookingProviderName.VIATOR,
+            "activity1");
+
+    Map<BookingProviderName, Set<String>> providerToIds = Map.of(BookingProviderName.VIATOR, Set.of("activity1"));
+    when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of(viatorProvider));
+    when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
+    when(mockStrategy.fetchProviderActivities(any())).thenReturn(List.of(activity));
+
+    // Execute
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
+    service.cacheNewActivitiesByProvider(providerToIds);
+
+    // Verify
+    activitiesCaptor = ArgumentCaptor.forClass(List.class);
+    verify(activityRepository).saveAll(activitiesCaptor.capture());
+
+    Activity savedActivity = activitiesCaptor.getValue().get(0);
+    assertThat(savedActivity.getActivityTranslations()).hasSize(2);
+  }
+
+  @Test
+  void toActivity_shouldSkipTranslationsForMissingLanguages() {
+    // Setup - only provide English language, but include titles for EN and FR
+    when(languageService.getAllLanguages()).thenReturn(List.of(new Language(1L, LanguageCode.EN)));
+
+    CommonPersistableActivity.Translation enTitle =
+        new CommonPersistableActivity.Translation(LanguageCode.EN, "English Title");
+    CommonPersistableActivity.Translation frTitle =
+        new CommonPersistableActivity.Translation(LanguageCode.FR, "French Title");
+
+    CommonPersistableActivity activity =
+        new CommonPersistableActivity(
+            List.of(enTitle, frTitle),
+            List.of(),
+            List.of(),
+            new CommonPersistableActivity.Review(4.5f, 100),
+            60,
+            "https://example.com",
+            BookingProviderName.VIATOR,
+            "activity1");
+
+    Map<BookingProviderName, Set<String>> providerToIds = Map.of(BookingProviderName.VIATOR, Set.of("activity1"));
+    when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of(viatorProvider));
+    when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
+    when(mockStrategy.fetchProviderActivities(any())).thenReturn(List.of(activity));
+    when(activityRepository.findExistingIdsByProviderNameAndIds(any(), any())).thenReturn(Set.of());
+
+    // Execute
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
+    service.cacheNewActivitiesByProvider(providerToIds);
+
+    // Verify only English translation was added
+    activitiesCaptor = ArgumentCaptor.forClass(List.class);
+    verify(activityRepository).saveAll(activitiesCaptor.capture());
+
+    Activity savedActivity = activitiesCaptor.getValue().get(0);
+    assertThat(savedActivity.getActivityTranslations()).hasSize(1);
+    assertThat(savedActivity.getActivityTranslations().iterator().next().getLanguage().getCode())
+        .isEqualTo(LanguageCode.EN);
   }
 
   @Test
@@ -187,7 +274,7 @@ class ActivityServiceTest {
         .thenReturn(Set.of("activity1", "activity2"));
     when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
 
-    service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute
     service.cacheNewActivitiesByProvider(providerToIds);
@@ -205,7 +292,7 @@ class ActivityServiceTest {
     // No matching strategy (returns different provider name)
     when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.GET_YOUR_GUIDE);
 
-    service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute
     service.cacheNewActivitiesByProvider(providerToIds);
@@ -222,7 +309,7 @@ class ActivityServiceTest {
     when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
     when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of());
 
-    service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute
     service.cacheNewActivitiesByProvider(providerToIds);
@@ -241,7 +328,7 @@ class ActivityServiceTest {
     when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
     when(mockStrategy.fetchProviderActivities(any())).thenThrow(new RuntimeException("Test exception"));
 
-    service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute - should not throw exception
     service.cacheNewActivitiesByProvider(providerToIds);
@@ -261,7 +348,7 @@ class ActivityServiceTest {
     when(mockStrategy.fetchProviderActivities(any())).thenReturn(List.of(persistableActivity));
     when(activityRepository.saveAll(any())).thenThrow(new RuntimeException("Database error"));
 
-    service = new ActivityService(activityRepository, bookingProviderService, List.of(mockStrategy));
+    service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute - method should not propagate the exception
     assertThatThrownBy(() -> service.cacheNewActivitiesByProvider(providerToIds))

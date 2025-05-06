@@ -1,27 +1,18 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
-import java.util.Optional;
-
+/*
+ * This enum is mapped to the Language entity's code attribute in the database
+ * To add new languages:
+ *
+ * 1. Add the two-letter ISO code in the enum
+ * 2. Make sure the Language table has corresponding entries
+ */
 public enum LanguageCode {
-    EN,
-    FR;
+  EN,
+  FR;
 
-    public String toDbValue() {
-        return this.name().toLowerCase();
-    }
-
-    public static Optional<LanguageCode> from(String code) {
-        if (code == null || code.isEmpty()) {
-            return Optional.empty();
-        }
-        if (!"EN".equalsIgnoreCase(code) && !"FR".equalsIgnoreCase(code)) {
-            return Optional.empty();
-        }
-        return Optional.of(LanguageCode.valueOf(code.toUpperCase()));
-    }
-
-    @Override
-    public String toString() {
-        return this.name().toLowerCase();
-    }
+  @Override
+  public String toString() {
+    return this.name().toLowerCase();
+  }
 }
