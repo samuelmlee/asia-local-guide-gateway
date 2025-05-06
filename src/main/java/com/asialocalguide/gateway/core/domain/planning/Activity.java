@@ -37,7 +37,7 @@ public class Activity extends BaseEntity {
 
   @DecimalMin(value = "0.0")
   @DecimalMax(value = "5.0")
-  private Double averageRating;
+  private Float averageRating;
 
   @Min(value = 0)
   private Integer reviewCount;
@@ -52,7 +52,7 @@ public class Activity extends BaseEntity {
   public Activity(
       String providerActivityId,
       BookingProvider provider,
-      Double averageRating,
+      Float averageRating,
       Integer reviewCount,
       Integer durationMinutes,
       String bookingUrl) {

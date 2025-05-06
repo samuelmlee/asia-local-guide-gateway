@@ -313,7 +313,7 @@ public class ViatorActivityService implements ActivityProvider {
 
   private CommonPersistableActivity.Review mapActivityDetailReview(ViatorActivityDetailDTO dto) {
 
-    double averageRating = dto.reviews().combinedAverageRating();
+    float averageRating = dto.reviews().combinedAverageRating();
     int reviewCount = dto.reviews().totalReviews();
 
     return new CommonPersistableActivity.Review(averageRating, reviewCount);

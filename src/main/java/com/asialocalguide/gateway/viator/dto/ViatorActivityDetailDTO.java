@@ -33,7 +33,7 @@ public record ViatorActivityDetailDTO(
   public record ReviewsDTO(
       List<ReviewCountTotalDTO> reviewCountTotals,
       @Positive int totalReviews,
-      @DecimalMin("0.0") @DecimalMax("5.0") double combinedAverageRating) {}
+      @DecimalMin("0.0") @DecimalMax("5.0") float combinedAverageRating) {}
 
   public record ReviewCountTotalDTO(int rating, int count) {}
 
