@@ -54,16 +54,7 @@ public class ActivityTag {
     if (mapping == null) {
       return;
     }
-    mapping.setActivityTag(this);
     activityTagProviderMappings.add(mapping);
-  }
-
-  public void removeProviderMapping(ActivityTagProviderMapping mapping) {
-    if (mapping == null) {
-      return;
-    }
-    mapping.setActivityTag(null);
-    activityTagProviderMappings.remove(mapping);
   }
 
   @Override
