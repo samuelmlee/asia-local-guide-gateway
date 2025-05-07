@@ -14,21 +14,19 @@ public class UserAuth {
   @EmbeddedId private UserAuthId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("userId")
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", insertable = false, updatable = false)
   private User user;
 
   @NotEmpty private String providerUserId;
 
   public UserAuth(User user, AuthProviderName authProviderName, String providerUserId) {
+    if (user == null || authProviderName == null || providerUserId == null) {
+      throw new IllegalArgumentException("User, AuthProviderName or providerUserId cannot be null");
+    }
 
-    this.id = new UserAuthId(authProviderName);
+    this.id = new UserAuthId(user.getId(), authProviderName);
     this.user = user;
     this.providerUserId = providerUserId;
-  }
-
-  void setUser(User user) {
-    this.user = user;
   }
 
   @Override
@@ -36,11 +34,11 @@ public class UserAuth {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     UserAuth userAuth = (UserAuth) o;
-    return Objects.equals(id, userAuth.id);
+    return Objects.equals(getId(), userAuth.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(getId());
   }
 }

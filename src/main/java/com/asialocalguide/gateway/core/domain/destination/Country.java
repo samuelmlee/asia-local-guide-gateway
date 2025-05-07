@@ -15,10 +15,7 @@ import org.hibernate.validator.constraints.Length;
 @NoArgsConstructor
 public class Country implements Translatable {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+  @Id @Getter private Long id;
 
   @OneToMany(mappedBy = "country", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<CountryTranslation> countryTranslations = new HashSet<>();

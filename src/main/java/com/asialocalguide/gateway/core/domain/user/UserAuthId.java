@@ -6,24 +6,23 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @NoArgsConstructor
 @Embeddable
 @Getter
-@Setter
 public class UserAuthId implements Serializable {
   @Column(name = "user_id")
-  private Long userId;
+  private UUID userId;
 
   @Enumerated(EnumType.STRING)
   private AuthProviderName authProviderName;
 
-  public UserAuthId(AuthProviderName authProviderName) {
+  public UserAuthId(UUID userId, AuthProviderName authProviderName) {
+    this.userId = userId;
     this.authProviderName = authProviderName;
-    // userId will be set by Hibernate with @MapsId in UserAuth
   }
 
   @Override
@@ -31,13 +30,13 @@ public class UserAuthId implements Serializable {
     if (o == null || getClass() != o.getClass()) return false;
 
     UserAuthId that = (UserAuthId) o;
-    return Objects.equals(userId, that.userId) && authProviderName == that.authProviderName;
+    return Objects.equals(getUserId(), that.getUserId()) && getAuthProviderName() == that.getAuthProviderName();
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(userId);
-    result = 31 * result + Objects.hashCode(authProviderName);
+    int result = Objects.hashCode(getUserId());
+    result = 31 * result + Objects.hashCode(getAuthProviderName());
     return result;
   }
 }

@@ -13,10 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ActivityTag {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+  @Id @Getter private Long id;
 
   @OneToMany(mappedBy = "activityTag", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<ActivityTagTranslation> activityTagTranslations = new HashSet<>();
