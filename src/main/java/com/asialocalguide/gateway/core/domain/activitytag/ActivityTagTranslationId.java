@@ -1,6 +1,5 @@
 package com.asialocalguide.gateway.core.domain.activitytag;
 
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
@@ -18,8 +17,13 @@ public class ActivityTagTranslationId implements Serializable {
   @Column(name = "language_id")
   private Long languageId;
 
-  public ActivityTagTranslationId(LanguageCode languageCode) {
-    // activityTagId and languageId set by Hibernate with @MapsId in ActivityTagTranslation
+  public ActivityTagTranslationId(Long activityTagId, Long languageId) {
+    if (activityTagId == null || languageId == null) {
+      throw new IllegalArgumentException(
+          String.format("ActivityTag ID: %s or Language ID: %s cannot be null", activityTagId, languageId));
+    }
+    this.activityTagId = activityTagId;
+    this.languageId = languageId;
   }
 
   @Override
@@ -27,11 +31,12 @@ public class ActivityTagTranslationId implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ActivityTagTranslationId that = (ActivityTagTranslationId) o;
-    return Objects.equals(activityTagId, that.activityTagId) && Objects.equals(languageId, that.languageId);
+    return Objects.equals(getActivityTagId(), that.getActivityTagId())
+        && Objects.equals(getLanguageId(), that.getLanguageId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(activityTagId, languageId);
+    return Objects.hash(getActivityTagId(), getLanguageId());
   }
 }

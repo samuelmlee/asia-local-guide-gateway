@@ -15,12 +15,10 @@ public class ActivityTagTranslation {
   @EmbeddedId private ActivityTagTranslationId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("activityTagId")
   @JoinColumn(name = "activity_tag_id")
   private ActivityTag activityTag;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("languageId")
   @JoinColumn(name = "language_id")
   private Language language;
 
@@ -29,14 +27,12 @@ public class ActivityTagTranslation {
   @NotEmpty private String promptText;
 
   public ActivityTagTranslation(ActivityTag activityTag, Language language, String name, String promptText) {
-    if (activityTag == null) {
-      throw new IllegalArgumentException("ActivityTag cannot be null");
-    }
-    if (language == null) {
-      throw new IllegalArgumentException("LanguageCode cannot be null");
+    if (activityTag == null || language == null || name == null) {
+      throw new IllegalArgumentException(
+          String.format("ActivityTag: %s or Language: %s or name: %s cannot be null", activityTag, language, name));
     }
 
-    this.id = new ActivityTagTranslationId();
+    this.id = new ActivityTagTranslationId(activityTag.getId(), language.getId());
     this.activityTag = activityTag;
     this.name = name;
     this.promptText = promptText;

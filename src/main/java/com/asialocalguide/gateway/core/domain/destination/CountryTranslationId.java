@@ -17,6 +17,15 @@ public class CountryTranslationId implements Serializable {
   @Column(name = "language_id")
   private Long languageId;
 
+  public CountryTranslationId(Long countryId, Long languageId) {
+    if (countryId == null || languageId == null) {
+      throw new IllegalArgumentException(
+          String.format("Country ID: %s or Language ID: %s cannot be null", countryId, languageId));
+    }
+    this.countryId = countryId;
+    this.languageId = languageId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

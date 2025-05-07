@@ -42,20 +42,7 @@ public class Country implements Translatable {
     if (countryTranslations == null) {
       countryTranslations = new HashSet<>();
     }
-    translation.setCountry(this);
     countryTranslations.add(translation);
-  }
-
-  public void removeTranslation(CountryTranslation translation) {
-    if (translation == null) {
-      throw new IllegalArgumentException("Translation cannot be null");
-    }
-
-    if (countryTranslations == null) {
-      return;
-    }
-    translation.setCountry(null);
-    countryTranslations.remove(translation);
   }
 
   /*
@@ -77,11 +64,11 @@ public class Country implements Translatable {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     Country country = (Country) o;
-    return Objects.equal(id, country.id);
+    return Objects.equal(getId(), country.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(getId());
   }
 }
