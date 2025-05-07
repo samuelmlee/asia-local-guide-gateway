@@ -36,7 +36,7 @@ CREATE TABLE country (
 
 -- "user" definition
 CREATE TABLE "user" (
-    id bigint NOT NULL,
+    id uuid NOT NULL,
     email varchar(255) NOT NULL,
     "name" varchar(255) NULL,
     CONSTRAINT pk_user PRIMARY KEY (id)
@@ -132,7 +132,7 @@ CREATE TYPE destination_type AS ENUM (
 );
 
 CREATE TABLE destination (
-    id bigint NOT NULL,
+    id uuid NOT NULL,
     latitude double precision NULL,
     longitude double precision NULL,
     "type" destination_type NOT NULL,
@@ -145,7 +145,7 @@ CREATE INDEX idx_destination_type ON destination USING btree (type);
 
 -- destination_provider_mapping definition
 CREATE TABLE destination_provider_mapping (
-    destination_id bigint NOT NULL,
+    destination_id uuid NOT NULL,
     booking_provider_id bigint NOT NULL,
     provider_destination_id varchar(255) NOT NULL,
     CONSTRAINT pk_destination_provider_mapping PRIMARY KEY (destination_id, booking_provider_id),
@@ -157,7 +157,7 @@ CREATE INDEX idx_destination_provider_mapping_booking_provider_id ON destination
 -- destination_translation definition
 CREATE TABLE destination_translation (
     language_id bigint NOT NULL,
-    destination_id bigint NOT NULL,
+    destination_id uuid NOT NULL,
     "name" varchar(255) NULL,
     CONSTRAINT pk_destination_translation PRIMARY KEY (destination_id, language_id),
     CONSTRAINT fk_destination_translation_to_destination FOREIGN KEY (destination_id) REFERENCES destination(id),
@@ -176,7 +176,7 @@ CREATE TYPE auth_provider_name AS ENUM (
 );
 
 CREATE TABLE user_auth (
-    user_id bigint NOT NULL,
+    user_id uuid NOT NULL,
     auth_provider_name auth_provider_name NOT NULL,
     provider_user_id varchar(255) NOT NULL,
     CONSTRAINT pk_user_auth PRIMARY KEY (user_id, auth_provider_name),
@@ -189,7 +189,7 @@ CREATE UNIQUE INDEX uq_user_auth_provider_user_id ON user_auth USING btree (auth
 CREATE TABLE planning (
     id uuid NOT NULL,
     "name" varchar(255) NOT NULL,
-    user_id bigint NOT NULL,
+    user_id uuid NOT NULL,
     created_date timestamptz NOT NULL,
     CONSTRAINT pk_planning PRIMARY KEY (id),
     CONSTRAINT fk_planning_to_user FOREIGN KEY (user_id) REFERENCES "user"(id)
