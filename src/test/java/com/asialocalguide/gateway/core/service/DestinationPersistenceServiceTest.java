@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
@@ -221,6 +222,7 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
@@ -294,6 +296,7 @@ class DestinationPersistenceServiceTest {
             invalidIso, List.of(mockRawDestinationDTO()));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(Set.of(validIso, invalidIso))).thenReturn(List.of(validCountry));
 
     service.persistNewDestinations(providerName, input);
@@ -316,6 +319,7 @@ class DestinationPersistenceServiceTest {
     Country country = new Country("US");
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
@@ -340,6 +344,7 @@ class DestinationPersistenceServiceTest {
     Country country = new Country("US");
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage(), getFrenchLanguage()));
     when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
@@ -359,5 +364,13 @@ class DestinationPersistenceServiceTest {
         null,
         BookingProviderName.VIATOR,
         "US");
+  }
+
+  private Language getEnglishLanguage() {
+    return new Language(1L, LanguageCode.EN);
+  }
+
+  private Language getFrenchLanguage() {
+    return new Language(2L, LanguageCode.FR);
   }
 }
