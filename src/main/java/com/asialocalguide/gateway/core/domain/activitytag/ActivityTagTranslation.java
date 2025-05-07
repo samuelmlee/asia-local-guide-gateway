@@ -15,11 +15,11 @@ public class ActivityTagTranslation {
   @EmbeddedId private ActivityTagTranslationId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "activity_tag_id")
+  @JoinColumn(name = "activity_tag_id", insertable = false, updatable = false)
   private ActivityTag activityTag;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "language_id")
+  @JoinColumn(name = "language_id", insertable = false, updatable = false)
   private Language language;
 
   @NotEmpty private String name;
