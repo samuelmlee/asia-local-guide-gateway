@@ -6,7 +6,7 @@ CREATE TABLE activity_tag (
 
 -- language definition
 CREATE TABLE language (
-    id int NOT NULL,
+    id bigint NOT NULL,
     code varchar(2) NOT NULL,
     CONSTRAINT pk_language PRIMARY KEY (id)
 );
@@ -91,7 +91,7 @@ CREATE INDEX idx_activity_tag_provider_mapping_booking_provider_id ON activity_t
 
 -- activity_tag_translation definition
 CREATE TABLE activity_tag_translation (
-    language_id int NOT NULL,
+    language_id bigint NOT NULL,
     "name" varchar(255) NOT NULL,
     prompt_text varchar(255) NOT NULL,
     activity_tag_id bigint NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE activity_tag_translation (
 -- activity_translation definition
 CREATE TABLE activity_translation (
     activity_id uuid NOT NULL,
-    language_id int NOT NULL,
+    language_id bigint NOT NULL,
     title varchar(255) NOT NULL,
     description text NULL,
     CONSTRAINT pk_activity_translation PRIMARY KEY (activity_id, language_id),
@@ -114,7 +114,7 @@ CREATE INDEX idx_activity_translation_language_id ON activity_translation USING 
 
 -- country_translation definition
 CREATE TABLE country_translation (
-    language_id int NOT NULL,
+    language_id bigint NOT NULL,
     "name" varchar(255) NOT NULL,
     country_id bigint NOT NULL,
     CONSTRAINT pk_country_translation PRIMARY KEY (country_id, language_id),
@@ -156,7 +156,7 @@ CREATE INDEX idx_destination_provider_mapping_booking_provider_id ON destination
 
 -- destination_translation definition
 CREATE TABLE destination_translation (
-    language_id int NOT NULL,
+    language_id bigint NOT NULL,
     destination_id bigint NOT NULL,
     "name" varchar(255) NULL,
     CONSTRAINT pk_destination_translation PRIMARY KEY (destination_id, language_id),
