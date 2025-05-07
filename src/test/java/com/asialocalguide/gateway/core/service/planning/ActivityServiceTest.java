@@ -42,7 +42,7 @@ class ActivityServiceTest {
 
   @BeforeEach
   void setup() {
-    viatorProvider = new BookingProvider(BookingProviderName.VIATOR);
+    viatorProvider = new BookingProvider(1L, BookingProviderName.VIATOR);
     validActivityIds = Set.of("activity1", "activity2");
 
     CommonPersistableActivity.Review review = new CommonPersistableActivity.Review(4.5f, 100);

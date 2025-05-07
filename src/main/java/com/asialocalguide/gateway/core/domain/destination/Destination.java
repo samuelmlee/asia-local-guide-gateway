@@ -65,16 +65,7 @@ public class Destination extends BaseEntity implements Translatable {
     if (mapping == null) {
       return;
     }
-    mapping.setDestination(this);
     destinationProviderMappings.add(mapping);
-  }
-
-  public void removeProviderMapping(DestinationProviderMapping mapping) {
-    if (mapping == null) {
-      return;
-    }
-    mapping.setDestination(null);
-    destinationProviderMappings.remove(mapping);
   }
 
   public Optional<DestinationProviderMapping> getBookingProviderMapping(Long providerId) {

@@ -41,8 +41,7 @@ class DestinationPersistenceServiceTest {
 
   @BeforeEach
   void setUp() {
-    provider = new BookingProvider(BookingProviderName.VIATOR);
-    provider.setId(providerId);
+    provider = new BookingProvider(providerId, BookingProviderName.VIATOR);
   }
 
   @Test
@@ -117,6 +116,7 @@ class DestinationPersistenceServiceTest {
     Map<UUID, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     Destination existingDestination = mock(Destination.class);
+    when(existingDestination.getId()).thenReturn(destinationId);
 
     DestinationProviderMapping existingMapping = new DestinationProviderMapping(existingDestination, provider, "D123");
     existingDestination.addProviderMapping(existingMapping);

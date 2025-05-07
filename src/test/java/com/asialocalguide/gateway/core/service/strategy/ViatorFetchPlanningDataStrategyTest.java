@@ -90,6 +90,7 @@ class ViatorFetchPlanningDataStrategyTest {
     // Setup
     BookingProvider viator = setupViatorProvider();
     Destination destination = mock(Destination.class);
+    when(destination.getId()).thenReturn(validRequest.destinationId());
     DestinationProviderMapping mapping = new DestinationProviderMapping(destination, viator, "VIATOR_DEST_123");
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
@@ -127,11 +128,13 @@ class ViatorFetchPlanningDataStrategyTest {
   void fetchProviderPlanningData_shouldHandleServiceExceptions() {
     setupViatorProvider();
     Destination destination = mock(Destination.class);
+    when(destination.getId()).thenReturn(validRequest.destinationId());
     DestinationProviderMapping mapping =
-        new DestinationProviderMapping(destination, new BookingProvider(BookingProviderName.VIATOR), "VIATOR_DEST_123");
+        new DestinationProviderMapping(
+            destination, new BookingProvider(1L, BookingProviderName.VIATOR), "VIATOR_DEST_123");
+    when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
-    when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
     when(viatorActivityService.fetchProviderPlanningData(any())).thenThrow(new RuntimeException("API Failure"));
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
@@ -140,7 +143,7 @@ class ViatorFetchPlanningDataStrategyTest {
   }
 
   private BookingProvider setupViatorProvider() {
-    BookingProvider viator = new BookingProvider(BookingProviderName.VIATOR);
+    BookingProvider viator = new BookingProvider(1L, BookingProviderName.VIATOR);
     when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
     return viator;
   }
