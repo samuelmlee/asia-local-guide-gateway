@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +31,8 @@ class DestinationPersistenceServiceTest {
   @Mock private LanguageService languageService;
 
   @InjectMocks private DestinationPersistenceService service;
+
+  @Captor ArgumentCaptor<List<Destination>> destinationsCaptor;
 
   private BookingProvider provider;
   private final Long providerId = 1L;
@@ -46,7 +49,7 @@ class DestinationPersistenceServiceTest {
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.empty());
 
     CommonDestination destination = mockRawDestinationDTO();
-    Map<Long, CommonDestination> input = Map.of(1L, destination);
+    Map<UUID, CommonDestination> input = Map.of(UUID.randomUUID(), destination);
 
     try {
       service.persistExistingDestinations(providerName, input);
@@ -68,7 +71,7 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistExistingDestinations_AddsMissingProviderMappings() {
     // Setup
-    Long destinationId = 100L;
+    UUID destinationId = UUID.randomUUID();
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
@@ -77,7 +80,7 @@ class DestinationPersistenceServiceTest {
             null,
             providerName,
             "US");
-    Map<Long, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
+    Map<UUID, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     // Create mock Destination
     Destination existingDestination = mock(Destination.class);
@@ -101,7 +104,7 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistExistingDestinations_SkipsWhenMappingExists() {
-    Long destinationId = 100L;
+    UUID destinationId = UUID.randomUUID();
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
@@ -110,7 +113,7 @@ class DestinationPersistenceServiceTest {
             null,
             providerName,
             "US");
-    Map<Long, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
+    Map<UUID, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     Destination existingDestination = mock(Destination.class);
 
@@ -187,17 +190,17 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
 
     // Verify saveAll is called with a list of one destination
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    List<Destination> savedDestinations = captor.getValue();
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    List<Destination> savedDestinations = destinationsCaptor.getValue();
 
     assertEquals(1, savedDestinations.size());
-    Destination saved = savedDestinations.get(0);
+    Destination saved = savedDestinations.getFirst();
     assertEquals(country, saved.getCountry());
     assertEquals(DestinationType.CITY, saved.getType());
 
@@ -228,17 +231,17 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistExistingDestinations_NullProviderName_ExitsEarly() {
 
-    service.persistExistingDestinations(null, Map.of(1L, mockRawDestinationDTO()));
+    service.persistExistingDestinations(null, Map.of(UUID.randomUUID(), mockRawDestinationDTO()));
 
     verifyNoInteractions(bookingProviderService, destinationRepository);
   }
 
   @Test
   void persistExistingDestinations_PartialDestinationMatches_ProcessesOnlyFound() {
-    Long foundId = 1L;
-    Long missingId = 2L;
+    UUID foundId = UUID.randomUUID();
+    UUID missingId = UUID.randomUUID();
     CommonDestination dto = mockRawDestinationDTO();
-    Map<Long, CommonDestination> input = Map.of(foundId, dto, missingId, dto);
+    Map<UUID, CommonDestination> input = Map.of(foundId, dto, missingId, dto);
 
     // Create a mock Destination and stub getId()
     Destination foundDestination = mock(Destination.class);
@@ -261,8 +264,8 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistExistingDestinations_NullRawDtoInMap_LogsWarning() {
-    Long destinationId = 1L;
-    Map<Long, CommonDestination> input = new HashMap<>();
+    UUID destinationId = UUID.randomUUID();
+    Map<UUID, CommonDestination> input = new HashMap<>();
     input.put(destinationId, null);
 
     assertThatThrownBy(() -> service.persistExistingDestinations(providerName, input))
@@ -295,9 +298,8 @@ class DestinationPersistenceServiceTest {
 
     service.persistNewDestinations(providerName, input);
 
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    assertEquals(1, captor.getValue().size()); // Only valid country processed
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    assertEquals(1, destinationsCaptor.getValue().size()); // Only valid country processed
   }
 
   @Test
@@ -318,9 +320,8 @@ class DestinationPersistenceServiceTest {
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
 
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    assertNull(captor.getValue().get(0).getCenterCoordinates());
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    assertNull(destinationsCaptor.getValue().getFirst().getCenterCoordinates());
   }
 
   @Test
@@ -343,9 +344,8 @@ class DestinationPersistenceServiceTest {
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
 
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    Destination destination = captor.getValue().getFirst();
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    Destination destination = destinationsCaptor.getValue().getFirst();
     assertEquals(Optional.of("Singapore"), destination.getTranslation(LanguageCode.EN));
     assertEquals(Optional.of("Singapour"), destination.getTranslation(LanguageCode.FR));
   }

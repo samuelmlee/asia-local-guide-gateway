@@ -12,10 +12,7 @@ import com.asialocalguide.gateway.core.service.destination.BookingProviderMappin
 import com.asialocalguide.gateway.core.service.destination.CountryService;
 import com.asialocalguide.gateway.core.service.destination.DestinationPersistenceService;
 import com.asialocalguide.gateway.core.service.destination.DestinationSortingService;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -99,7 +96,7 @@ class DestinationSortingServiceTest {
     sortingService.triageRawDestinations(
         new DestinationIngestionInput(providerName, List.of(existingRawDto, newRawDto)));
 
-    ArgumentCaptor<Map<Long, CommonDestination>> existingCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<UUID, CommonDestination>> existingCaptor = ArgumentCaptor.forClass(Map.class);
     ArgumentCaptor<Map<String, List<CommonDestination>>> newCaptor = ArgumentCaptor.forClass(Map.class);
 
     verify(destinationPersistenceService).persistExistingDestinations(eq(providerName), existingCaptor.capture());

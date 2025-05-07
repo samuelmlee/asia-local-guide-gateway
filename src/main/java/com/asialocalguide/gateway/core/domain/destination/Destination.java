@@ -1,24 +1,17 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
-public class Destination implements Translatable {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+public class Destination extends BaseEntity implements Translatable {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "country_id")
@@ -58,16 +51,7 @@ public class Destination implements Translatable {
     if (translation == null) {
       return;
     }
-    translation.setDestination(this);
     destinationTranslations.add(translation);
-  }
-
-  public void removeTranslation(DestinationTranslation translation) {
-    if (translation == null) {
-      return;
-    }
-    translation.setDestination(null);
-    destinationTranslations.remove(translation);
   }
 
   public int getTranslationCount() {
@@ -112,16 +96,16 @@ public class Destination implements Translatable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Destination that = (Destination) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(getId(), that.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(getId());
   }
 
   @Override
   public String toString() {
-    return "Destination{" + "id=" + id + ", type=" + type + '}';
+    return "Destination{" + "id=" + getId() + ", type=" + type + '}';
   }
 }

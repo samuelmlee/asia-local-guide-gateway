@@ -13,7 +13,7 @@ public abstract class BaseEntity {
   @Id private UUID id;
 
   protected BaseEntity() {
-    // UUIDv7 See https://github.com/f4b6a3/uuid-creator
+    // UUIDv7 See uuid-creator https://github.com/f4b6a3/uuid-creator
     this.id = UuidCreator.getTimeOrderedEpoch();
   }
 

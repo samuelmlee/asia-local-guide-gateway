@@ -56,7 +56,7 @@ public class DestinationSortingService {
 
     // Maps to store new and existing destinations
     Map<String, List<CommonDestination>> newDestinationsMap = new HashMap<>();
-    Map<Long, CommonDestination> existingDestinationsMap = new HashMap<>();
+    Map<UUID, CommonDestination> existingDestinationsMap = new HashMap<>();
 
     // Process each provider
     processDestinationsByIsoCode(
@@ -77,7 +77,7 @@ public class DestinationSortingService {
       Map<String, List<CommonDestination>> isoCodeToRawDestinations,
       Map<String, List<Destination>> isoCodeToExistingDestinations,
       Map<String, List<CommonDestination>> newDestinationsMap,
-      Map<Long, CommonDestination> existingDestinationsMap) {
+      Map<UUID, CommonDestination> existingDestinationsMap) {
 
     isoCodeToRawDestinations.forEach(
         (isoCode, rawDestinations) -> {
@@ -132,7 +132,7 @@ public class DestinationSortingService {
       List<CommonDestination> rawDestinations,
       List<Destination> possibleExistingDestinations,
       Map<String, List<CommonDestination>> newDestinationsMap,
-      Map<Long, CommonDestination> existingDestinationsMap) {
+      Map<UUID, CommonDestination> existingDestinationsMap) {
 
     for (CommonDestination rawDto : rawDestinations) {
       if (rawDto == null) {
@@ -153,7 +153,7 @@ public class DestinationSortingService {
   private void persistDestinations(
       BookingProviderName providerName,
       Map<String, List<CommonDestination>> newDestinationsMap,
-      Map<Long, CommonDestination> existingDestinationsMap) {
+      Map<UUID, CommonDestination> existingDestinationsMap) {
 
     if (!newDestinationsMap.isEmpty()) {
       destinationPersistenceService.persistNewDestinations(providerName, newDestinationsMap);

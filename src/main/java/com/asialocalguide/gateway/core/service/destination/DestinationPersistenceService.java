@@ -41,7 +41,7 @@ public class DestinationPersistenceService {
    */
   @Transactional
   public void persistExistingDestinations(
-      BookingProviderName providerName, Map<Long, CommonDestination> idToRawDestinations) {
+      BookingProviderName providerName, Map<UUID, CommonDestination> idToRawDestinations) {
     if (providerName == null || idToRawDestinations == null || idToRawDestinations.isEmpty()) {
       log.warn(
           "Persist existing destinations: BookingProviderName is null or Map<Long, RawDestinationDTO> to process is"
@@ -144,9 +144,9 @@ public class DestinationPersistenceService {
                 name ->
                     Optional.ofNullable(codeToLanguage.get(name.languageCode()))
                         .ifPresentOrElse(
-                            languageCode ->
+                            language ->
                                 newDestination.addTranslation(
-                                    new DestinationTranslation(newDestination, languageCode, name.name())),
+                                    new DestinationTranslation(newDestination, language, name.name())),
                             () ->
                                 log.warn(
                                     "Skipping translation with invalid language code: {} for destination name: {},"

@@ -15,35 +15,26 @@ public class DestinationTranslation {
   @EmbeddedId @Getter private DestinationTranslationId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("destinationId")
-  @JoinColumn(name = "destination_id")
+  @JoinColumn(name = "destination_id", insertable = false, updatable = false)
   @Getter
   private Destination destination;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("languageId")
-  @JoinColumn(name = "language_id")
+  @JoinColumn(name = "language_id", insertable = false, updatable = false)
   @Getter
   private Language language;
 
   @Setter @NotEmpty @Getter private String name;
 
   public DestinationTranslation(Destination destination, Language language, String name) {
-    if (destination == null) {
-      throw new IllegalArgumentException("Destination cannot be null");
-    }
-    if (language == null) {
-      throw new IllegalArgumentException("LanguageCode cannot be null");
+    if (destination == null || language == null || name == null) {
+      throw new IllegalArgumentException("Destination or Language pr name cannot be null");
     }
 
-    this.id = new DestinationTranslationId();
+    this.id = new DestinationTranslationId(destination.getId(), language.getId());
     this.destination = destination;
     this.language = language;
     this.name = name;
-  }
-
-  void setDestination(Destination destination) {
-    this.destination = destination;
   }
 
   @Override

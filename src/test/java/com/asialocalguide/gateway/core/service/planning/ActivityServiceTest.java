@@ -352,6 +352,7 @@ class ActivityServiceTest {
     Map<BookingProviderName, Set<String>> providerToIds = Map.of(BookingProviderName.VIATOR, Set.of("activity1"));
 
     when(bookingProviderService.getAllBookingProviders()).thenReturn(List.of(viatorProvider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(activityRepository.findExistingIdsByProviderNameAndIds(any(), any())).thenReturn(Set.of());
     when(mockStrategy.getProviderName()).thenReturn(BookingProviderName.VIATOR);
     when(mockStrategy.fetchProviderActivities(any())).thenReturn(List.of(persistableActivity));

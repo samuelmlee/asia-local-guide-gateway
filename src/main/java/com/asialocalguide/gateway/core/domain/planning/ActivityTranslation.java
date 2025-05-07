@@ -35,6 +35,8 @@ public class ActivityTranslation {
     this.language = language;
     this.title = title;
     this.description = description;
+
+    this.activity.addTranslation(this);
   }
 
   @Override

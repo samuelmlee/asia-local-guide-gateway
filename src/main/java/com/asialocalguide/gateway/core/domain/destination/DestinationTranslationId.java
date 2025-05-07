@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,10 +15,15 @@ import lombok.Setter;
 @Setter
 public class DestinationTranslationId implements Serializable {
   @Column(name = "destination_id")
-  private Long destinationId;
+  private UUID destinationId;
 
   @Column(name = "language_id")
   private Long languageId;
+
+  public DestinationTranslationId(UUID destinationId, Long languageId) {
+    this.destinationId = destinationId;
+    this.languageId = languageId;
+  }
 
   @Override
   public boolean equals(Object o) {
