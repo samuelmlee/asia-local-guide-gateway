@@ -86,11 +86,11 @@ class DestinationServiceTest {
     LocaleContextHolder.setLocale(Locale.FRANCE);
     Destination destination = createTestDestinationWithTranslations();
 
-    when(destinationRepository.findCityOrRegionByNameWithEagerTranslations(LanguageCode.FR, "paris"))
+    when(destinationRepository.findCityOrRegionByNameWithEagerTranslations(LanguageCode.FR, "New York"))
         .thenReturn(List.of(destination));
 
     // Act
-    List<DestinationDTO> result = destinationService.getAutocompleteSuggestions("paris");
+    List<DestinationDTO> result = destinationService.getAutocompleteSuggestions("New York");
 
     // Assert
     assertEquals(1, result.size());
@@ -135,9 +135,9 @@ class DestinationServiceTest {
   }
 
   private Destination createTestDestinationWithTranslations() {
-    Destination destination = new Destination();
-    destination.setType(DestinationType.CITY);
-    destination.addTranslation(new DestinationTranslation(destination, new Language(1L, LanguageCode.EN), "New York"));
+    Destination destination =
+        new Destination(new Country("FR"), DestinationType.CITY, new Coordinates(40.7128, -74.0060));
+    destination.addTranslation(new DestinationTranslation(destination, new Language(1L, LanguageCode.EN), "Paris"));
     destination.addTranslation(new DestinationTranslation(destination, new Language(2L, LanguageCode.FR), "Paris"));
     return destination;
   }

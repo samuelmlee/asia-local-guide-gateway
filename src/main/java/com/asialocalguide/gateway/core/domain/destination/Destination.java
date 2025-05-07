@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
@@ -17,7 +16,6 @@ public class Destination extends BaseEntity implements Translatable {
   @JoinColumn(name = "country_id")
   @NotNull
   @Getter
-  @Setter
   private Country country;
 
   @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -27,13 +25,24 @@ public class Destination extends BaseEntity implements Translatable {
   @Enumerated(EnumType.STRING)
   @NotNull
   @Getter
-  @Setter
   private DestinationType type;
 
   @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
-  @NotNull @Embedded @Getter @Setter Coordinates centerCoordinates;
+  @NotNull @Embedded @Getter Coordinates centerCoordinates;
+
+  public Destination(Country country, DestinationType type, Coordinates centerCoordinates) {
+    if (country == null || centerCoordinates == null || type == null) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Country: %s, centerCoordinates: %s or type: %s cannot be null", country, centerCoordinates, type));
+    }
+
+    this.country = country;
+    this.type = type;
+    this.centerCoordinates = centerCoordinates;
+  }
 
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {

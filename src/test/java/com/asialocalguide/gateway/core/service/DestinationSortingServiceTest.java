@@ -47,9 +47,8 @@ class DestinationSortingServiceTest {
             providerName,
             supportedIsoCode);
 
-    existingDestination = new Destination();
-    existingDestination.setCenterCoordinates(new Coordinates(40.7128, -74.0060));
-    existingDestination.setCountry(new Country(supportedIsoCode));
+    existingDestination =
+        new Destination(new Country(supportedIsoCode), DestinationType.CITY, new Coordinates(40.7128, -74.0060));
   }
 
   @Test

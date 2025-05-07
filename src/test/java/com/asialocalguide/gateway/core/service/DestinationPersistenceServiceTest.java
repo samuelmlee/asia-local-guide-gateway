@@ -306,29 +306,6 @@ class DestinationPersistenceServiceTest {
   }
 
   @Test
-  void persistNewDestinations_WithNullCoordinates_SetsNullInEntity() {
-    CommonDestination dto =
-        new CommonDestination(
-            "D123",
-            List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
-            DestinationType.CITY,
-            null, // Null coordinates
-            providerName,
-            "US");
-
-    Country country = new Country("US");
-
-    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
-    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
-
-    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
-
-    verify(destinationRepository).saveAll(destinationsCaptor.capture());
-    assertNull(destinationsCaptor.getValue().getFirst().getCenterCoordinates());
-  }
-
-  @Test
   void persistNewDestinations_WithMultipleTranslations_CreatesAll() {
     CommonDestination dto =
         new CommonDestination(
@@ -337,7 +314,7 @@ class DestinationPersistenceServiceTest {
                 new CommonDestination.Translation(LanguageCode.EN, "Singapore"),
                 new CommonDestination.Translation(LanguageCode.FR, "Singapour")),
             DestinationType.CITY,
-            null,
+            new Coordinates(35.6895, 139.6917),
             providerName,
             "US");
 
@@ -361,7 +338,7 @@ class DestinationPersistenceServiceTest {
         "test-id",
         List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
         DestinationType.CITY,
-        null,
+        new Coordinates(35.6895, 139.6917),
         BookingProviderName.VIATOR,
         "US");
   }

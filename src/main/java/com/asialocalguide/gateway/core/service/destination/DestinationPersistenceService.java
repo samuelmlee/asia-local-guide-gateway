@@ -133,10 +133,7 @@ public class DestinationPersistenceService {
 
       for (CommonDestination rawDto : nonNullDestinations) {
 
-        Destination newDestination = new Destination();
-        newDestination.setCountry(country);
-        newDestination.setType(rawDto.type());
-        newDestination.setCenterCoordinates(rawDto.centerCoordinates());
+        Destination newDestination = new Destination(country, rawDto.type(), rawDto.centerCoordinates());
 
         rawDto
             .names()
