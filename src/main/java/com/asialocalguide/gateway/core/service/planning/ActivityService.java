@@ -254,7 +254,7 @@ public class ActivityService {
                 return;
               }
 
-              activity.addTranslation(new ActivityTranslation(language, title, description));
+              activity.addTranslation(new ActivityTranslation(activity, language, title, description));
 
             } catch (Exception ex) {
               log.warn(

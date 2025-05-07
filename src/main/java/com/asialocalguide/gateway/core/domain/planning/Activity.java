@@ -5,7 +5,9 @@ import com.asialocalguide.gateway.core.domain.BookingProvider;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
@@ -73,22 +75,6 @@ public class Activity extends BaseEntity {
     return Collections.unmodifiableSet(coverImages);
   }
 
-  public void addTranslation(ActivityTranslation translation) {
-    if (translation == null) {
-      return;
-    }
-    translation.setActivity(this);
-    activityTranslations.add(translation);
-  }
-
-  public void removeTranslation(ActivityTranslation translation) {
-    if (translation == null) {
-      return;
-    }
-    translation.setActivity(null);
-    activityTranslations.remove(translation);
-  }
-
   public void addImage(ActivityImage image) {
     if (image == null) {
       return;
@@ -103,5 +89,12 @@ public class Activity extends BaseEntity {
     }
     image.setActivity(null);
     coverImages.remove(image);
+  }
+
+  public void addTranslation(ActivityTranslation activityTranslation) {
+    if (activityTranslation == null) {
+      return;
+    }
+    activityTranslations.add(activityTranslation);
   }
 }

@@ -19,6 +19,11 @@ public class ActivityTranslationId implements Serializable {
   @Column(name = "language_id")
   private Long languageId;
 
+  public ActivityTranslationId(UUID activityId, Long languageId) {
+    this.activityId = activityId;
+    this.languageId = languageId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;

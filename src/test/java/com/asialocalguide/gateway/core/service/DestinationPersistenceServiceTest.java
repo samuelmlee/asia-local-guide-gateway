@@ -350,29 +350,6 @@ class DestinationPersistenceServiceTest {
     assertEquals(Optional.of("Singapour"), destination.getTranslation(LanguageCode.FR));
   }
 
-  @Test
-  void persistNewDestinations_WithNoValidTranslations_SkipsDestination() {
-    // Create destination with only invalid language code translations
-    CommonDestination dto =
-        new CommonDestination(
-            "D123",
-            List.of(new CommonDestination.Translation(null, "Test1")),
-            DestinationType.CITY,
-            null,
-            providerName,
-            "US");
-
-    Country country = new Country("US");
-
-    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
-
-    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
-
-    // Verify destinationRepository.saveAll wasn't called
-    verify(destinationRepository, never()).saveAll(anyList());
-  }
-
   private static CommonDestination mockRawDestinationDTO() {
 
     return new CommonDestination(

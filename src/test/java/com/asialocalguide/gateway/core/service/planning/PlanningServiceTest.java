@@ -337,7 +337,7 @@ class PlanningServiceTest {
 
     assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
         .isInstanceOf(PlanningCreationException.class)
-        .hasMessageContaining("Error during persisting new activities for Planning creation");
+        .hasMessageContaining("Error during caching new activities for Planning creation");
   }
 
   @Test

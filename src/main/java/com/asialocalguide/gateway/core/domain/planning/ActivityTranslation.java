@@ -15,31 +15,26 @@ public class ActivityTranslation {
   @EmbeddedId private ActivityTranslationId id;
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @MapsId("activityId")
-  @JoinColumn(name = "activity_id", nullable = false)
+  @JoinColumn(name = "activity_id", insertable = false, updatable = false)
   private Activity activity;
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @MapsId("languageId")
-  @JoinColumn(name = "language_id", nullable = false)
+  @JoinColumn(name = "language_id", insertable = false, updatable = false)
   private Language language;
 
   @NotEmpty private String title;
 
   private String description;
 
-  public ActivityTranslation(Language language, String title, String description) {
-    if (language == null || title == null) {
-      throw new IllegalArgumentException("Language and title cannot be null");
+  public ActivityTranslation(Activity activity, Language language, String title, String description) {
+    if (activity == null || language == null || title == null) {
+      throw new IllegalArgumentException("Activity, Language or title cannot be null");
     }
-    this.id = new ActivityTranslationId();
+    this.id = new ActivityTranslationId(activity.getId(), language.getId());
+    this.activity = activity;
     this.language = language;
     this.title = title;
     this.description = description;
-  }
-
-  void setActivity(Activity activity) {
-    this.activity = activity;
   }
 
   @Override
