@@ -27,16 +27,13 @@ public class UserAuthId implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-
+    if (!(o instanceof UserAuthId)) return false;
     UserAuthId that = (UserAuthId) o;
     return Objects.equals(getUserId(), that.getUserId()) && getAuthProviderName() == that.getAuthProviderName();
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(getUserId());
-    result = 31 * result + Objects.hashCode(getAuthProviderName());
-    return result;
+    return Objects.hash(getUserId(), getAuthProviderName());
   }
 }

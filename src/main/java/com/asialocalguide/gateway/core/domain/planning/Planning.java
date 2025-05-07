@@ -36,7 +36,7 @@ public class Planning extends BaseEntity {
 
   public Planning(User user, String name) {
     if (user == null || name == null) {
-      throw new IllegalArgumentException("User or Name cannot be null");
+      throw new IllegalArgumentException(String.format("User: %s or name: %s cannot be null", user, name));
     }
     this.user = user;
     this.name = name;

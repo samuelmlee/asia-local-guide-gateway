@@ -28,7 +28,8 @@ public class DestinationTranslation {
 
   public DestinationTranslation(Destination destination, Language language, String name) {
     if (destination == null || language == null || name == null) {
-      throw new IllegalArgumentException("Destination or Language pr name cannot be null");
+      throw new IllegalArgumentException(
+          String.format("Destination: %s, language: %s or name: %s cannot be null", destination, language, name));
     }
 
     this.id = new DestinationTranslationId(destination.getId(), language.getId());

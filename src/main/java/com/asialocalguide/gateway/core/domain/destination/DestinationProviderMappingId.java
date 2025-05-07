@@ -20,7 +20,8 @@ public class DestinationProviderMappingId implements Serializable {
 
   public DestinationProviderMappingId(UUID destinationId, Long bookingProviderId) {
     if (destinationId == null || bookingProviderId == null) {
-      throw new IllegalArgumentException("Destination ID or Booking Provider ID cannot be null");
+      throw new IllegalArgumentException(
+          String.format("DestinationId: %s or BookingProviderId: %s cannot be null", destinationId, bookingProviderId));
     }
     this.destinationId = destinationId;
     this.bookingProviderId = bookingProviderId;
