@@ -10,11 +10,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class CustomBookingProviderMappingRepositoryImpl implements CustomBookingProviderMappingRepository {
+public class CustomDestinationProviderMappingRepositoryImpl implements CustomDestinationProviderMappingRepository {
 
   private final JPAQueryFactory queryFactory;
 
-  public CustomBookingProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
+  public CustomDestinationProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
     this.queryFactory = queryFactory;
   }
 
