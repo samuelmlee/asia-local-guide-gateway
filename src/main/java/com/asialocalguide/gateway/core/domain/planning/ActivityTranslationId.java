@@ -20,6 +20,10 @@ public class ActivityTranslationId implements Serializable {
   private Long languageId;
 
   public ActivityTranslationId(UUID activityId, Long languageId) {
+    if (activityId == null || languageId == null) {
+      throw new IllegalArgumentException(
+          String.format("Activity ID: %s or Language ID: %s cannot be null", activityId, languageId));
+    }
     this.activityId = activityId;
     this.languageId = languageId;
   }

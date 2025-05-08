@@ -65,7 +65,8 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderPlanningData_shouldThrowWhenDestinationNotFound() {
-    setupViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR))
+        .thenReturn(Optional.of(createViatorProvider()));
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
@@ -74,7 +75,9 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderPlanningData_shouldThrowWhenNoViatorMapping() {
-    BookingProvider viator = setupViatorProvider();
+    BookingProvider viator = createViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.empty());
     Destination destination = mock(Destination.class);
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
@@ -88,7 +91,8 @@ class ViatorFetchPlanningDataStrategyTest {
   @Test
   void fetchProviderPlanningData_shouldPassCorrectParametersToService() {
     // Setup
-    BookingProvider viator = setupViatorProvider();
+    BookingProvider viator = createViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
     Destination destination = mock(Destination.class);
     when(destination.getId()).thenReturn(validRequest.destinationId());
     DestinationProviderMapping mapping = new DestinationProviderMapping(destination, viator, "VIATOR_DEST_123");
@@ -126,7 +130,8 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderPlanningData_shouldHandleServiceExceptions() {
-    setupViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR))
+        .thenReturn(Optional.of(createViatorProvider()));
     Destination destination = mock(Destination.class);
     when(destination.getId()).thenReturn(validRequest.destinationId());
     DestinationProviderMapping mapping =
@@ -142,9 +147,7 @@ class ViatorFetchPlanningDataStrategyTest {
         .hasMessageContaining("API Failure");
   }
 
-  private BookingProvider setupViatorProvider() {
-    BookingProvider viator = new BookingProvider(1L, BookingProviderName.VIATOR);
-    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
-    return viator;
+  private BookingProvider createViatorProvider() {
+    return new BookingProvider(1L, BookingProviderName.VIATOR);
   }
 }

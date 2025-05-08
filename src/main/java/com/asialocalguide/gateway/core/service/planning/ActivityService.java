@@ -79,8 +79,10 @@ public class ActivityService {
             .toList();
 
     if (strategiesToUse.isEmpty()) {
-      log.warn("No strategies found for provider name to ID mapping: {}", providerNameToId);
-      return;
+      throw new ActivityCachingException(
+          String.format(
+              "No strategies found for provider name to ID mapping: %s, strategies in service: %s",
+              providerNameToId, strategiesToUse));
     }
 
     Map<BookingProviderName, BookingProvider> nameToProvider =

@@ -158,7 +158,7 @@ CREATE INDEX idx_destination_provider_mapping_booking_provider_id ON destination
 CREATE TABLE destination_translation (
     language_id bigint NOT NULL,
     destination_id uuid NOT NULL,
-    "name" varchar(255) NULL,
+    "name" varchar(255) NOT NULL,
     CONSTRAINT pk_destination_translation PRIMARY KEY (destination_id, language_id),
     CONSTRAINT fk_destination_translation_to_destination FOREIGN KEY (destination_id) REFERENCES destination(id),
     CONSTRAINT fk_destination_translation_to_language FOREIGN KEY (language_id) REFERENCES language(id)

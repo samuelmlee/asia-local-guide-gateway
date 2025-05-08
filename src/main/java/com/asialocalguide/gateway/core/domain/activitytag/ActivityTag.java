@@ -22,7 +22,7 @@ public class ActivityTag {
   private Set<ActivityTagProviderMapping> activityTagProviderMappings = new HashSet<>();
 
   /*
-   * Method needs the Language entity in ActivityTagTranslation to be eagerly lodged.
+   * Method needs the Language entity in ActivityTagTranslation to be eagerly loaded from the repository method.
    */
   public Optional<ActivityTagTranslation> getTranslation(LanguageCode languageCode) {
     if (languageCode == null || activityTagTranslations.isEmpty()) {
