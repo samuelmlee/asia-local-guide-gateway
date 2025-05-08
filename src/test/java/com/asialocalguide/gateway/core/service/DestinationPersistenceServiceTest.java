@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,8 +29,11 @@ class DestinationPersistenceServiceTest {
   @Mock private DestinationRepository destinationRepository;
   @Mock private BookingProviderService bookingProviderService;
   @Mock private CountryService countryService;
+  @Mock private LanguageService languageService;
 
   @InjectMocks private DestinationPersistenceService service;
+
+  @Captor ArgumentCaptor<List<Destination>> destinationsCaptor;
 
   private BookingProvider provider;
   private final Long providerId = 1L;
@@ -36,8 +41,7 @@ class DestinationPersistenceServiceTest {
 
   @BeforeEach
   void setUp() {
-    provider = new BookingProvider(BookingProviderName.VIATOR);
-    provider.setId(providerId);
+    provider = new BookingProvider(providerId, BookingProviderName.VIATOR);
   }
 
   @Test
@@ -45,7 +49,7 @@ class DestinationPersistenceServiceTest {
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.empty());
 
     CommonDestination destination = mockRawDestinationDTO();
-    Map<Long, CommonDestination> input = Map.of(1L, destination);
+    Map<UUID, CommonDestination> input = Map.of(UUID.randomUUID(), destination);
 
     try {
       service.persistExistingDestinations(providerName, input);
@@ -67,16 +71,16 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistExistingDestinations_AddsMissingProviderMappings() {
     // Setup
-    Long destinationId = 100L;
+    UUID destinationId = UUID.randomUUID();
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "Paris")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Paris")),
             DestinationType.CITY,
             null,
             providerName,
             "US");
-    Map<Long, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
+    Map<UUID, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     // Create mock Destination
     Destination existingDestination = mock(Destination.class);
@@ -100,18 +104,19 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistExistingDestinations_SkipsWhenMappingExists() {
-    Long destinationId = 100L;
+    UUID destinationId = UUID.randomUUID();
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "Paris")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Paris")),
             DestinationType.CITY,
             null,
             providerName,
             "US");
-    Map<Long, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
+    Map<UUID, CommonDestination> idToRawDestinations = Map.of(destinationId, rawDto);
 
     Destination existingDestination = mock(Destination.class);
+    when(existingDestination.getId()).thenReturn(destinationId);
 
     DestinationProviderMapping existingMapping = new DestinationProviderMapping(existingDestination, provider, "D123");
     existingDestination.addProviderMapping(existingMapping);
@@ -154,7 +159,7 @@ class DestinationPersistenceServiceTest {
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "New York")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "New York")),
             DestinationType.CITY,
             new Coordinates(),
             providerName,
@@ -174,7 +179,7 @@ class DestinationPersistenceServiceTest {
     String isoCode = "us";
     Country country = new Country(isoCode);
 
-    CommonDestination.Translation translation = new CommonDestination.Translation("en", "New York");
+    CommonDestination.Translation translation = new CommonDestination.Translation(LanguageCode.EN, "New York");
     CommonDestination rawDto =
         new CommonDestination(
             "D123",
@@ -186,17 +191,17 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, List.of(rawDto));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
 
     // Verify saveAll is called with a list of one destination
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    List<Destination> savedDestinations = captor.getValue();
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    List<Destination> savedDestinations = destinationsCaptor.getValue();
 
     assertEquals(1, savedDestinations.size());
-    Destination saved = savedDestinations.get(0);
+    Destination saved = savedDestinations.getFirst();
     assertEquals(country, saved.getCountry());
     assertEquals(DestinationType.CITY, saved.getType());
 
@@ -217,6 +222,7 @@ class DestinationPersistenceServiceTest {
     Map<String, List<CommonDestination>> isoToDtos = Map.of(isoCode, Arrays.asList(null, mockRawDestinationDTO()));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(Set.of(isoCode))).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, isoToDtos);
@@ -227,17 +233,17 @@ class DestinationPersistenceServiceTest {
   @Test
   void persistExistingDestinations_NullProviderName_ExitsEarly() {
 
-    service.persistExistingDestinations(null, Map.of(1L, mockRawDestinationDTO()));
+    service.persistExistingDestinations(null, Map.of(UUID.randomUUID(), mockRawDestinationDTO()));
 
     verifyNoInteractions(bookingProviderService, destinationRepository);
   }
 
   @Test
   void persistExistingDestinations_PartialDestinationMatches_ProcessesOnlyFound() {
-    Long foundId = 1L;
-    Long missingId = 2L;
+    UUID foundId = UUID.randomUUID();
+    UUID missingId = UUID.randomUUID();
     CommonDestination dto = mockRawDestinationDTO();
-    Map<Long, CommonDestination> input = Map.of(foundId, dto, missingId, dto);
+    Map<UUID, CommonDestination> input = Map.of(foundId, dto, missingId, dto);
 
     // Create a mock Destination and stub getId()
     Destination foundDestination = mock(Destination.class);
@@ -260,8 +266,8 @@ class DestinationPersistenceServiceTest {
 
   @Test
   void persistExistingDestinations_NullRawDtoInMap_LogsWarning() {
-    Long destinationId = 1L;
-    Map<Long, CommonDestination> input = new HashMap<>();
+    UUID destinationId = UUID.randomUUID();
+    Map<UUID, CommonDestination> input = new HashMap<>();
     input.put(destinationId, null);
 
     assertThatThrownBy(() -> service.persistExistingDestinations(providerName, input))
@@ -290,36 +296,13 @@ class DestinationPersistenceServiceTest {
             invalidIso, List.of(mockRawDestinationDTO()));
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage()));
     when(countryService.findByIso2CodeIn(Set.of(validIso, invalidIso))).thenReturn(List.of(validCountry));
 
     service.persistNewDestinations(providerName, input);
 
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    assertEquals(1, captor.getValue().size()); // Only valid country processed
-  }
-
-  @Test
-  void persistNewDestinations_WithNullCoordinates_SetsNullInEntity() {
-    CommonDestination dto =
-        new CommonDestination(
-            "D123",
-            List.of(new CommonDestination.Translation("en", "Test")),
-            DestinationType.CITY,
-            null, // Null coordinates
-            providerName,
-            "US");
-
-    Country country = new Country("US");
-
-    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
-
-    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
-
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    assertNull(captor.getValue().get(0).getCenterCoordinates());
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    assertEquals(1, destinationsCaptor.getValue().size()); // Only valid country processed
   }
 
   @Test
@@ -328,58 +311,43 @@ class DestinationPersistenceServiceTest {
         new CommonDestination(
             "D123",
             List.of(
-                new CommonDestination.Translation("en", "Singapore"),
-                new CommonDestination.Translation("fr", "Singapour")),
+                new CommonDestination.Translation(LanguageCode.EN, "Singapore"),
+                new CommonDestination.Translation(LanguageCode.FR, "Singapour")),
             DestinationType.CITY,
-            null,
+            new Coordinates(35.6895, 139.6917),
             providerName,
             "US");
 
     Country country = new Country("US");
 
     when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
+    when(languageService.getAllLanguages()).thenReturn(List.of(getEnglishLanguage(), getFrenchLanguage()));
     when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
 
     service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
 
-    ArgumentCaptor<List<Destination>> captor = ArgumentCaptor.forClass(List.class);
-    verify(destinationRepository).saveAll(captor.capture());
-    Destination destination = captor.getValue().getFirst();
+    verify(destinationRepository).saveAll(destinationsCaptor.capture());
+    Destination destination = destinationsCaptor.getValue().getFirst();
     assertEquals(Optional.of("Singapore"), destination.getTranslation(LanguageCode.EN));
     assertEquals(Optional.of("Singapour"), destination.getTranslation(LanguageCode.FR));
-  }
-
-  @Test
-  void persistNewDestinations_WithNoValidTranslations_SkipsDestination() {
-    // Create destination with only invalid language code translations
-    CommonDestination dto =
-        new CommonDestination(
-            "D123",
-            List.of(new CommonDestination.Translation("invalid1", "Test1")),
-            DestinationType.CITY,
-            null,
-            providerName,
-            "US");
-
-    Country country = new Country("US");
-
-    when(bookingProviderService.getBookingProviderByName(providerName)).thenReturn(Optional.of(provider));
-    when(countryService.findByIso2CodeIn(anySet())).thenReturn(List.of(country));
-
-    service.persistNewDestinations(providerName, Map.of("US", List.of(dto)));
-
-    // Verify destinationRepository.saveAll wasn't called
-    verify(destinationRepository, never()).saveAll(anyList());
   }
 
   private static CommonDestination mockRawDestinationDTO() {
 
     return new CommonDestination(
         "test-id",
-        List.of(new CommonDestination.Translation("en", "Test")),
+        List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
         DestinationType.CITY,
-        null,
+        new Coordinates(35.6895, 139.6917),
         BookingProviderName.VIATOR,
         "US");
+  }
+
+  private Language getEnglishLanguage() {
+    return new Language(1L, LanguageCode.EN);
+  }
+
+  private Language getFrenchLanguage() {
+    return new Language(2L, LanguageCode.FR);
   }
 }

@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.domain.user;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -13,12 +14,7 @@ import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
-public class User {
-
-  @Id
-  @Getter
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+public class User extends BaseEntity {
 
   @NotNull
   @Getter
@@ -36,16 +32,7 @@ public class User {
     if (userAuth == null) {
       return;
     }
-    userAuth.setUser(this);
     userAuths.add(userAuth);
-  }
-
-  public void removeUserAuth(UserAuth userAuth) {
-    if (userAuth == null) {
-      return;
-    }
-    userAuth.setUser(null);
-    userAuths.remove(userAuth);
   }
 
   public Optional<UserAuth> findUserAuth(AuthProviderName authProviderName) {
@@ -64,11 +51,11 @@ public class User {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     User that = (User) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(getId(), that.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(getId());
   }
 }

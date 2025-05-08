@@ -20,6 +20,7 @@ import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +46,7 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @BeforeEach
   void setUp() {
-    validRequest = new PlanningRequestDTO(today, tomorrow, 1L, Collections.singletonList("adventure"));
+    validRequest = new PlanningRequestDTO(today, tomorrow, UUID.randomUUID(), Collections.singletonList("adventure"));
   }
 
   @Test
@@ -64,7 +65,8 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderPlanningData_shouldThrowWhenDestinationNotFound() {
-    setupViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR))
+        .thenReturn(Optional.of(createViatorProvider()));
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
@@ -73,7 +75,9 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderPlanningData_shouldThrowWhenNoViatorMapping() {
-    BookingProvider viator = setupViatorProvider();
+    BookingProvider viator = createViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
+    when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.empty());
     Destination destination = mock(Destination.class);
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
@@ -87,8 +91,10 @@ class ViatorFetchPlanningDataStrategyTest {
   @Test
   void fetchProviderPlanningData_shouldPassCorrectParametersToService() {
     // Setup
-    BookingProvider viator = setupViatorProvider();
+    BookingProvider viator = createViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
     Destination destination = mock(Destination.class);
+    when(destination.getId()).thenReturn(validRequest.destinationId());
     DestinationProviderMapping mapping = new DestinationProviderMapping(destination, viator, "VIATOR_DEST_123");
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
@@ -124,13 +130,16 @@ class ViatorFetchPlanningDataStrategyTest {
 
   @Test
   void fetchProviderPlanningData_shouldHandleServiceExceptions() {
-    setupViatorProvider();
+    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR))
+        .thenReturn(Optional.of(createViatorProvider()));
     Destination destination = mock(Destination.class);
+    when(destination.getId()).thenReturn(validRequest.destinationId());
     DestinationProviderMapping mapping =
-        new DestinationProviderMapping(destination, new BookingProvider(BookingProviderName.VIATOR), "VIATOR_DEST_123");
+        new DestinationProviderMapping(
+            destination, new BookingProvider(1L, BookingProviderName.VIATOR), "VIATOR_DEST_123");
+    when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
 
     when(destinationService.findDestinationById(validRequest.destinationId())).thenReturn(Optional.of(destination));
-    when(destination.getBookingProviderMapping(any())).thenReturn(Optional.of(mapping));
     when(viatorActivityService.fetchProviderPlanningData(any())).thenThrow(new RuntimeException("API Failure"));
 
     assertThatThrownBy(() -> strategy.fetchProviderPlanningData(validRequest, LanguageCode.EN))
@@ -138,9 +147,7 @@ class ViatorFetchPlanningDataStrategyTest {
         .hasMessageContaining("API Failure");
   }
 
-  private BookingProvider setupViatorProvider() {
-    BookingProvider viator = new BookingProvider(BookingProviderName.VIATOR);
-    when(bookingProviderService.getBookingProviderByName(BookingProviderName.VIATOR)).thenReturn(Optional.of(viator));
-    return viator;
+  private BookingProvider createViatorProvider() {
+    return new BookingProvider(1L, BookingProviderName.VIATOR);
   }
 }

@@ -1,10 +1,10 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,15 +15,18 @@ import lombok.Setter;
 @Setter
 public class DestinationTranslationId implements Serializable {
   @Column(name = "destination_id")
-  private Long destinationId;
+  private UUID destinationId;
 
-  @Column(name = "language_code")
-  @Convert(converter = LanguageCodeConverter.class)
-  private LanguageCode languageCode;
+  @Column(name = "language_id")
+  private Long languageId;
 
-  public DestinationTranslationId(LanguageCode languageCode) {
-    // destinationId is set by Hibernate with @MapsId in DestinationTranslation
-    this.languageCode = languageCode;
+  public DestinationTranslationId(UUID destinationId, Long languageId) {
+    if (destinationId == null || languageId == null) {
+      throw new IllegalArgumentException(
+          String.format("DestinationId: %s or languageId: %s cannot be null", destinationId, languageId));
+    }
+    this.destinationId = destinationId;
+    this.languageId = languageId;
   }
 
   @Override
@@ -31,11 +34,12 @@ public class DestinationTranslationId implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     DestinationTranslationId that = (DestinationTranslationId) o;
-    return Objects.equals(destinationId, that.destinationId) && Objects.equals(languageCode, that.languageCode);
+    return Objects.equals(getDestinationId(), that.getDestinationId())
+        && Objects.equals(getLanguageId(), that.getLanguageId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(destinationId, languageCode);
+    return Objects.hash(getDestinationId(), getLanguageId());
   }
 }

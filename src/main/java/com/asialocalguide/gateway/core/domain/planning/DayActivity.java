@@ -30,7 +30,8 @@ public class DayActivity extends BaseEntity {
 
   public DayActivity(Activity activity, LocalDateTime startTime, LocalDateTime endTime) {
     if (startTime == null || endTime == null || activity == null) {
-      throw new IllegalArgumentException("Start time, end time, and activity cannot be null");
+      throw new IllegalArgumentException(
+          String.format("Start time: %s, end time: %s or activity: %s cannot be null", startTime, endTime, activity));
     }
     this.startTime = startTime;
     this.endTime = endTime;

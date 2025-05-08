@@ -16,18 +16,18 @@ public class DestinationSortingService {
 
   private final DestinationRepository destinationRepository;
   private final CountryService countryService;
-  private final BookingProviderMappingService bookingProviderMappingService;
+  private final DestinationProviderMappingService destinationProviderMappingService;
   private final DestinationPersistenceService destinationPersistenceService;
 
   public DestinationSortingService(
       DestinationRepository destinationRepository,
       CountryService countryService,
-      BookingProviderMappingService bookingProviderMappingService,
+      DestinationProviderMappingService destinationProviderMappingService,
       DestinationPersistenceService destinationPersistenceService) {
     this.destinationRepository = destinationRepository;
     this.countryService = countryService;
 
-    this.bookingProviderMappingService = bookingProviderMappingService;
+    this.destinationProviderMappingService = destinationProviderMappingService;
     this.destinationPersistenceService = destinationPersistenceService;
   }
 
@@ -56,7 +56,7 @@ public class DestinationSortingService {
 
     // Maps to store new and existing destinations
     Map<String, List<CommonDestination>> newDestinationsMap = new HashMap<>();
-    Map<Long, CommonDestination> existingDestinationsMap = new HashMap<>();
+    Map<UUID, CommonDestination> existingDestinationsMap = new HashMap<>();
 
     // Process each provider
     processDestinationsByIsoCode(
@@ -77,7 +77,7 @@ public class DestinationSortingService {
       Map<String, List<CommonDestination>> isoCodeToRawDestinations,
       Map<String, List<Destination>> isoCodeToExistingDestinations,
       Map<String, List<CommonDestination>> newDestinationsMap,
-      Map<Long, CommonDestination> existingDestinationsMap) {
+      Map<UUID, CommonDestination> existingDestinationsMap) {
 
     isoCodeToRawDestinations.forEach(
         (isoCode, rawDestinations) -> {
@@ -105,7 +105,7 @@ public class DestinationSortingService {
       BookingProviderName providerName, List<CommonDestination> rawDestinations) {
 
     Set<String> existingProviderDestinationIds =
-        bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName);
+        destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName);
 
     return rawDestinations.stream()
         .filter(Objects::nonNull)
@@ -132,7 +132,7 @@ public class DestinationSortingService {
       List<CommonDestination> rawDestinations,
       List<Destination> possibleExistingDestinations,
       Map<String, List<CommonDestination>> newDestinationsMap,
-      Map<Long, CommonDestination> existingDestinationsMap) {
+      Map<UUID, CommonDestination> existingDestinationsMap) {
 
     for (CommonDestination rawDto : rawDestinations) {
       if (rawDto == null) {
@@ -153,7 +153,7 @@ public class DestinationSortingService {
   private void persistDestinations(
       BookingProviderName providerName,
       Map<String, List<CommonDestination>> newDestinationsMap,
-      Map<Long, CommonDestination> existingDestinationsMap) {
+      Map<UUID, CommonDestination> existingDestinationsMap) {
 
     if (!newDestinationsMap.isEmpty()) {
       destinationPersistenceService.persistNewDestinations(providerName, newDestinationsMap);

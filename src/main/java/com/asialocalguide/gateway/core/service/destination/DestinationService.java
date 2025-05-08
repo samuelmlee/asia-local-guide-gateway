@@ -9,10 +9,7 @@ import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
 import com.asialocalguide.gateway.core.exception.DestinationIngestionException;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
 import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,7 +33,7 @@ public class DestinationService {
     this.destinationRepository = destinationRepository;
   }
 
-  public Optional<Destination> findDestinationById(Long id) {
+  public Optional<Destination> findDestinationById(UUID id) {
     return destinationRepository.findById(id);
   }
 

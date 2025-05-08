@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.validator.constraints.URL;
 
 @Entity
@@ -26,6 +28,7 @@ public class ActivityImage extends BaseEntity {
 
   @NotNull
   @Enumerated(EnumType.STRING)
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private ImageType type;
 
   public ActivityImage(Integer height, Integer width, String url, ImageType type) {

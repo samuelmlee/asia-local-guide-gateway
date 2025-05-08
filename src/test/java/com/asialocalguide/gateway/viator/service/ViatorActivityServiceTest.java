@@ -483,7 +483,7 @@ class ViatorActivityServiceTest {
     // Then
     assertThat(result).hasSize(1);
     CommonPersistableActivity.Review review = result.getFirst().review();
-    assertThat(review.averageRating()).isEqualTo(4.5);
+    assertThat(review.averageRating()).isEqualTo(4.5f);
     assertThat(review.reviewCount()).isEqualTo(100);
   }
 
@@ -518,7 +518,7 @@ class ViatorActivityServiceTest {
         List.of(), // empty destinations
         new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
         "http://viator.com/activity/" + productCode,
-        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5) // Non-null reviews
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5f) // Non-null reviews
         );
   }
 
@@ -542,6 +542,6 @@ class ViatorActivityServiceTest {
         List.of(),
         new ViatorActivityDetailDTO.ItineraryDTO("STANDARD", new ViatorActivityDetailDTO.DurationDTO(null, null, 60)),
         "http://viator.com/activity/" + productCode,
-        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5));
+        new ViatorActivityDetailDTO.ReviewsDTO(List.of(), 100, 4.5f));
   }
 }

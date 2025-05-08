@@ -1,12 +1,11 @@
 package com.asialocalguide.gateway.core.domain.activitytag;
 
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.core.domain.Language;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
@@ -16,27 +15,31 @@ public class ActivityTagTranslation {
   @EmbeddedId private ActivityTagTranslationId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("activityTagId")
-  @JoinColumn(name = "activity_tag_id")
-  @Setter
+  @JoinColumn(name = "activity_tag_id", insertable = false, updatable = false)
   private ActivityTag activityTag;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "language_id", insertable = false, updatable = false)
+  private Language language;
 
   @NotEmpty private String name;
 
   @NotEmpty private String promptText;
 
-  public ActivityTagTranslation(ActivityTag activityTag, LanguageCode languageCode, String name, String promptText) {
-    if (activityTag == null) {
-      throw new IllegalArgumentException("ActivityTag cannot be null");
-    }
-    if (languageCode == null) {
-      throw new IllegalArgumentException("LanguageCode cannot be null");
+  public ActivityTagTranslation(ActivityTag activityTag, Language language, String name, String promptText) {
+    if (activityTag == null || language == null || name == null) {
+      throw new IllegalArgumentException(
+          String.format("ActivityTag: %s or Language: %s or name: %s cannot be null", activityTag, language, name));
     }
 
-    this.id = new ActivityTagTranslationId(languageCode);
+    this.id = new ActivityTagTranslationId(activityTag.getId(), language.getId());
     this.activityTag = activityTag;
     this.name = name;
     this.promptText = promptText;
+  }
+
+  protected void setActivityTag(ActivityTag activityTag) {
+    this.activityTag = activityTag;
   }
 
   @Override
@@ -55,11 +58,13 @@ public class ActivityTagTranslation {
   @Override
   public String toString() {
     return "ActivityTagTranslation{"
-        + ", languageCode='"
-        + id.getLanguageCode()
-        + '\''
+        + "id="
+        + id
         + ", name='"
         + name
+        + '\''
+        + ", promptText='"
+        + promptText
         + '\''
         + '}';
   }

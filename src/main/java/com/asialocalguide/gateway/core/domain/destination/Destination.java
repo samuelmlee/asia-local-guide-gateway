@@ -1,30 +1,23 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
+import com.asialocalguide.gateway.core.domain.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @Entity
 @NoArgsConstructor
-public class Destination implements Translatable {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+public class Destination extends BaseEntity implements Translatable {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "country_id")
   @NotNull
   @Getter
-  @Setter
   private Country country;
 
   @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -34,13 +27,25 @@ public class Destination implements Translatable {
   @Enumerated(EnumType.STRING)
   @NotNull
   @Getter
-  @Setter
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private DestinationType type;
 
   @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<DestinationProviderMapping> destinationProviderMappings = new HashSet<>();
 
-  @NotNull @Embedded @Getter @Setter Coordinates centerCoordinates;
+  @NotNull @Embedded @Getter Coordinates centerCoordinates;
+
+  public Destination(Country country, DestinationType type, Coordinates centerCoordinates) {
+    if (country == null || centerCoordinates == null || type == null) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Country: %s, centerCoordinates: %s or type: %s cannot be null", country, centerCoordinates, type));
+    }
+
+    this.country = country;
+    this.type = type;
+    this.centerCoordinates = centerCoordinates;
+  }
 
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
@@ -49,7 +54,7 @@ public class Destination implements Translatable {
     }
 
     return destinationTranslations.stream()
-        .filter(t -> t.getId() != null && languageCode.equals(t.getId().getLanguageCode()))
+        .filter(t -> t.getId() != null && languageCode.equals(t.getLanguage().getCode()))
         .findFirst()
         .map(DestinationTranslation::getName);
   }
@@ -58,16 +63,7 @@ public class Destination implements Translatable {
     if (translation == null) {
       return;
     }
-    translation.setDestination(this);
     destinationTranslations.add(translation);
-  }
-
-  public void removeTranslation(DestinationTranslation translation) {
-    if (translation == null) {
-      return;
-    }
-    translation.setDestination(null);
-    destinationTranslations.remove(translation);
   }
 
   public int getTranslationCount() {
@@ -81,16 +77,7 @@ public class Destination implements Translatable {
     if (mapping == null) {
       return;
     }
-    mapping.setDestination(this);
     destinationProviderMappings.add(mapping);
-  }
-
-  public void removeProviderMapping(DestinationProviderMapping mapping) {
-    if (mapping == null) {
-      return;
-    }
-    mapping.setDestination(null);
-    destinationProviderMappings.remove(mapping);
   }
 
   public Optional<DestinationProviderMapping> getBookingProviderMapping(Long providerId) {
@@ -112,16 +99,16 @@ public class Destination implements Translatable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Destination that = (Destination) o;
-    return Objects.equals(id, that.id);
+    return Objects.equals(getId(), that.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id);
+    return Objects.hash(getId());
   }
 
   @Override
   public String toString() {
-    return "Destination{" + "id=" + id + ", type=" + type + '}';
+    return "Destination{" + "id=" + getId() + ", type=" + type + '}';
   }
 }

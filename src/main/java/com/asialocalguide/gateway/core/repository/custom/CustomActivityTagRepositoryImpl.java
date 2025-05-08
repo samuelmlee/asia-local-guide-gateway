@@ -1,10 +1,10 @@
 package com.asialocalguide.gateway.core.repository.custom;
 
+import com.asialocalguide.gateway.core.domain.QLanguage;
 import com.asialocalguide.gateway.core.domain.activitytag.ActivityTag;
 import com.asialocalguide.gateway.core.domain.activitytag.QActivityTag;
 import com.asialocalguide.gateway.core.domain.activitytag.QActivityTagTranslation;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.repository.CustomActivityTagRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import org.springframework.stereotype.Repository;
@@ -24,13 +24,16 @@ public class CustomActivityTagRepositoryImpl implements CustomActivityTagReposit
   public List<ActivityTag> findAllWithTranslations(LanguageCode languageCode) {
     QActivityTag activityTag = QActivityTag.activityTag;
     QActivityTagTranslation translation = QActivityTagTranslation.activityTagTranslation;
+    QLanguage language = QLanguage.language;
 
     return queryFactory
         .selectDistinct(activityTag)
         .from(activityTag)
         .leftJoin(activityTag.activityTagTranslations, translation)
         .fetchJoin()
-        .where(translation.id.languageCode.eq(languageCode))
+        .leftJoin(translation.language, language)
+        .fetchJoin()
+        .where(translation.language.code.eq(languageCode))
         .fetch();
   }
 }

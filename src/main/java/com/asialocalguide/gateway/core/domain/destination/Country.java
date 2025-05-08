@@ -15,10 +15,7 @@ import org.hibernate.validator.constraints.Length;
 @NoArgsConstructor
 public class Country implements Translatable {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Getter
-  private Long id;
+  @Id @Getter private Long id;
 
   @OneToMany(mappedBy = "country", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<CountryTranslation> countryTranslations = new HashSet<>();
@@ -45,22 +42,12 @@ public class Country implements Translatable {
     if (countryTranslations == null) {
       countryTranslations = new HashSet<>();
     }
-    translation.setCountry(this);
     countryTranslations.add(translation);
   }
 
-  public void removeTranslation(CountryTranslation translation) {
-    if (translation == null) {
-      throw new IllegalArgumentException("Translation cannot be null");
-    }
-
-    if (countryTranslations == null) {
-      return;
-    }
-    translation.setCountry(null);
-    countryTranslations.remove(translation);
-  }
-
+  /*
+   * Method needs the Language entity in CountryTranslation to be eagerly loaded.
+   */
   @Override
   public Optional<String> getTranslation(LanguageCode languageCode) {
     if (languageCode == null || countryTranslations == null) {
@@ -68,7 +55,7 @@ public class Country implements Translatable {
     }
 
     return countryTranslations.stream()
-        .filter(ct -> ct.getId() != null && languageCode.equals(ct.getId().getLanguageCode()))
+        .filter(ct -> ct.getId() != null && languageCode.equals(ct.getLanguage().getCode()))
         .findFirst()
         .map(CountryTranslation::getName);
   }
@@ -77,11 +64,11 @@ public class Country implements Translatable {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     Country country = (Country) o;
-    return Objects.equal(id, country.id);
+    return Objects.equal(getId(), country.getId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id);
+    return Objects.hashCode(getId());
   }
 }

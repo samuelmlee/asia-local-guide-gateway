@@ -257,7 +257,7 @@ public class PlanningService {
     try {
       activityService.cacheNewActivitiesByProvider(providerNameToIds);
     } catch (Exception ex) {
-      throw new PlanningCreationException("Error during persisting new activities for Planning creation", ex);
+      throw new PlanningCreationException("Error during caching new activities for Planning creation", ex);
     }
   }
 

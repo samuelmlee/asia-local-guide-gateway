@@ -1,5 +1,6 @@
 package com.asialocalguide.gateway.core.repository.custom;
 
+import com.asialocalguide.gateway.core.domain.QLanguage;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -22,18 +23,25 @@ public class CustomDestinationRepositoryImpl implements CustomDestinationReposit
     QDestinationTranslation dt = QDestinationTranslation.destinationTranslation;
     QCountry country = QCountry.country;
     QCountryTranslation ct = QCountryTranslation.countryTranslation;
+    QLanguage languageDt = new QLanguage("languageDt");
+    QLanguage languageCt = new QLanguage("languageCt");
 
     return queryFactory
-        .selectFrom(destination)
+        .selectDistinct(destination)
+        .from(destination)
         .join(destination.destinationTranslations, dt)
+        .fetchJoin()
+        .join(dt.language, languageDt)
         .fetchJoin()
         .join(destination.country, country)
         .fetchJoin()
         .join(country.countryTranslations, ct)
         .fetchJoin()
+        .join(ct.language, languageCt)
+        .fetchJoin()
         .where(
-            dt.id.languageCode.eq(languageCode),
-            ct.id.languageCode.eq(languageCode),
+            dt.language.code.eq(languageCode),
+            ct.language.code.eq(languageCode),
             dt.name.lower().like("%" + name.toLowerCase() + "%"),
             destination.type.in(DestinationType.CITY, DestinationType.REGION))
         .fetch();

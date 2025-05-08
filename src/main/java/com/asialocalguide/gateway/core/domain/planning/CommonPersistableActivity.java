@@ -23,7 +23,7 @@ public record CommonPersistableActivity(
       @NotBlank String url) {}
 
   public record Review(
-      @NotNull @DecimalMin("0.0") @DecimalMax("5.0") Double averageRating, @NotNull @Positive Integer reviewCount) {}
+      @NotNull @DecimalMin("0.0") @DecimalMax("5.0") float averageRating, @NotNull @Positive Integer reviewCount) {}
 
   public record Translation(@NotNull LanguageCode languageCode, @NotBlank String value) {}
 }

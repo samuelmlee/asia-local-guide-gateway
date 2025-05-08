@@ -6,38 +6,37 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @NoArgsConstructor
 @Embeddable
 @Getter
-@Setter
 public class UserAuthId implements Serializable {
   @Column(name = "user_id")
-  private Long userId;
+  private UUID userId;
 
   @Enumerated(EnumType.STRING)
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private AuthProviderName authProviderName;
 
-  public UserAuthId(AuthProviderName authProviderName) {
+  public UserAuthId(UUID userId, AuthProviderName authProviderName) {
+    this.userId = userId;
     this.authProviderName = authProviderName;
-    // userId will be set by Hibernate with @MapsId in UserAuth
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-
+    if (!(o instanceof UserAuthId)) return false;
     UserAuthId that = (UserAuthId) o;
-    return Objects.equals(userId, that.userId) && authProviderName == that.authProviderName;
+    return Objects.equals(getUserId(), that.getUserId()) && getAuthProviderName() == that.getAuthProviderName();
   }
 
   @Override
   public int hashCode() {
-    int result = Objects.hashCode(userId);
-    result = 31 * result + Objects.hashCode(authProviderName);
-    return result;
+    return Objects.hash(getUserId(), getAuthProviderName());
   }
 }

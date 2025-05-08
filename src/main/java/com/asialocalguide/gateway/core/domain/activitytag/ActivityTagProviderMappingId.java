@@ -15,8 +15,14 @@ public class ActivityTagProviderMappingId implements Serializable {
   @Column(name = "booking_provider_id")
   private Long bookingProviderId;
 
-  public ActivityTagProviderMappingId() {
-    // activityTagId and bookingProviderId are set by @MapsId in ActivityTagProviderMapping
+  public ActivityTagProviderMappingId(Long activityTagId, Long bookingProviderId) {
+    if (activityTagId == null || bookingProviderId == null) {
+      throw new IllegalArgumentException(
+          String.format(
+              "ActivityTag ID: %s or Booking Provider ID: %s cannot be null", activityTagId, bookingProviderId));
+    }
+    this.activityTagId = activityTagId;
+    this.bookingProviderId = bookingProviderId;
   }
 
   @Override
@@ -24,12 +30,12 @@ public class ActivityTagProviderMappingId implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ActivityTagProviderMappingId that = (ActivityTagProviderMappingId) o;
-    return Objects.equals(activityTagId, that.activityTagId)
-        && Objects.equals(bookingProviderId, that.bookingProviderId);
+    return Objects.equals(getActivityTagId(), that.getActivityTagId())
+        && Objects.equals(getBookingProviderId(), that.getBookingProviderId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(activityTagId, bookingProviderId);
+    return Objects.hash(getActivityTagId(), getBookingProviderId());
   }
 }

@@ -2,10 +2,13 @@ package com.asialocalguide.gateway.core.service.destination;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
+import com.asialocalguide.gateway.core.service.LanguageService;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,14 +21,17 @@ public class DestinationPersistenceService {
   private final DestinationRepository destinationRepository;
   private final CountryService countryService;
   private final BookingProviderService bookingProviderService;
+  private final LanguageService languageService;
 
   public DestinationPersistenceService(
       DestinationRepository destinationRepository,
       CountryService countryService,
-      BookingProviderService bookingProviderService) {
+      BookingProviderService bookingProviderService,
+      LanguageService languageService) {
     this.destinationRepository = destinationRepository;
     this.countryService = countryService;
     this.bookingProviderService = bookingProviderService;
+    this.languageService = languageService;
   }
 
   /**
@@ -35,7 +41,7 @@ public class DestinationPersistenceService {
    */
   @Transactional
   public void persistExistingDestinations(
-      BookingProviderName providerName, Map<Long, CommonDestination> idToRawDestinations) {
+      BookingProviderName providerName, Map<UUID, CommonDestination> idToRawDestinations) {
     if (providerName == null || idToRawDestinations == null || idToRawDestinations.isEmpty()) {
       log.warn(
           "Persist existing destinations: BookingProviderName is null or Map<Long, RawDestinationDTO> to process is"
@@ -122,22 +128,22 @@ public class DestinationPersistenceService {
 
       List<CommonDestination> nonNullDestinations = commonDestinations.stream().filter(Objects::nonNull).toList();
 
+      Map<LanguageCode, Language> codeToLanguage =
+          languageService.getAllLanguages().stream().collect(Collectors.toMap(Language::getCode, Function.identity()));
+
       for (CommonDestination rawDto : nonNullDestinations) {
 
-        Destination newDestination = new Destination();
-        newDestination.setCountry(country);
-        newDestination.setType(rawDto.type());
-        newDestination.setCenterCoordinates(rawDto.centerCoordinates());
+        Destination newDestination = new Destination(country, rawDto.type(), rawDto.centerCoordinates());
 
         rawDto
             .names()
             .forEach(
                 name ->
-                    LanguageCode.from(name.languageCode())
+                    Optional.ofNullable(codeToLanguage.get(name.languageCode()))
                         .ifPresentOrElse(
-                            languageCode ->
+                            language ->
                                 newDestination.addTranslation(
-                                    new DestinationTranslation(newDestination, languageCode, name.name())),
+                                    new DestinationTranslation(newDestination, language, name.name())),
                             () ->
                                 log.warn(
                                     "Skipping translation with invalid language code: {} for destination name: {},"

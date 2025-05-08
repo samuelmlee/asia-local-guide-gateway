@@ -1,6 +1,7 @@
 package com.asialocalguide.gateway.core.repository.custom;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.QBookingProvider;
 import com.asialocalguide.gateway.core.domain.destination.QDestinationProviderMapping;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.HashSet;
@@ -10,11 +11,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class CustomBookingProviderMappingRepositoryImpl implements CustomBookingProviderMappingRepository {
+public class CustomDestinationProviderMappingRepositoryImpl implements CustomDestinationProviderMappingRepository {
 
   private final JPAQueryFactory queryFactory;
 
-  public CustomBookingProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
+  public CustomDestinationProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
     this.queryFactory = queryFactory;
   }
 
@@ -22,12 +23,14 @@ public class CustomBookingProviderMappingRepositoryImpl implements CustomBooking
   @Transactional(readOnly = true)
   public Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName) {
     QDestinationProviderMapping mapping = QDestinationProviderMapping.destinationProviderMapping;
+    QBookingProvider provider = QBookingProvider.bookingProvider;
 
     List<String> results =
         queryFactory
             .select(mapping.providerDestinationId)
             .from(mapping)
-            .where(mapping.provider.name.eq(providerName))
+            .innerJoin(mapping.provider, provider)
+            .where(provider.name.eq(providerName))
             .fetch();
 
     return new HashSet<>(results);

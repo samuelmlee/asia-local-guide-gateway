@@ -8,14 +8,11 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.core.service.destination.BookingProviderMappingService;
 import com.asialocalguide.gateway.core.service.destination.CountryService;
 import com.asialocalguide.gateway.core.service.destination.DestinationPersistenceService;
+import com.asialocalguide.gateway.core.service.destination.DestinationProviderMappingService;
 import com.asialocalguide.gateway.core.service.destination.DestinationSortingService;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +26,7 @@ class DestinationSortingServiceTest {
 
   @Mock private DestinationRepository destinationRepository;
   @Mock private CountryService countryService;
-  @Mock private BookingProviderMappingService bookingProviderMappingService;
+  @Mock private DestinationProviderMappingService destinationProviderMappingService;
   @Mock private DestinationPersistenceService destinationPersistenceService;
 
   @InjectMocks private DestinationSortingService sortingService;
@@ -44,15 +41,14 @@ class DestinationSortingServiceTest {
     validRawDto =
         new CommonDestination(
             "D123",
-            List.of(new CommonDestination.Translation("en", "New York")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "New York")),
             DestinationType.CITY,
             new Coordinates(40.7128, -74.0060),
             providerName,
             supportedIsoCode);
 
-    existingDestination = new Destination();
-    existingDestination.setCenterCoordinates(new Coordinates(40.7128, -74.0060));
-    existingDestination.setCountry(new Country(supportedIsoCode));
+    existingDestination =
+        new Destination(new Country(supportedIsoCode), DestinationType.CITY, new Coordinates(40.7128, -74.0060));
   }
 
   @Test
@@ -62,7 +58,7 @@ class DestinationSortingServiceTest {
 
   @Test
   void triageRawDestinations_ValidNewDestination_PersistsNewDestination() {
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Collections.emptySet());
     when(countryService.findAllIso2Codes()).thenReturn(Set.of(supportedIsoCode));
     when(destinationRepository.findByIsoCodes(anySet())).thenReturn(Collections.emptyList());
@@ -85,13 +81,13 @@ class DestinationSortingServiceTest {
     CommonDestination newRawDto =
         new CommonDestination(
             "D456",
-            List.of(new CommonDestination.Translation("en", "Los Angeles")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Los Angeles")),
             DestinationType.CITY,
             new Coordinates(34.0522, -118.2437),
             providerName,
             supportedIsoCode);
 
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Set.of("D999")); // Different ID so not filtered
     when(countryService.findAllIso2Codes()).thenReturn(Set.of(supportedIsoCode));
     when(destinationRepository.findByIsoCodes(anySet())).thenReturn(List.of(existingDestination));
@@ -99,7 +95,7 @@ class DestinationSortingServiceTest {
     sortingService.triageRawDestinations(
         new DestinationIngestionInput(providerName, List.of(existingRawDto, newRawDto)));
 
-    ArgumentCaptor<Map<Long, CommonDestination>> existingCaptor = ArgumentCaptor.forClass(Map.class);
+    ArgumentCaptor<Map<UUID, CommonDestination>> existingCaptor = ArgumentCaptor.forClass(Map.class);
     ArgumentCaptor<Map<String, List<CommonDestination>>> newCaptor = ArgumentCaptor.forClass(Map.class);
 
     verify(destinationPersistenceService).persistExistingDestinations(eq(providerName), existingCaptor.capture());
@@ -114,13 +110,13 @@ class DestinationSortingServiceTest {
     CommonDestination nullCoordsDto =
         new CommonDestination(
             "D789",
-            List.of(new CommonDestination.Translation("en", "Test")),
+            List.of(new CommonDestination.Translation(LanguageCode.EN, "Test")),
             DestinationType.CITY,
             null,
             providerName,
             supportedIsoCode);
 
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Collections.emptySet());
     when(countryService.findAllIso2Codes()).thenReturn(Set.of(supportedIsoCode));
     when(destinationRepository.findByIsoCodes(anySet())).thenReturn(List.of(existingDestination));
@@ -135,7 +131,7 @@ class DestinationSortingServiceTest {
 
   @Test
   void triageRawDestinations_AllDestinationsFiltered_NoPersistenceCalls() {
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Set.of(validRawDto.destinationId()));
 
     sortingService.triageRawDestinations(new DestinationIngestionInput(providerName, List.of(validRawDto)));

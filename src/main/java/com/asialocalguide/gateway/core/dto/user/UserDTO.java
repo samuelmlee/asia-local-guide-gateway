@@ -1,3 +1,5 @@
 package com.asialocalguide.gateway.core.dto.user;
 
-public record UserDTO(Long userId) {}
+import java.util.UUID;
+
+public record UserDTO(UUID userId) {}

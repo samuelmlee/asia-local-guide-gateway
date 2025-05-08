@@ -67,7 +67,7 @@ class PlanningServiceTest {
         new PlanningService(
             List.of(planningStrategy1, planningStrategy2), userService, activityService, planningRepository);
 
-    validRequest = new PlanningRequestDTO(today, tomorrow, 1L, List.of("adventure"));
+    validRequest = new PlanningRequestDTO(today, tomorrow, UUID.randomUUID(), List.of("adventure"));
 
     testUser = createTestUser();
     testActivity = createTestActivity();
@@ -94,7 +94,7 @@ class PlanningServiceTest {
   void generateActivityPlanning_shouldHandleFailedProviders() {
     // Setup 2-day request
     LocalDate endDate = today.plusDays(1);
-    PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, 1L, List.of("adventure"));
+    PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, UUID.randomUUID(), List.of("adventure"));
 
     when(planningStrategy1.fetchProviderPlanningData(any(), any())).thenThrow(new RuntimeException("Provider error"));
     when(planningStrategy2.fetchProviderPlanningData(any(), any())).thenReturn(createTestProviderData());
@@ -188,7 +188,7 @@ class PlanningServiceTest {
         new PlanningRequestDTO(
             today,
             today.plusDays(2), // 3-day duration
-            1L,
+            UUID.randomUUID(),
             List.of("adventure"));
 
     List<DayPlanDTO> result = planningService.generateActivityPlanning(multiDayRequest);
@@ -242,7 +242,7 @@ class PlanningServiceTest {
             new ProviderPlanningData(
                 List.of(createTestCommonActivity(4.5), createTestCommonActivity(5)), conflictData, today));
 
-    PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, 1L, List.of("adventure"));
+    PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, UUID.randomUUID(), List.of("adventure"));
 
     List<DayPlanDTO> result = planningService.generateActivityPlanning(request);
 
@@ -337,7 +337,7 @@ class PlanningServiceTest {
 
     assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
         .isInstanceOf(PlanningCreationException.class)
-        .hasMessageContaining("Error during persisting new activities for Planning creation");
+        .hasMessageContaining("Error during caching new activities for Planning creation");
   }
 
   @Test
@@ -420,7 +420,7 @@ class PlanningServiceTest {
 
     Activity secondActivity =
         new Activity(
-            "activity2", new BookingProvider(BookingProviderName.VIATOR), 4.2, 80, 120, "https://example2.com");
+            "activity2", new BookingProvider(1L, BookingProviderName.VIATOR), 4.2f, 80, 120, "https://example2.com");
 
     Set<String> activityIds = Set.of("activity1", "activity2");
     when(activityService.findActivitiesByProviderNameAndIds(BookingProviderName.VIATOR, activityIds))
@@ -537,7 +537,8 @@ class PlanningServiceTest {
 
   private Activity createTestActivity() {
     testActivity =
-        new Activity("activity1", new BookingProvider(BookingProviderName.VIATOR), 4.5, 100, 60, "https://example.com");
+        new Activity(
+            "activity1", new BookingProvider(1L, BookingProviderName.VIATOR), 4.5f, 100, 60, "https://example.com");
 
     return testActivity;
   }
