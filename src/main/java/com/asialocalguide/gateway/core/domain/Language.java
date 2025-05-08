@@ -4,6 +4,8 @@ import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @Entity
 @NoArgsConstructor
@@ -14,6 +16,7 @@ public class Language {
 
   @Column(nullable = false, unique = true, length = 2)
   @Enumerated(EnumType.STRING)
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private LanguageCode code;
 
   public Language(Long id, LanguageCode code) {

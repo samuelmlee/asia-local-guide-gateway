@@ -16,18 +16,18 @@ public class DestinationSortingService {
 
   private final DestinationRepository destinationRepository;
   private final CountryService countryService;
-  private final BookingProviderMappingService bookingProviderMappingService;
+  private final DestinationProviderMappingService destinationProviderMappingService;
   private final DestinationPersistenceService destinationPersistenceService;
 
   public DestinationSortingService(
       DestinationRepository destinationRepository,
       CountryService countryService,
-      BookingProviderMappingService bookingProviderMappingService,
+      DestinationProviderMappingService destinationProviderMappingService,
       DestinationPersistenceService destinationPersistenceService) {
     this.destinationRepository = destinationRepository;
     this.countryService = countryService;
 
-    this.bookingProviderMappingService = bookingProviderMappingService;
+    this.destinationProviderMappingService = destinationProviderMappingService;
     this.destinationPersistenceService = destinationPersistenceService;
   }
 
@@ -105,7 +105,7 @@ public class DestinationSortingService {
       BookingProviderName providerName, List<CommonDestination> rawDestinations) {
 
     Set<String> existingProviderDestinationIds =
-        bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName);
+        destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName);
 
     return rawDestinations.stream()
         .filter(Objects::nonNull)

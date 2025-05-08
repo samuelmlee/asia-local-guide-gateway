@@ -6,11 +6,11 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
-public class BookingProviderMappingService {
+public class DestinationProviderMappingService {
 
   private final DestinationProviderMappingRepository destinationProviderMappingRepository;
 
-  public BookingProviderMappingService(DestinationProviderMappingRepository destinationProviderMappingRepository) {
+  public DestinationProviderMappingService(DestinationProviderMappingRepository destinationProviderMappingRepository) {
     this.destinationProviderMappingRepository = destinationProviderMappingRepository;
   }
 

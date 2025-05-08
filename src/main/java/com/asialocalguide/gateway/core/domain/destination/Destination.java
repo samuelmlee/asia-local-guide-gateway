@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @Entity
 @NoArgsConstructor
@@ -25,6 +27,7 @@ public class Destination extends BaseEntity implements Translatable {
   @Enumerated(EnumType.STRING)
   @NotNull
   @Getter
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private DestinationType type;
 
   @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)

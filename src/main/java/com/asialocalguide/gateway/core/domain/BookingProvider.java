@@ -3,6 +3,8 @@ package com.asialocalguide.gateway.core.domain;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @Entity
 @Getter
@@ -13,6 +15,7 @@ public class BookingProvider {
 
   @Enumerated(EnumType.STRING)
   @Column(unique = true, nullable = false)
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private BookingProviderName name;
 
   public BookingProvider(Long id, BookingProviderName name) {

@@ -8,9 +8,9 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.*;
 import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.core.service.destination.BookingProviderMappingService;
 import com.asialocalguide.gateway.core.service.destination.CountryService;
 import com.asialocalguide.gateway.core.service.destination.DestinationPersistenceService;
+import com.asialocalguide.gateway.core.service.destination.DestinationProviderMappingService;
 import com.asialocalguide.gateway.core.service.destination.DestinationSortingService;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,7 @@ class DestinationSortingServiceTest {
 
   @Mock private DestinationRepository destinationRepository;
   @Mock private CountryService countryService;
-  @Mock private BookingProviderMappingService bookingProviderMappingService;
+  @Mock private DestinationProviderMappingService destinationProviderMappingService;
   @Mock private DestinationPersistenceService destinationPersistenceService;
 
   @InjectMocks private DestinationSortingService sortingService;
@@ -58,7 +58,7 @@ class DestinationSortingServiceTest {
 
   @Test
   void triageRawDestinations_ValidNewDestination_PersistsNewDestination() {
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Collections.emptySet());
     when(countryService.findAllIso2Codes()).thenReturn(Set.of(supportedIsoCode));
     when(destinationRepository.findByIsoCodes(anySet())).thenReturn(Collections.emptyList());
@@ -87,7 +87,7 @@ class DestinationSortingServiceTest {
             providerName,
             supportedIsoCode);
 
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Set.of("D999")); // Different ID so not filtered
     when(countryService.findAllIso2Codes()).thenReturn(Set.of(supportedIsoCode));
     when(destinationRepository.findByIsoCodes(anySet())).thenReturn(List.of(existingDestination));
@@ -116,7 +116,7 @@ class DestinationSortingServiceTest {
             providerName,
             supportedIsoCode);
 
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Collections.emptySet());
     when(countryService.findAllIso2Codes()).thenReturn(Set.of(supportedIsoCode));
     when(destinationRepository.findByIsoCodes(anySet())).thenReturn(List.of(existingDestination));
@@ -131,7 +131,7 @@ class DestinationSortingServiceTest {
 
   @Test
   void triageRawDestinations_AllDestinationsFiltered_NoPersistenceCalls() {
-    when(bookingProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
+    when(destinationProviderMappingService.findProviderDestinationIdsByProviderName(providerName))
         .thenReturn(Set.of(validRawDto.destinationId()));
 
     sortingService.triageRawDestinations(new DestinationIngestionInput(providerName, List.of(validRawDto)));

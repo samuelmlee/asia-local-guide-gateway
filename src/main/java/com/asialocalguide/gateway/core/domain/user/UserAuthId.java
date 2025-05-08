@@ -9,6 +9,8 @@ import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @NoArgsConstructor
 @Embeddable
@@ -18,6 +20,7 @@ public class UserAuthId implements Serializable {
   private UUID userId;
 
   @Enumerated(EnumType.STRING)
+  @JdbcType(PostgreSQLEnumJdbcType.class)
   private AuthProviderName authProviderName;
 
   public UserAuthId(UUID userId, AuthProviderName authProviderName) {
