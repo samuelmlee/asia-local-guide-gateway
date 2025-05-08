@@ -21,6 +21,10 @@ public class DestinationTranslationId implements Serializable {
   private Long languageId;
 
   public DestinationTranslationId(UUID destinationId, Long languageId) {
+    if (destinationId == null || languageId == null) {
+      throw new IllegalArgumentException(
+          String.format("DestinationId: %s or languageId: %s cannot be null", destinationId, languageId));
+    }
     this.destinationId = destinationId;
     this.languageId = languageId;
   }
