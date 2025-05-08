@@ -305,10 +305,8 @@ class ActivityServiceTest {
     service = new ActivityService(activityRepository, bookingProviderService, languageService, List.of(mockStrategy));
 
     // Execute
-    service.cacheNewActivitiesByProvider(providerToIds);
-
-    // Verify no activities were saved
-    verify(activityRepository, never()).saveAll(any());
+    assertThatThrownBy(() -> service.cacheNewActivitiesByProvider(providerToIds))
+        .isInstanceOf(ActivityCachingException.class);
   }
 
   @Test
