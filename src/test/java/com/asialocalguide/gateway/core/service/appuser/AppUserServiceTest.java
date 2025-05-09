@@ -11,7 +11,7 @@ import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
 import com.asialocalguide.gateway.core.domain.user.UserAuth;
 import com.asialocalguide.gateway.core.dto.user.CreateUserDTO;
 import com.asialocalguide.gateway.core.exception.UserCreationException;
-import com.asialocalguide.gateway.core.repository.AppAppUserRepository;
+import com.asialocalguide.gateway.core.repository.AppUserRepository;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -23,9 +23,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessException;
 
 @ExtendWith(MockitoExtension.class)
-class AppAppUserServiceTest {
+class AppUserServiceTest {
 
-  @Mock private AppAppUserRepository appUserRepository;
+  @Mock private AppUserRepository appUserRepository;
 
   @Mock private AuthProviderService authProviderService;
 

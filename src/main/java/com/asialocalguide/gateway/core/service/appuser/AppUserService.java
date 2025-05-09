@@ -6,7 +6,7 @@ import com.asialocalguide.gateway.core.domain.user.UserAuth;
 import com.asialocalguide.gateway.core.dto.user.CreateUserDTO;
 import com.asialocalguide.gateway.core.exception.UserCreationException;
 import com.asialocalguide.gateway.core.exception.UserNotFoundException;
-import com.asialocalguide.gateway.core.repository.AppAppUserRepository;
+import com.asialocalguide.gateway.core.repository.AppUserRepository;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,11 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AppUserService {
 
-  private final AppAppUserRepository appUserRepository;
+  private final AppUserRepository appUserRepository;
 
   private final AuthProviderService authProviderService;
 
-  public AppUserService(AppAppUserRepository appUserRepository, AuthProviderService authProviderService) {
+  public AppUserService(AppUserRepository appUserRepository, AuthProviderService authProviderService) {
     this.appUserRepository = appUserRepository;
     this.authProviderService = authProviderService;
   }

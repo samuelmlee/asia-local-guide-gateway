@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AppAppUserRepository extends JpaRepository<AppUser, UUID>, CustomAppUserRepository {
+public interface AppUserRepository extends JpaRepository<AppUser, UUID>, CustomAppUserRepository {
 
   Optional<AppUser> findByEmail(String email);
 }
