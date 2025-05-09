@@ -1,16 +1,10 @@
 package com.asialocalguide.gateway.core.service.planning;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
-
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.planning.*;
+import com.asialocalguide.gateway.core.domain.user.AppUser;
 import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
-import com.asialocalguide.gateway.core.domain.user.User;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
@@ -18,12 +12,8 @@ import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.exception.PlanningCreationException;
 import com.asialocalguide.gateway.core.exception.UserNotFoundException;
 import com.asialocalguide.gateway.core.repository.PlanningRepository;
+import com.asialocalguide.gateway.core.service.appuser.AppUserService;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
-import com.asialocalguide.gateway.core.service.user.UserService;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +22,17 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class PlanningServiceTest {
 
@@ -39,7 +40,7 @@ class PlanningServiceTest {
 
   @Mock private FetchPlanningDataStrategy planningStrategy2;
 
-  @Mock private UserService userService;
+  @Mock private AppUserService appUserService;
 
   @Mock private ActivityService activityService;
 
@@ -53,7 +54,7 @@ class PlanningServiceTest {
   private final LocalDate today = LocalDate.now();
   private final LocalDate tomorrow = today.plusDays(1);
 
-  private User testUser;
+  private AppUser testAppUser;
   private Activity testActivity;
   private PlanningCreateRequestDTO validCreateRequest;
   private AuthProviderName authProviderName;
@@ -65,11 +66,11 @@ class PlanningServiceTest {
   void setup() {
     planningService =
         new PlanningService(
-            List.of(planningStrategy1, planningStrategy2), userService, activityService, planningRepository);
+            List.of(planningStrategy1, planningStrategy2), appUserService, activityService, planningRepository);
 
     validRequest = new PlanningRequestDTO(today, tomorrow, UUID.randomUUID(), List.of("adventure"));
 
-    testUser = createTestUser();
+    testAppUser = createTestUser();
     testActivity = createTestActivity();
     userProviderId = "user123";
     authProviderName = AuthProviderName.FIREBASE;
@@ -83,7 +84,7 @@ class PlanningServiceTest {
 
   @Test
   void generateActivityPlanning_shouldHandleNoProviders() {
-    PlanningService service = new PlanningService(List.of(), userService, activityService, planningRepository);
+    PlanningService service = new PlanningService(List.of(), appUserService, activityService, planningRepository);
 
     List<DayPlanDTO> result = service.generateActivityPlanning(validRequest);
 
@@ -255,14 +256,14 @@ class PlanningServiceTest {
   @Test
   void savePlanning_shouldCreateAndSavePlanningSuccessfully() {
     // Setup
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
-        .thenReturn(Optional.of(testUser));
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
 
     Set<String> activityIds = Set.of("activity1");
     when(activityService.findActivitiesByProviderNameAndIds(BookingProviderName.VIATOR, activityIds))
         .thenReturn(Set.of(testActivity));
 
-    Planning savedPlanning = new Planning(testUser, "Test Planning");
+    Planning savedPlanning = new Planning(testAppUser, "Test Planning");
     when(planningRepository.save(any(Planning.class))).thenReturn(savedPlanning);
 
     // Execute
@@ -271,7 +272,7 @@ class PlanningServiceTest {
     // Verify
     assertThat(result).isNotNull();
     assertThat(result.getName()).isEqualTo("Test Planning");
-    assertThat(result.getUser()).isEqualTo(testUser);
+    assertThat(result.getAppUser()).isEqualTo(testAppUser);
 
     verify(activityService).cacheNewActivitiesByProvider(any());
     verify(activityService).findActivitiesByProviderNameAndIds(eq(BookingProviderName.VIATOR), eq(activityIds));
@@ -280,7 +281,7 @@ class PlanningServiceTest {
     verify(planningRepository).save(planningCaptor.capture());
     Planning capturedPlanning = planningCaptor.getValue();
     assertThat(capturedPlanning.getName()).isEqualTo("Test Planning");
-    assertThat(capturedPlanning.getUser()).isEqualTo(testUser);
+    assertThat(capturedPlanning.getAppUser()).isEqualTo(testAppUser);
     assertThat(capturedPlanning.getDayPlans()).hasSize(1);
   }
 
@@ -307,7 +308,7 @@ class PlanningServiceTest {
 
   @Test
   void savePlanning_shouldThrowWhenUserNotFound() {
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
@@ -317,8 +318,8 @@ class PlanningServiceTest {
 
   @Test
   void savePlanning_shouldThrowWhenActivityLookupMapIsEmpty() {
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
-        .thenReturn(Optional.of(testUser));
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
 
     when(activityService.findActivitiesByProviderNameAndIds(any(), any()))
         .thenReturn(Set.of()); // Empty set of activities
@@ -330,8 +331,8 @@ class PlanningServiceTest {
 
   @Test
   void savePlanning_shouldThrowWhenActivityServiceThrowsException() {
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
-        .thenReturn(Optional.of(testUser));
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
 
     doThrow(new RuntimeException("Activity service error")).when(activityService).cacheNewActivitiesByProvider(any());
 
@@ -358,14 +359,14 @@ class PlanningServiceTest {
 
     PlanningCreateRequestDTO request = new PlanningCreateRequestDTO("Test Planning", List.of(dayPlan));
 
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
-        .thenReturn(Optional.of(testUser));
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
 
     Set<String> activityIds = Set.of("activity1", "invalidActivity");
     when(activityService.findActivitiesByProviderNameAndIds(BookingProviderName.VIATOR, activityIds))
         .thenReturn(Set.of(testActivity));
 
-    Planning savedPlanning = new Planning(testUser, "Test Planning");
+    Planning savedPlanning = new Planning(testAppUser, "Test Planning");
     when(planningRepository.save(any(Planning.class))).thenReturn(savedPlanning);
 
     // Execute
@@ -381,7 +382,7 @@ class PlanningServiceTest {
 
     // Verify planning properties
     assertThat(capturedPlanning.getName()).isEqualTo("Test Planning");
-    assertThat(capturedPlanning.getUser()).isEqualTo(testUser);
+    assertThat(capturedPlanning.getAppUser()).isEqualTo(testAppUser);
 
     // Verify day plans
     assertThat(capturedPlanning.getDayPlans()).hasSize(1);
@@ -399,8 +400,8 @@ class PlanningServiceTest {
 
   @Test
   void savePlanning_shouldThrowWhenPlanningRepositoryThrowsException() {
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
-        .thenReturn(Optional.of(testUser));
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
 
     Set<String> activityIds = Set.of("activity1");
     when(activityService.findActivitiesByProviderNameAndIds(BookingProviderName.VIATOR, activityIds))
@@ -415,8 +416,8 @@ class PlanningServiceTest {
   @Test
   void savePlanning_shouldHandleMultipleActivitiesAcrossMultipleDays() {
     // Setup
-    when(userService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
-        .thenReturn(Optional.of(testUser));
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
 
     Activity secondActivity =
         new Activity(
@@ -449,7 +450,7 @@ class PlanningServiceTest {
     PlanningCreateRequestDTO multiDayRequest =
         new PlanningCreateRequestDTO("Two-Day Planning", List.of(dayPlan1, dayPlan2));
 
-    Planning savedPlanning = new Planning(testUser, "Two-Day Planning");
+    Planning savedPlanning = new Planning(testAppUser, "Two-Day Planning");
     when(planningRepository.save(any(Planning.class))).thenReturn(savedPlanning);
 
     // Execute
@@ -465,7 +466,7 @@ class PlanningServiceTest {
 
     // Verify Planning properties
     assertThat(capturedPlanning.getName()).isEqualTo("Two-Day Planning");
-    assertThat(capturedPlanning.getUser()).isEqualTo(testUser);
+    assertThat(capturedPlanning.getAppUser()).isEqualTo(testAppUser);
     assertThat(capturedPlanning.getDayPlans()).hasSize(2);
 
     // Get day plans and sort them by date
@@ -528,11 +529,11 @@ class PlanningServiceTest {
         "VIATOR-123");
   }
 
-  private User createTestUser() {
-    testUser = new User();
-    testUser.setEmail("test@example.com");
+  private AppUser createTestUser() {
+    testAppUser = new AppUser();
+    testAppUser.setEmail("test@example.com");
 
-    return testUser;
+    return testAppUser;
   }
 
   private Activity createTestActivity() {

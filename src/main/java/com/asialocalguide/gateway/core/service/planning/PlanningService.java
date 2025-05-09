@@ -3,8 +3,8 @@ package com.asialocalguide.gateway.core.service.planning;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.*;
+import com.asialocalguide.gateway.core.domain.user.AppUser;
 import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
-import com.asialocalguide.gateway.core.domain.user.User;
 import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
@@ -12,8 +12,8 @@ import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.exception.PlanningCreationException;
 import com.asialocalguide.gateway.core.exception.UserNotFoundException;
 import com.asialocalguide.gateway.core.repository.PlanningRepository;
+import com.asialocalguide.gateway.core.service.appuser.AppUserService;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
-import com.asialocalguide.gateway.core.service.user.UserService;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,7 +33,7 @@ public class PlanningService {
 
   private final List<FetchPlanningDataStrategy> fetchPlanningDataStrategies;
 
-  private final UserService userService;
+  private final AppUserService appUserService;
 
   private final ActivityService activityService;
 
@@ -41,11 +41,11 @@ public class PlanningService {
 
   public PlanningService(
       List<FetchPlanningDataStrategy> fetchPlanningDataStrategies,
-      UserService userService,
+      AppUserService appUserService,
       ActivityService activityService,
       PlanningRepository planningRepository) {
     this.fetchPlanningDataStrategies = fetchPlanningDataStrategies;
-    this.userService = userService;
+    this.appUserService = appUserService;
     this.activityService = activityService;
     this.planningRepository = planningRepository;
   }
@@ -161,7 +161,7 @@ public class PlanningService {
 
     Map<BookingProviderName, Set<String>> providerNameToIds = buildProviderNameToActivityIds(planningRequest);
 
-    User user = getUserForPlanning(planningRequest, authProviderName, userProviderId);
+    AppUser appUser = getUserForPlanning(planningRequest, authProviderName, userProviderId);
 
     persistNewActivitiesForPlanning(providerNameToIds);
 
@@ -171,7 +171,7 @@ public class PlanningService {
       throw new PlanningCreationException("Error fetching any activities for the provided planning request.");
     }
 
-    Planning planning = buildPlanningEntity(planningRequest, user, activityLookupMap);
+    Planning planning = buildPlanningEntity(planningRequest, appUser, activityLookupMap);
 
     if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
       throw new PlanningCreationException("Error fetching any activities for the planning request and day plans.");
@@ -203,9 +203,9 @@ public class PlanningService {
     }
   }
 
-  private User getUserForPlanning(
+  private AppUser getUserForPlanning(
       PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName, String userProviderId) {
-    return userService
+    return appUserService
         .getUserByProviderNameAndProviderUserId(authProviderName, userProviderId)
         .orElseThrow(
             () ->
@@ -263,9 +263,9 @@ public class PlanningService {
 
   private Planning buildPlanningEntity(
       PlanningCreateRequestDTO planningRequest,
-      User user,
+      AppUser appUser,
       Map<BookingProviderName, Map<String, Activity>> activityLookupMap) {
-    Planning planning = new Planning(user, planningRequest.name());
+    Planning planning = new Planning(appUser, planningRequest.name());
 
     planningRequest
         .dayPlans()

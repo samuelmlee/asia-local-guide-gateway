@@ -34,14 +34,14 @@ CREATE TABLE country (
     CONSTRAINT pk_country PRIMARY KEY (id)
 );
 
--- "user" definition
-CREATE TABLE "user" (
+-- app_user definition
+CREATE TABLE app_user (
     id uuid NOT NULL,
     email varchar(255) NOT NULL,
     "name" varchar(255) NULL,
-    CONSTRAINT pk_user PRIMARY KEY (id)
+    CONSTRAINT pk_app_user PRIMARY KEY (id)
 );
-CREATE UNIQUE INDEX uq_user_email ON "user" USING btree (email);
+CREATE UNIQUE INDEX uq_app_user_email ON app_user USING btree (email);
 
 -- activity definition
 CREATE TABLE activity (
@@ -176,11 +176,11 @@ CREATE TYPE auth_provider_name AS ENUM (
 );
 
 CREATE TABLE user_auth (
-    user_id uuid NOT NULL,
+    app_user_id uuid NOT NULL,
     auth_provider_name auth_provider_name NOT NULL,
     provider_user_id varchar(255) NOT NULL,
-    CONSTRAINT pk_user_auth PRIMARY KEY (user_id, auth_provider_name),
-    CONSTRAINT fk_user_auth_to_user FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
+    CONSTRAINT pk_user_auth PRIMARY KEY (app_user_id, auth_provider_name),
+    CONSTRAINT fk_user_auth_to_app_user FOREIGN KEY (app_user_id) REFERENCES app_user(id) ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX uq_user_auth_provider_user_id ON user_auth USING btree (auth_provider_name, provider_user_id);
 
@@ -189,12 +189,12 @@ CREATE UNIQUE INDEX uq_user_auth_provider_user_id ON user_auth USING btree (auth
 CREATE TABLE planning (
     id uuid NOT NULL,
     "name" varchar(255) NOT NULL,
-    user_id uuid NOT NULL,
+    app_user_id uuid NOT NULL,
     created_date timestamptz NOT NULL,
     CONSTRAINT pk_planning PRIMARY KEY (id),
-    CONSTRAINT fk_planning_to_user FOREIGN KEY (user_id) REFERENCES "user"(id)
+    CONSTRAINT fk_planning_to_app_user FOREIGN KEY (app_user_id) REFERENCES app_user(id)
 );
-CREATE INDEX idx_planning_user_id ON planning USING btree (user_id);
+CREATE INDEX idx_planning_app_user_id ON planning USING btree (app_user_id);
 
 -- day_plan definition
 CREATE TABLE day_plan (

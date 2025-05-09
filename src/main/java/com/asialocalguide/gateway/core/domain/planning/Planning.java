@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
 import com.asialocalguide.gateway.core.domain.BaseEntity;
-import com.asialocalguide.gateway.core.domain.user.User;
+import com.asialocalguide.gateway.core.domain.user.AppUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -23,10 +23,10 @@ public class Planning extends BaseEntity {
   @Getter @NotBlank private String name;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "app_user_id")
   @Getter
   @NotNull
-  private User user;
+  private AppUser appUser;
 
   @OneToMany(mappedBy = "planning", cascade = CascadeType.ALL, orphanRemoval = true)
   @NotEmpty
@@ -34,11 +34,11 @@ public class Planning extends BaseEntity {
 
   @CreatedDate @Getter private Instant createdDate;
 
-  public Planning(User user, String name) {
-    if (user == null || name == null) {
-      throw new IllegalArgumentException(String.format("User: %s or name: %s cannot be null", user, name));
+  public Planning(AppUser appUser, String name) {
+    if (appUser == null || name == null) {
+      throw new IllegalArgumentException(String.format("User: %s or name: %s cannot be null", appUser, name));
     }
-    this.user = user;
+    this.appUser = appUser;
     this.name = name;
   }
 
