@@ -14,7 +14,7 @@ import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
-public class User extends BaseEntity {
+public class AppUser extends BaseEntity {
 
   @NotNull
   @Getter
@@ -25,7 +25,7 @@ public class User extends BaseEntity {
 
   @Getter @Setter private String name;
 
-  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<UserAuth> userAuths = new HashSet<>();
 
   public void addUserAuth(UserAuth userAuth) {
@@ -50,7 +50,7 @@ public class User extends BaseEntity {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    User that = (User) o;
+    AppUser that = (AppUser) o;
     return Objects.equals(getId(), that.getId());
   }
 

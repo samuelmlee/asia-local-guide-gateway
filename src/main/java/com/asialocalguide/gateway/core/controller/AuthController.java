@@ -26,7 +26,7 @@ public class AuthController {
     return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
   }
 
-  @DeleteMapping
+  @DeleteMapping("/users")
   public void deleteUser(@NotNull Authentication authentication) {
     String uid = authentication.getName();
 

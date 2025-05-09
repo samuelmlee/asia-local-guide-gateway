@@ -16,7 +16,7 @@ import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 @Embeddable
 @Getter
 public class UserAuthId implements Serializable {
-  @Column(name = "user_id")
+  @Column(name = "app_user_id")
   private UUID userId;
 
   @Enumerated(EnumType.STRING)

@@ -14,18 +14,18 @@ public class UserAuth {
   @EmbeddedId private UserAuthId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", insertable = false, updatable = false)
-  private User user;
+  @JoinColumn(name = "app_user_id", insertable = false, updatable = false)
+  private AppUser appUser;
 
   @NotEmpty private String providerUserId;
 
-  public UserAuth(User user, AuthProviderName authProviderName, String providerUserId) {
-    if (user == null || authProviderName == null || providerUserId == null) {
+  public UserAuth(AppUser appUser, AuthProviderName authProviderName, String providerUserId) {
+    if (appUser == null || authProviderName == null || providerUserId == null) {
       throw new IllegalArgumentException("User, AuthProviderName or providerUserId cannot be null");
     }
 
-    this.id = new UserAuthId(user.getId(), authProviderName);
-    this.user = user;
+    this.id = new UserAuthId(appUser.getId(), authProviderName);
+    this.appUser = appUser;
     this.providerUserId = providerUserId;
   }
 
