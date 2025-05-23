@@ -1,5 +1,11 @@
 package com.asialocalguide.gateway.core.service.planning;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.planning.*;
@@ -14,6 +20,10 @@ import com.asialocalguide.gateway.core.exception.UserNotFoundException;
 import com.asialocalguide.gateway.core.repository.PlanningRepository;
 import com.asialocalguide.gateway.core.service.appuser.AppUserService;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,17 +31,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PlanningServiceTest {
@@ -314,6 +313,22 @@ class PlanningServiceTest {
     assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
         .isInstanceOf(UserNotFoundException.class)
         .hasMessageContaining("User not found for Planning Creation request");
+  }
+
+  @Test
+  void savePlanning_shouldThrowWhenPlanningNameAlreadyExists() {
+    when(appUserService.getUserByProviderNameAndProviderUserId(authProviderName, userProviderId))
+        .thenReturn(Optional.of(testAppUser));
+
+    when(planningRepository.existsByAppUserIdAndName(testAppUser.getId(), "Test Planning")).thenReturn(true);
+
+    assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
+        .isInstanceOf(PlanningCreationException.class)
+        .hasMessageContaining("Planning with the same name already exists");
+
+    verify(planningRepository).existsByAppUserIdAndName(testAppUser.getId(), "Test Planning");
+
+    verify(planningRepository, never()).save(any(Planning.class));
   }
 
   @Test

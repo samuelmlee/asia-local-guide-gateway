@@ -163,19 +163,13 @@ public class PlanningService {
 
     AppUser appUser = getUserForPlanning(planningRequest, authProviderName, userProviderId);
 
+    checkForNameDuplicates(planningRequest, appUser);
+
     persistNewActivitiesForPlanning(providerNameToIds);
 
     Map<BookingProviderName, Map<String, Activity>> activityLookupMap = buildActivityLookupMap(providerNameToIds);
 
-    if (activityLookupMap.isEmpty() || activityLookupMap.values().stream().allMatch(Map::isEmpty)) {
-      throw new PlanningCreationException("Error fetching any activities for the provided planning request.");
-    }
-
     Planning planning = buildPlanningEntity(planningRequest, appUser, activityLookupMap);
-
-    if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
-      throw new PlanningCreationException("Error fetching any activities for the planning request and day plans.");
-    }
 
     return persistPlanning(planning);
   }
@@ -216,6 +210,12 @@ public class PlanningService {
                         planningRequest, authProviderName, userProviderId)));
   }
 
+  private void checkForNameDuplicates(PlanningCreateRequestDTO planningRequest, AppUser appUser) {
+    if (planningRepository.existsByAppUserIdAndName(appUser.getId(), planningRequest.name())) {
+      throw new PlanningCreationException("Planning with the same name already exists");
+    }
+  }
+
   private static Map<BookingProviderName, Set<String>> buildProviderNameToActivityIds(
       PlanningCreateRequestDTO planningRequest) {
     List<PlanningCreateRequestDTO.CreateDayActivityDTO> activities =
@@ -250,6 +250,10 @@ public class PlanningService {
           }
         });
 
+    if (result.isEmpty() || result.values().stream().allMatch(Map::isEmpty)) {
+      throw new PlanningCreationException("Error fetching any activities for the provided planning request.");
+    }
+
     return result;
   }
 
@@ -283,6 +287,11 @@ public class PlanningService {
 
               dayPlanOpt.ifPresent(planning::addDayPlan);
             });
+
+    if (planning.getDayPlans() == null || planning.getDayPlans().isEmpty()) {
+      throw new PlanningCreationException("Error fetching any activities for the planning request and day plans.");
+    }
+
     return planning;
   }
 
