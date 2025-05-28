@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@RequestMapping("v1/planning")
+@RequestMapping("v1/plannings")
 public class PlanningController {
 
   private final PlanningService planningService;
