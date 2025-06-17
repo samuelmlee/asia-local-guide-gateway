@@ -4,8 +4,8 @@ import com.asialocalguide.gateway.core.domain.planning.Planning;
 import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningCreatedDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.dto.planning.PlanningResponseDTO;
 import com.asialocalguide.gateway.core.service.auth.AuthService;
 import com.asialocalguide.gateway.core.service.planning.PlanningService;
 import jakarta.validation.Valid;
@@ -31,13 +31,13 @@ public class PlanningController {
   }
 
   @PostMapping("/generate")
-  public List<DayPlanDTO> generateActivityPlan(@Valid @RequestBody PlanningRequestDTO request) {
-    return planningService.generateActivityPlanning(request);
+  public List<DayPlanDTO> generateDayPlans(@Valid @RequestBody PlanningRequestDTO request) {
+    return planningService.generateDayPlans(request);
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<PlanningResponseDTO> savePlanning(
+  public ResponseEntity<PlanningCreatedDTO> savePlanning(
       @Valid @RequestBody PlanningCreateRequestDTO planningRequest, Authentication authentication) {
 
     AuthProviderName providerName =
@@ -51,6 +51,17 @@ public class PlanningController {
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(planningCreated.getId()).toUri();
 
-    return ResponseEntity.created(location).body(new PlanningResponseDTO(planningCreated.getId()));
+    return ResponseEntity.created(location).body(new PlanningCreatedDTO(planningCreated.getId()));
+  }
+
+  @GetMapping
+  public List<Planning> getUserPlannings(Authentication authentication) {
+    AuthProviderName providerName =
+        authService
+            .getProviderFromAuthentication(authentication)
+            .orElseThrow(() -> new SecurityException("Authentication provider not recognized"));
+    String userProviderId = authentication.getName();
+
+    return planningService.getUserPlannings(providerName, userProviderId);
   }
 }

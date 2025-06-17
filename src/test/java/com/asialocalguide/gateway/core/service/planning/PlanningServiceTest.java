@@ -82,16 +82,16 @@ class PlanningServiceTest {
   }
 
   @Test
-  void generateActivityPlanning_shouldHandleNoProviders() {
+  void generateDayPlans_shouldHandleNoProviders() {
     PlanningService service = new PlanningService(List.of(), appUserService, activityService, planningRepository);
 
-    List<DayPlanDTO> result = service.generateActivityPlanning(validRequest);
+    List<DayPlanDTO> result = service.generateDayPlans(validRequest);
 
     assertTrue(result.isEmpty());
   }
 
   @Test
-  void generateActivityPlanning_shouldHandleFailedProviders() {
+  void generateDayPlans_shouldHandleFailedProviders() {
     // Setup 2-day request
     LocalDate endDate = today.plusDays(1);
     PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, UUID.randomUUID(), List.of("adventure"));
@@ -99,7 +99,7 @@ class PlanningServiceTest {
     when(planningStrategy1.fetchProviderPlanningData(any(), any())).thenThrow(new RuntimeException("Provider error"));
     when(planningStrategy2.fetchProviderPlanningData(any(), any())).thenReturn(createTestProviderData());
 
-    List<DayPlanDTO> result = planningService.generateActivityPlanning(request);
+    List<DayPlanDTO> result = planningService.generateDayPlans(request);
 
     // Verify exactly one activity is scheduled across all days
     int totalActivities = result.stream().mapToInt(day -> day.activities().size()).sum();
@@ -120,13 +120,13 @@ class PlanningServiceTest {
                     ),
                 today));
 
-    List<DayPlanDTO> result = planningService.generateActivityPlanning(validRequest);
+    List<DayPlanDTO> result = planningService.generateDayPlans(validRequest);
 
     assertTrue(result.stream().allMatch(day -> day.activities().isEmpty()));
   }
 
   @Test
-  void generateActivityPlanning_shouldHandleSchedulingFailure() {
+  void generateDayPlans_shouldHandleSchedulingFailure() {
     boolean[][][] availability = new boolean[1][2][24];
 
     String[][][] startTimes = new String[1][2][24];
@@ -143,13 +143,13 @@ class PlanningServiceTest {
     when(planningStrategy1.fetchProviderPlanningData(any(), any()))
         .thenReturn(new ProviderPlanningData(List.of(createTestCommonActivity(4.5)), invalidData, today));
 
-    List<DayPlanDTO> result = planningService.generateActivityPlanning(validRequest);
+    List<DayPlanDTO> result = planningService.generateDayPlans(validRequest);
 
     assertTrue(result.getFirst().activities().isEmpty());
   }
 
   @Test
-  void generateActivityPlanning_shouldCreateMultiDaySchedule() {
+  void generateDayPlans_shouldCreateMultiDaySchedule() {
     // 24 slots/day format: 0=00:00-01:00, 1=01:00-02:00,...23=23:00-00:00
     int numDays = 3;
     int slotsPerDay = 24;
@@ -191,7 +191,7 @@ class PlanningServiceTest {
             UUID.randomUUID(),
             List.of("adventure"));
 
-    List<DayPlanDTO> result = planningService.generateActivityPlanning(multiDayRequest);
+    List<DayPlanDTO> result = planningService.generateDayPlans(multiDayRequest);
 
     // Verify the activity is scheduled once across all days
     int totalScheduled = result.stream().mapToInt(day -> day.activities().size()).sum();
@@ -203,7 +203,7 @@ class PlanningServiceTest {
   }
 
   @Test
-  void generateActivityPlanning_shouldHandleTimeSlotConflicts() {
+  void generateDayPlans_shouldHandleTimeSlotConflicts() {
     // Setup 1-day request with 24 slots
     LocalDate endDate = today.plusDays(0); // Same day (1-day duration)
     int numDays = 1;
@@ -244,7 +244,7 @@ class PlanningServiceTest {
 
     PlanningRequestDTO request = new PlanningRequestDTO(today, endDate, UUID.randomUUID(), List.of("adventure"));
 
-    List<DayPlanDTO> result = planningService.generateActivityPlanning(request);
+    List<DayPlanDTO> result = planningService.generateDayPlans(request);
 
     // Verify only 1 activity is scheduled
     assertEquals(1, result.size());
@@ -312,7 +312,7 @@ class PlanningServiceTest {
 
     assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
         .isInstanceOf(UserNotFoundException.class)
-        .hasMessageContaining("User not found for Planning Creation request");
+        .hasMessageContaining("User not found for operation:");
   }
 
   @Test
