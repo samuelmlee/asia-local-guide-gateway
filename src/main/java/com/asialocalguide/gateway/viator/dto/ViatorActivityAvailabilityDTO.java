@@ -1,8 +1,9 @@
 package com.asialocalguide.gateway.viator.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 
 public record ViatorActivityAvailabilityDTO(
     @NotNull String productCode,
@@ -14,7 +15,7 @@ public record ViatorActivityAvailabilityDTO(
   public record Season(String startDate, String endDate, @NotNull @NotEmpty List<PricingRecord> pricingRecords) {}
 
   public record PricingRecord(
-      @NotNull @NotEmpty List<String> daysOfWeek, @NotNull @NotEmpty List<TimedEntry> timedEntries) {}
+      @NotNull @NotEmpty List<String> daysOfWeek, @NotNull @NotEmpty @NotNull @NotEmpty List<TimedEntry> timedEntries) {}
 
   public record TimedEntry(String startTime, List<UnavailableDate> unavailableDates) {}
 
