@@ -1,7 +1,5 @@
 package com.asialocalguide.gateway.viator.client;
 
-import com.asialocalguide.gateway.viator.dto.*;
-import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,11 +7,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityResponseDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorDestinationResponseDTO;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 
 @Component
 public class ViatorClient {
@@ -136,11 +144,13 @@ public class ViatorClient {
     }
   }
 
-  private void handleViatorError(ClientHttpResponse response) throws IOException {
-    String responseBody =
-        new BufferedReader(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))
-            .lines()
-            .collect(Collectors.joining("\n"));
-    throw new ViatorApiException("Viator API error: " + response.getStatusCode() + " - " + responseBody);
-  }
+	private void handleViatorError(ClientHttpResponse response) throws IOException {
+		try (BufferedReader reader = new BufferedReader(
+				new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
+
+			String responseBody = reader.lines().collect(Collectors.joining("\n"));
+
+			throw new ViatorApiException("Viator API error: " + response.getStatusCode() + " - " + responseBody);
+		}
+	}
 }
