@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EnableJpaAuditing
 public class AsiaLocalGuideGatewayApplication {
 
-  public static void main(String[] args) {
-    SpringApplication.run(AsiaLocalGuideGatewayApplication.class, args);
-  }
+	public static void main(String[] args) {
+		SpringApplication.run(AsiaLocalGuideGatewayApplication.class, args);
+	}
 }

@@ -110,31 +110,30 @@ public class ViatorClient {
     }
   }
 
-  public Optional<ViatorActivityAvailabilityDTO> getAvailabilityByProductCode(String productCode) {
-    try {
-      ResponseEntity<ViatorActivityAvailabilityDTO> entity =
-          viatorRestClient
-              .get()
-              .uri("/availability/schedules/{productCode}", productCode)
-              .retrieve()
-              .onStatus(
-                  // Exclude 404 from errors
-                  status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND) || status.is5xxServerError(),
-                  (req, res) -> handleViatorError(res))
-              .toEntity(ViatorActivityAvailabilityDTO.class);
+	public Optional<ViatorActivityAvailabilityDTO> getAvailabilityByProductCode(String productCode) {
+		try {
+			ResponseEntity<ViatorActivityAvailabilityDTO> entity = viatorRestClient.get()
+					.uri("/availability/schedules/{productCode}", productCode)
+					.retrieve()
+					.onStatus(
+							// Exclude 404 from errors
+							status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND)
+									|| status.is5xxServerError(),
+							(req, res) -> handleViatorError(res))
+					.toEntity(ViatorActivityAvailabilityDTO.class);
 
-      if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
-        return Optional.empty();
-      }
+			if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
+				return Optional.empty();
+			}
 
-      return Optional.ofNullable(entity.getBody());
+			return Optional.ofNullable(entity.getBody());
 
-    } catch (ViatorApiException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ViatorApiException("Failed to call Availability Schedules API: " + e.getMessage(), e);
-    }
-  }
+		} catch (ViatorApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ViatorApiException("Failed to call Availability Schedules API: " + e.getMessage(), e);
+		}
+	}
 
   private void handleViatorError(ClientHttpResponse response) throws IOException {
     String responseBody =
