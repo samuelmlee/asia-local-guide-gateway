@@ -143,11 +143,17 @@ public class ViatorClient {
 	}
 
 	private void handleViatorError(ClientHttpResponse response) throws IOException {
+<<<<<<< HEAD
+
+		try (InputStreamReader streamReader = new InputStreamReader(response.getBody(), StandardCharsets.UTF_8)) {
+			String responseBody = new BufferedReader(streamReader).lines().collect(Collectors.joining("\n"));
+=======
 		try (BufferedReader reader = new BufferedReader(
 				new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
 
 			String responseBody = reader.lines().collect(Collectors.joining("\n"));
 
+>>>>>>> main
 			throw new ViatorApiException("Viator API error: " + response.getStatusCode() + " - " + responseBody);
 		}
 	}

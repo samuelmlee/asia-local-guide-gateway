@@ -13,9 +13,14 @@ public record ViatorActivityAvailabilityDTO(@NotNull String productCode,
 	public record Season(String startDate, String endDate, @NotNull @NotEmpty List<PricingRecord> pricingRecords) {
 	}
 
+<<<<<<< HEAD
 	public record PricingRecord(@NotNull @NotEmpty List<String> daysOfWeek,
-			@NotNull @NotEmpty List<TimedEntry> timedEntries) {
+			@NotNull @NotEmpty @NotNull @NotEmpty List<TimedEntry> timedEntries) {
 	}
+=======
+  public record PricingRecord(
+      @NotNull @NotEmpty List<String> daysOfWeek, @NotNull @NotEmpty @NotNull @NotEmpty List<TimedEntry> timedEntries) {}
+>>>>>>> main
 
 	public record TimedEntry(String startTime, List<UnavailableDate> unavailableDates) {
 	}
