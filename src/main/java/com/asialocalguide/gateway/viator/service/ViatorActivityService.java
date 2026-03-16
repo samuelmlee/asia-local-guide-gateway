@@ -2,22 +2,49 @@ package com.asialocalguide.gateway.viator.service;
 
 import static java.util.Objects.requireNonNull;
 
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.*;
-import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
-import com.asialocalguide.gateway.viator.client.ViatorClient;
-import com.asialocalguide.gateway.viator.dto.*;
-import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
-import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
+
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
+import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
+import com.asialocalguide.gateway.core.domain.planning.ImageType;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
+import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
+import com.asialocalguide.gateway.viator.client.ViatorClient;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivityDetailDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySearchDTO;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySortingOrder;
+import com.asialocalguide.gateway.viator.dto.ViatorActivitySortingType;
+import com.asialocalguide.gateway.viator.exception.ViatorActivityServiceException;
+import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -77,14 +104,16 @@ public class ViatorActivityService implements ActivityProvider {
       // Use English language activities as base for creating CommonPersistableActivity, other language for translations
       Map<String, ViatorActivityDetailDTO> idToActivitiesEnDTOs = languageToActivities.get(LanguageCode.EN);
 
-      if (idToActivitiesEnDTOs == null || idToActivitiesEnDTOs.isEmpty()) {
-        throw new ViatorActivityServiceException("Failed to process any activities for English language");
-      }
+		if (idToActivitiesEnDTOs == null || idToActivitiesEnDTOs.isEmpty()) {
+			throw new ViatorActivityServiceException("Failed to process any activities for English language");
+		}
 
-      return idToActivitiesEnDTOs.values().stream()
-          .map(dto -> createCommonPersistableActivity(dto, languageToActivities))
-          .flatMap(Optional::stream)
-          .toList();
+		return idToActivitiesEnDTOs.values()
+				.stream()
+				.map(dto -> createCommonPersistableActivity(dto, languageToActivities))
+				.flatMap(Optional::stream)
+				.toList();
+		
     } catch (Exception ex) {
       throw new ViatorActivityServiceException(
           String.format("Failed to fetch Viator activities for activityIds : %s", activityIds), ex);
@@ -199,18 +228,16 @@ public class ViatorActivityService implements ActivityProvider {
         .toList();
   }
 
-  private ActivityPlanningData mapToActivityData(
-      List<ViatorActivityDTO> activities,
-      List<ViatorActivityAvailabilityDTO> availabilities,
-      ProviderPlanningRequest request) {
-    try {
-      return ViatorActivityAvailabilityMapper.mapToActivityData(
-          activities, availabilities, request.startDate(), request.endDate());
-    } catch (Exception e) {
-      log.error("Failed to map activity data: {}", e.getMessage());
-      throw new ViatorActivityServiceException("Activity data mapping failed", e);
-    }
-  }
+	private ActivityPlanningData mapToActivityData(List<ViatorActivityDTO> activities,
+			List<ViatorActivityAvailabilityDTO> availabilities, ProviderPlanningRequest request) {
+		try {
+			return ViatorActivityAvailabilityMapper
+					.mapToActivityData(activities, availabilities, request.startDate(), request.endDate());
+		} catch (Exception e) {
+			log.error("Failed to map activity data: {}", e.getMessage());
+			throw new ViatorActivityServiceException("Activity data mapping failed", e);
+		}
+	}
 
   private Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> fetchLanguageToActivities(Set<String> activityIds) {
 
@@ -234,23 +261,20 @@ public class ViatorActivityService implements ActivityProvider {
             continue;
           }
 
-          futures.add(
-              executor.submit(
-                  () -> {
-                    try {
-                      Optional<ViatorActivityDetailDTO> activityOpt =
-                          viatorClient.getActivityByIdAndLanguage(language.toString(), id);
+			futures.add(executor.submit(() -> {
+				try {
+					Optional<ViatorActivityDetailDTO> activityOpt = viatorClient
+							.getActivityByIdAndLanguage(language.toString(), id);
 
-                      activityOpt.ifPresent(activity -> result.get(language).put(activity.productCode(), activity));
+					activityOpt.ifPresent(activity -> result.get(language).put(activity.productCode(), activity));
 
-                    } catch (Exception ex) {
-                      log.warn(
-                          "Failed to fetch Viator activity for id {} for language {} : {}",
-                          id,
-                          language,
-                          ex.getMessage());
-                    }
-                  }));
+				} catch (Exception ex) {
+					log.warn("Failed to fetch Viator activity for id {} for language {} : {}",
+							id,
+							language,
+							ex.getMessage());
+				}
+			}));
         }
       }
 
@@ -272,16 +296,15 @@ public class ViatorActivityService implements ActivityProvider {
 
     try {
 
-      CommonPersistableActivity activity =
-          new CommonPersistableActivity(
-              resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::title),
-              resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::description),
-              mapActivityDetailImages(dto),
-              mapActivityDetailReview(dto),
-              dto.getDurationMinutes(),
-              dto.productUrl(),
-              BookingProviderName.VIATOR,
-              dto.productCode());
+		CommonPersistableActivity activity = new CommonPersistableActivity(
+				resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::title),
+				resolveTranslations(dto.productCode(), languageToActivities, ViatorActivityDetailDTO::description),
+				mapActivityDetailImages(dto),
+				mapActivityDetailReview(dto),
+				dto.getDurationMinutes(),
+				dto.productUrl(),
+				BookingProviderName.VIATOR,
+				dto.productCode());
 
       return Optional.of(activity);
 
@@ -311,42 +334,36 @@ public class ViatorActivityService implements ActivityProvider {
     return images;
   }
 
-  private CommonPersistableActivity.Review mapActivityDetailReview(ViatorActivityDetailDTO dto) {
+	private CommonPersistableActivity.Review mapActivityDetailReview(ViatorActivityDetailDTO dto) {
 
-    float averageRating = dto.reviews().combinedAverageRating();
-    int reviewCount = dto.reviews().totalReviews();
+		float averageRating = dto.reviews().combinedAverageRating();
+		int reviewCount = dto.reviews().totalReviews();
 
-    return new CommonPersistableActivity.Review(averageRating, reviewCount);
-  }
+		return new CommonPersistableActivity.Review(averageRating, reviewCount);
+	}
 
-  private List<CommonPersistableActivity.Translation> resolveTranslations(
-      String productCode,
-      Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities,
-      Function<ViatorActivityDetailDTO, String> mapper) {
+	private List<CommonPersistableActivity.Translation> resolveTranslations(String productCode,
+			Map<LanguageCode, Map<String, ViatorActivityDetailDTO>> languageToActivities,
+			Function<ViatorActivityDetailDTO, String> mapper) {
 
-    return languageToActivities.entrySet().stream()
-        .map(
-            entry -> {
-              Map<String, ViatorActivityDetailDTO> idToActivities = entry.getValue();
+		return languageToActivities.entrySet().stream().map(entry -> {
+			Map<String, ViatorActivityDetailDTO> idToActivities = entry.getValue();
 
-              if (idToActivities == null) {
-                log.debug(
-                    "No idToActivities Map found for language: {} while processing productCode: {}",
-                    entry.getKey(),
-                    productCode);
-                return null;
-              }
+			if (idToActivities == null) {
+				log.debug("No idToActivities Map found for language: {} while processing productCode: {}",
+						entry.getKey(),
+						productCode);
+				return null;
+			}
 
-              ViatorActivityDetailDTO dto = idToActivities.get(productCode);
-              if (dto == null) {
-                log.debug("No translation found for productCode: {} in language: {}", productCode, entry.getKey());
-                return null;
-              }
-              return new CommonPersistableActivity.Translation(entry.getKey(), mapper.apply(dto));
-            })
-        .filter(Objects::nonNull)
-        .toList();
-  }
+			ViatorActivityDetailDTO dto = idToActivities.get(productCode);
+			if (dto == null) {
+				log.debug("No translation found for productCode: {} in language: {}", productCode, entry.getKey());
+				return null;
+			}
+			return new CommonPersistableActivity.Translation(entry.getKey(), mapper.apply(dto));
+		}).filter(Objects::nonNull).toList();
+	}
 
   private void waitForTaskCompletion(List<Future<?>> futures) {
     for (Future<?> future : futures) {

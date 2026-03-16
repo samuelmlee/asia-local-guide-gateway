@@ -1,21 +1,31 @@
 package com.asialocalguide.gateway.core.controller;
 
+import java.net.URI;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import com.asialocalguide.gateway.core.domain.planning.Planning;
 import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
 import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningCreatedDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningSummaryDTO;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.dto.planning.PlanningResponseDTO;
 import com.asialocalguide.gateway.core.service.auth.AuthService;
 import com.asialocalguide.gateway.core.service.planning.PlanningService;
+
 import jakarta.validation.Valid;
-import java.net.URI;
-import java.util.List;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("v1/plannings")
@@ -31,19 +41,23 @@ public class PlanningController {
   }
 
   @PostMapping("/generate")
-  public List<DayPlanDTO> generateActivityPlan(@Valid @RequestBody PlanningRequestDTO request) {
-    return planningService.generateActivityPlanning(request);
+  public List<DayPlanDTO> generateDayPlans(@Valid @RequestBody PlanningRequestDTO request) {
+    return planningService.generateDayPlans(request);
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<PlanningResponseDTO> savePlanning(
+  public ResponseEntity<PlanningCreatedDTO> savePlanning(
       @Valid @RequestBody PlanningCreateRequestDTO planningRequest, Authentication authentication) {
 
     AuthProviderName providerName =
         authService
             .getProviderFromAuthentication(authentication)
-            .orElseThrow(() -> new SecurityException("Authentication provider not recognized"));
+            .orElseThrow(
+                    () ->
+                        new ResponseStatusException(
+                            HttpStatus.UNAUTHORIZED, "Authentication provider not recognized"));
+    
     String userProviderId = authentication.getName();
 
     Planning planningCreated = planningService.savePlanning(planningRequest, providerName, userProviderId);
@@ -51,6 +65,21 @@ public class PlanningController {
     URI location =
         ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(planningCreated.getId()).toUri();
 
-    return ResponseEntity.created(location).body(new PlanningResponseDTO(planningCreated.getId()));
+    return ResponseEntity.created(location).body(new PlanningCreatedDTO(planningCreated.getId()));
+  }
+
+  @GetMapping
+  public List<PlanningSummaryDTO> getUserPlannings(Authentication authentication) {
+    AuthProviderName providerName =
+        authService
+            .getProviderFromAuthentication(authentication)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Authentication provider not recognized"));
+    
+    String userProviderId = authentication.getName();
+
+	return planningService.getUserPlannings(providerName, userProviderId);
   }
 }
