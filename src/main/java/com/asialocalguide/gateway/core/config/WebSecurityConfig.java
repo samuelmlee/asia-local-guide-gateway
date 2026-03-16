@@ -36,12 +36,17 @@ public class WebSecurityConfig {
 				.requestMatchers("/v1/activity-tags/**",
 						"/v1/auth/check-email",
 						"/v1/destinations/autocomplete",
-						"/v1/destinations/sync/**",
-						"/v1/plannings/**")
+						"/v1/destinations/sync/**")
 				.permitAll()
-	            // Allow POST /v1/users, registration without auth
-	            .requestMatchers(HttpMethod.POST, "/v1/users")
-	            .permitAll()
+				// Allow unauthenticated Planning generation
+				.requestMatchers(HttpMethod.POST, "/v1/plannings/generate")
+				.permitAll()
+				// Require auth for everything else under /v1/plannings/**
+				.requestMatchers("/v1/plannings/**")
+				.authenticated()
+				// Allow POST /v1/users, registration without auth
+				.requestMatchers(HttpMethod.POST, "/v1/users")
+				.permitAll()
 	            // Require auth for everything else under /v1/users/**
 	            .requestMatchers("/v1/users/**")
 	            .authenticated()

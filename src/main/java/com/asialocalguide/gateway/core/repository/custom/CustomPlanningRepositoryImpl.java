@@ -33,6 +33,7 @@ public class CustomPlanningRepositoryImpl implements CustomPlanningRepository {
         != null;
   }
 
+  // TODO: Redo query to fetch data for Planning Summary in Frontend
   public List<Planning> getPlanningsByAppUserIdAndLanguageCode(UUID appUserId, LanguageCode languageCode) {
     QPlanning planning = QPlanning.planning;
     QDayPlan dayPlan = QDayPlan.dayPlan;
