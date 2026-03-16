@@ -1,28 +1,49 @@
 package com.asialocalguide.gateway.core.service.planning;
 
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.domain.planning.*;
-import com.asialocalguide.gateway.core.domain.user.AppUser;
-import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
-import com.asialocalguide.gateway.core.dto.planning.*;
-import com.asialocalguide.gateway.core.exception.PlanningCreationException;
-import com.asialocalguide.gateway.core.exception.UserNotFoundException;
-import com.asialocalguide.gateway.core.repository.PlanningRepository;
-import com.asialocalguide.gateway.core.service.appuser.AppUserService;
-import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.core.domain.planning.Activity;
+import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
+import com.asialocalguide.gateway.core.domain.planning.DayActivity;
+import com.asialocalguide.gateway.core.domain.planning.DayPlan;
+import com.asialocalguide.gateway.core.domain.planning.Planning;
+import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
+import com.asialocalguide.gateway.core.domain.user.AppUser;
+import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
+import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
+import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningSummaryDTO;
+import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
+import com.asialocalguide.gateway.core.exception.PlanningCreationException;
+import com.asialocalguide.gateway.core.exception.UserNotFoundException;
+import com.asialocalguide.gateway.core.repository.PlanningRepository;
+import com.asialocalguide.gateway.core.service.appuser.AppUserService;
+import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -371,13 +392,15 @@ public class PlanningService {
   }
 
   @Transactional
-  public List<Planning> getUserPlannings(AuthProviderName providerName, String userProviderId) {
+  public List<PlanningSummaryDTO> getUserPlannings(AuthProviderName providerName, String userProviderId) {
 
     AppUser appUser = getAppUserByProviderNameAndId("getPlannings", providerName, userProviderId);
 
     LanguageCode languageCode = getLanguageCodeFromContext();
 
-    return planningRepository.getPlanningsByAppUserIdAndLanguageCode(appUser.getId(), languageCode);
+    List<Planning> plannings = planningRepository.getPlanningsByAppUserIdAndLanguageCode(appUser.getId(), languageCode);
+    
+    return plannings.stream().map(planning -> new PlanningSummaryDTO(planning.getId(), planning.getName())).toList();
   }
 
   private static LanguageCode getLanguageCodeFromContext() {

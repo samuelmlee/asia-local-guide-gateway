@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of origins allowed by the CORS configuration (e.g. http://localhost:4200,https://myapp.com)."
+    },
+    {
+      "name": "auth.firebase.project-id",
+      "type": "java.lang.String",
+      "description": "Firebase project ID used to verify JWT tokens issued by Firebase Authentication."
+    }
+  ]
+}

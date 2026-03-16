@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
@@ -44,7 +45,11 @@ public class ViatorClient {
 							// Exclude 404 from errors
 							status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND)
 									|| status.is5xxServerError(),
-							(req, res) -> handleViatorError(res))
+							(req, res) -> {
+								if (res.getStatusCode() != HttpStatus.NOT_FOUND) {
+									handleViatorError(res);
+								}
+							})
 					.toEntity(ViatorDestinationResponseDTO.class);
 
 			if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -55,9 +60,7 @@ public class ViatorClient {
 					.map(ViatorDestinationResponseDTO::destinations)
 					.orElseGet(List::of);
 
-		} catch (ViatorApiException e) {
-			throw e;
-		} catch (Exception e) {
+		} catch (RestClientException e) {
 			throw new ViatorApiException("Failed to call Destination API: " + e.getMessage(), e);
 		}
 	}
@@ -74,7 +77,11 @@ public class ViatorClient {
 							// Exclude 404 from errors
 							status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND)
 									|| status.is5xxServerError(),
-							(req, res) -> handleViatorError(res))
+							(req, res) -> {
+								if (res.getStatusCode() != HttpStatus.NOT_FOUND) {
+									handleViatorError(res);
+								}
+							})
 					.toEntity(ViatorActivityResponseDTO.class);
 
 			if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -83,9 +90,7 @@ public class ViatorClient {
 
 			return Optional.ofNullable(entity.getBody()).map(ViatorActivityResponseDTO::products).orElseGet(List::of);
 
-		} catch (ViatorApiException e) {
-			throw e;
-		} catch (Exception e) {
+		} catch (RestClientException e) {
 			throw new ViatorApiException("Failed to call Products Search API: " + e.getMessage(), e);
 		}
 	}
@@ -100,7 +105,11 @@ public class ViatorClient {
 							// Exclude 404 from errors
 							status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND)
 									|| status.is5xxServerError(),
-							(req, res) -> handleViatorError(res))
+							(req, res) -> {
+								if (res.getStatusCode() != HttpStatus.NOT_FOUND) {
+									handleViatorError(res);
+								}
+							})
 					.toEntity(ViatorActivityDetailDTO.class);
 
 			if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -109,9 +118,7 @@ public class ViatorClient {
 
 			return Optional.ofNullable(entity.getBody());
 
-		} catch (ViatorApiException e) {
-			throw e;
-		} catch (Exception e) {
+		} catch (RestClientException e) {
 
 			throw new ViatorApiException("Failed to call Products by Product Code API: " + e.getMessage(), e);
 		}
@@ -126,7 +133,11 @@ public class ViatorClient {
 							// Exclude 404 from errors
 							status -> (status.is4xxClientError() && status != HttpStatus.NOT_FOUND)
 									|| status.is5xxServerError(),
-							(req, res) -> handleViatorError(res))
+							(req, res) -> {
+								if (res.getStatusCode() != HttpStatus.NOT_FOUND) {
+									handleViatorError(res);
+								}
+							})
 					.toEntity(ViatorActivityAvailabilityDTO.class);
 
 			if (entity.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -135,9 +146,7 @@ public class ViatorClient {
 
 			return Optional.ofNullable(entity.getBody());
 
-		} catch (ViatorApiException e) {
-			throw e;
-		} catch (Exception e) {
+		} catch (RestClientException e) {
 			throw new ViatorApiException("Failed to call Availability Schedules API: " + e.getMessage(), e);
 		}
 	}
