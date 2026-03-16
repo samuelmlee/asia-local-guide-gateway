@@ -11,16 +11,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class FirebaseJwtConverterProvider implements JwtConverterProvider {
 
-  @Override
-  public JwtAuthenticationConverter getJwtAuthenticationConverter() {
-    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+	@Override
+	public JwtAuthenticationConverter getJwtAuthenticationConverter() {
+		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
-    converter.setJwtGrantedAuthoritiesConverter(
-        jwt ->
-            Optional.ofNullable(jwt.getClaimAsStringList("roles")).orElse(List.of()).stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList()));
+		converter.setJwtGrantedAuthoritiesConverter(jwt -> Optional.ofNullable(jwt.getClaimAsStringList("roles"))
+				.orElse(List.of())
+				.stream()
+				.map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+				.collect(Collectors.toList()));
 
-    return converter;
-  }
+		return converter;
+	}
 }

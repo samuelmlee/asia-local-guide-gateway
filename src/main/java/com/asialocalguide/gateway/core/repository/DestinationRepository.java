@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface DestinationRepository extends JpaRepository<Destination, UUID>, CustomDestinationRepository {
 
-  @Transactional(readOnly = true)
-  @Query("SELECT d FROM Destination d WHERE d.country.iso2Code IN :isoCodes")
-  List<Destination> findByIsoCodes(@Param("isoCodes") Set<String> isoCodes);
+	@Transactional(readOnly = true)
+	@Query("SELECT d FROM Destination d WHERE d.country.iso2Code IN :isoCodes")
+	List<Destination> findByIsoCodes(@Param("isoCodes") Set<String> isoCodes);
 }

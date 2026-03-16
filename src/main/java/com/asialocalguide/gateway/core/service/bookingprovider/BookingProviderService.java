@@ -10,17 +10,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class BookingProviderService {
 
-  private final BookingProviderRepository bookingProviderRepository;
+	private final BookingProviderRepository bookingProviderRepository;
 
-  public BookingProviderService(BookingProviderRepository bookingProviderRepository) {
-    this.bookingProviderRepository = bookingProviderRepository;
-  }
+	public BookingProviderService(BookingProviderRepository bookingProviderRepository) {
+		this.bookingProviderRepository = bookingProviderRepository;
+	}
 
-  public Optional<BookingProvider> getBookingProviderByName(BookingProviderName providerName) {
-    return bookingProviderRepository.findByName(providerName);
-  }
+	public Optional<BookingProvider> getBookingProviderByName(BookingProviderName providerName) {
+		return bookingProviderRepository.findByName(providerName);
+	}
 
-  public List<BookingProvider> getAllBookingProviders() {
-    return bookingProviderRepository.findAll();
-  }
+	public List<BookingProvider> getAllBookingProviders() {
+		return bookingProviderRepository.findAll();
+	}
 }

@@ -13,27 +13,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class CustomActivityTagRepositoryImpl implements CustomActivityTagRepository {
 
-  private final JPAQueryFactory queryFactory;
+	private final JPAQueryFactory queryFactory;
 
-  public CustomActivityTagRepositoryImpl(JPAQueryFactory queryFactory) {
-    this.queryFactory = queryFactory;
-  }
+	public CustomActivityTagRepositoryImpl(JPAQueryFactory queryFactory) {
+		this.queryFactory = queryFactory;
+	}
 
-  @Override
-  @Transactional(readOnly = true)
-  public List<ActivityTag> findAllWithTranslations(LanguageCode languageCode) {
-    QActivityTag activityTag = QActivityTag.activityTag;
-    QActivityTagTranslation translation = QActivityTagTranslation.activityTagTranslation;
-    QLanguage language = QLanguage.language;
+	@Override
+	@Transactional(readOnly = true)
+	public List<ActivityTag> findAllWithTranslations(LanguageCode languageCode) {
+		QActivityTag activityTag = QActivityTag.activityTag;
+		QActivityTagTranslation translation = QActivityTagTranslation.activityTagTranslation;
+		QLanguage language = QLanguage.language;
 
-    return queryFactory
-        .selectDistinct(activityTag)
-        .from(activityTag)
-        .leftJoin(activityTag.activityTagTranslations, translation)
-        .fetchJoin()
-        .leftJoin(translation.language, language)
-        .fetchJoin()
-        .where(translation.language.code.eq(languageCode))
-        .fetch();
-  }
+		return queryFactory.selectDistinct(activityTag)
+				.from(activityTag)
+				.leftJoin(activityTag.activityTagTranslations, translation)
+				.fetchJoin()
+				.leftJoin(translation.language, language)
+				.fetchJoin()
+				.where(translation.language.code.eq(languageCode))
+				.fetch();
+	}
 }

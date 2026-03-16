@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface CustomAppUserRepository {
 
-  Optional<AppUser> findUserByProviderNameAndProviderUserId(AuthProviderName providerName, String providerUserId);
+	Optional<AppUser> findUserByProviderNameAndProviderUserId(AuthProviderName providerName, String providerUserId);
 }

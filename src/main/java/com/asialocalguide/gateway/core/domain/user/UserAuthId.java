@@ -16,27 +16,28 @@ import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 @Embeddable
 @Getter
 public class UserAuthId implements Serializable {
-  @Column(name = "app_user_id")
-  private UUID userId;
+	@Column(name = "app_user_id")
+	private UUID userId;
 
-  @Enumerated(EnumType.STRING)
-  @JdbcType(PostgreSQLEnumJdbcType.class)
-  private AuthProviderName authProviderName;
+	@Enumerated(EnumType.STRING)
+	@JdbcType(PostgreSQLEnumJdbcType.class)
+	private AuthProviderName authProviderName;
 
-  public UserAuthId(UUID userId, AuthProviderName authProviderName) {
-    this.userId = userId;
-    this.authProviderName = authProviderName;
-  }
+	public UserAuthId(UUID userId, AuthProviderName authProviderName) {
+		this.userId = userId;
+		this.authProviderName = authProviderName;
+	}
 
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof UserAuthId)) return false;
-    UserAuthId that = (UserAuthId) o;
-    return Objects.equals(getUserId(), that.getUserId()) && getAuthProviderName() == that.getAuthProviderName();
-  }
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof UserAuthId))
+			return false;
+		UserAuthId that = (UserAuthId) o;
+		return Objects.equals(getUserId(), that.getUserId()) && getAuthProviderName() == that.getAuthProviderName();
+	}
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getUserId(), getAuthProviderName());
-  }
+	@Override
+	public int hashCode() {
+		return Objects.hash(getUserId(), getAuthProviderName());
+	}
 }

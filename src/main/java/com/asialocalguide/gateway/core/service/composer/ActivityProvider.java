@@ -9,9 +9,9 @@ import java.util.Set;
 
 public interface ActivityProvider {
 
-  BookingProviderName getProviderName();
+	BookingProviderName getProviderName();
 
-  ProviderPlanningData fetchProviderPlanningData(ProviderPlanningRequest request);
+	ProviderPlanningData fetchProviderPlanningData(ProviderPlanningRequest request);
 
-  List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds);
+	List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds);
 }

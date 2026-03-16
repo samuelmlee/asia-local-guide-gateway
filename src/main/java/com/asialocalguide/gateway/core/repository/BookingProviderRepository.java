@@ -11,6 +11,6 @@ import java.util.Optional;
 @Repository
 public interface BookingProviderRepository extends JpaRepository<BookingProvider, Long> {
 
-    @Transactional(readOnly = true)
-    Optional<BookingProvider> findByName(BookingProviderName name);
+	@Transactional(readOnly = true)
+	Optional<BookingProvider> findByName(BookingProviderName name);
 }

@@ -13,26 +13,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class CustomDestinationProviderMappingRepositoryImpl implements CustomDestinationProviderMappingRepository {
 
-  private final JPAQueryFactory queryFactory;
+	private final JPAQueryFactory queryFactory;
 
-  public CustomDestinationProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
-    this.queryFactory = queryFactory;
-  }
+	public CustomDestinationProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
+		this.queryFactory = queryFactory;
+	}
 
-  @Override
-  @Transactional(readOnly = true)
-  public Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName) {
-    QDestinationProviderMapping mapping = QDestinationProviderMapping.destinationProviderMapping;
-    QBookingProvider provider = QBookingProvider.bookingProvider;
+	@Override
+	@Transactional(readOnly = true)
+	public Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName) {
+		QDestinationProviderMapping mapping = QDestinationProviderMapping.destinationProviderMapping;
+		QBookingProvider provider = QBookingProvider.bookingProvider;
 
-    List<String> results =
-        queryFactory
-            .select(mapping.providerDestinationId)
-            .from(mapping)
-            .innerJoin(mapping.provider, provider)
-            .where(provider.name.eq(providerName))
-            .fetch();
+		List<String> results = queryFactory.select(mapping.providerDestinationId)
+				.from(mapping)
+				.innerJoin(mapping.provider, provider)
+				.where(provider.name.eq(providerName))
+				.fetch();
 
-    return new HashSet<>(results);
-  }
+		return new HashSet<>(results);
+	}
 }

@@ -9,12 +9,12 @@ import org.springframework.http.client.ClientHttpResponse;
 
 @Slf4j
 class ViatorRequestInterceptor implements ClientHttpRequestInterceptor {
-  @Override
-  public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
-      throws IOException {
+	@Override
+	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+			throws IOException {
 
-    log.info("Viator Request - Method: {}, URI: {}", request.getMethod(), request.getURI());
+		log.info("Viator Request - Method: {}, URI: {}", request.getMethod(), request.getURI());
 
-    return execution.execute(request, body);
-  }
+		return execution.execute(request, body);
+	}
 }

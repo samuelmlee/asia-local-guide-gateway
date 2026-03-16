@@ -31,55 +31,49 @@ import jakarta.validation.Valid;
 @RequestMapping("v1/plannings")
 public class PlanningController {
 
-  private final PlanningService planningService;
+	private final PlanningService planningService;
 
-  private final AuthService authService;
+	private final AuthService authService;
 
-  public PlanningController(PlanningService planningService, AuthService authService) {
-    this.planningService = planningService;
-    this.authService = authService;
-  }
+	public PlanningController(PlanningService planningService, AuthService authService) {
+		this.planningService = planningService;
+		this.authService = authService;
+	}
 
-  @PostMapping("/generate")
-  public List<DayPlanDTO> generateDayPlans(@Valid @RequestBody PlanningRequestDTO request) {
-    return planningService.generateDayPlans(request);
-  }
+	@PostMapping("/generate")
+	public List<DayPlanDTO> generateDayPlans(@Valid @RequestBody PlanningRequestDTO request) {
+		return planningService.generateDayPlans(request);
+	}
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<PlanningCreatedDTO> savePlanning(
-      @Valid @RequestBody PlanningCreateRequestDTO planningRequest, Authentication authentication) {
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public ResponseEntity<PlanningCreatedDTO> savePlanning(@Valid @RequestBody PlanningCreateRequestDTO planningRequest,
+			Authentication authentication) {
 
-    AuthProviderName providerName =
-        authService
-            .getProviderFromAuthentication(authentication)
-            .orElseThrow(
-                    () ->
-                        new ResponseStatusException(
-                            HttpStatus.UNAUTHORIZED, "Authentication provider not recognized"));
-    
-    String userProviderId = authentication.getName();
+		AuthProviderName providerName = authService.getProviderFromAuthentication(authentication)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+						"Authentication provider not recognized"));
 
-    Planning planningCreated = planningService.savePlanning(planningRequest, providerName, userProviderId);
+		String userProviderId = authentication.getName();
 
-    URI location =
-        ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(planningCreated.getId()).toUri();
+		Planning planningCreated = planningService.savePlanning(planningRequest, providerName, userProviderId);
 
-    return ResponseEntity.created(location).body(new PlanningCreatedDTO(planningCreated.getId()));
-  }
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+				.path("/{id}")
+				.buildAndExpand(planningCreated.getId())
+				.toUri();
 
-  @GetMapping
-  public List<PlanningSummaryDTO> getUserPlannings(Authentication authentication) {
-    AuthProviderName providerName =
-        authService
-            .getProviderFromAuthentication(authentication)
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Authentication provider not recognized"));
-    
-    String userProviderId = authentication.getName();
+		return ResponseEntity.created(location).body(new PlanningCreatedDTO(planningCreated.getId()));
+	}
 
-	return planningService.getUserPlannings(providerName, userProviderId);
-  }
+	@GetMapping
+	public List<PlanningSummaryDTO> getUserPlannings(Authentication authentication) {
+		AuthProviderName providerName = authService.getProviderFromAuthentication(authentication)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+						"Authentication provider not recognized"));
+
+		String userProviderId = authentication.getName();
+
+		return planningService.getUserPlannings(providerName, userProviderId);
+	}
 }

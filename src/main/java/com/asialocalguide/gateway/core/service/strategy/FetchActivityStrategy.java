@@ -7,7 +7,7 @@ import java.util.Set;
 
 public interface FetchActivityStrategy {
 
-  BookingProviderName getProviderName();
+	BookingProviderName getProviderName();
 
-  List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds);
+	List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds);
 }

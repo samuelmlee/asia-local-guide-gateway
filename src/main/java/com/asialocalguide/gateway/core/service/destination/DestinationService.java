@@ -18,73 +18,65 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DestinationService {
 
-  private final List<DestinationProvider> destinationProviders;
+	private final List<DestinationProvider> destinationProviders;
 
-  private final DestinationSortingService destinationSortingService;
+	private final DestinationSortingService destinationSortingService;
 
-  private final DestinationRepository destinationRepository;
+	private final DestinationRepository destinationRepository;
 
-  public DestinationService(
-      List<DestinationProvider> destinationProviders,
-      DestinationSortingService destinationSortingService,
-      DestinationRepository destinationRepository) {
-    this.destinationProviders = destinationProviders;
-    this.destinationSortingService = destinationSortingService;
-    this.destinationRepository = destinationRepository;
-  }
+	public DestinationService(List<DestinationProvider> destinationProviders,
+			DestinationSortingService destinationSortingService, DestinationRepository destinationRepository) {
+		this.destinationProviders = destinationProviders;
+		this.destinationSortingService = destinationSortingService;
+		this.destinationRepository = destinationRepository;
+	}
 
-  public Optional<Destination> findDestinationById(UUID id) {
-    return destinationRepository.findById(id);
-  }
+	public Optional<Destination> findDestinationById(UUID id) {
+		return destinationRepository.findById(id);
+	}
 
-  public void syncDestinationsForProvider(BookingProviderName providerName) {
+	public void syncDestinationsForProvider(BookingProviderName providerName) {
 
-    Objects.requireNonNull(providerName);
+		Objects.requireNonNull(providerName);
 
-    DestinationProvider destinationProvider =
-        destinationProviders.stream()
-            .filter(provider -> provider.getProviderName().equals(providerName))
-            .findFirst()
-            .orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
+		DestinationProvider destinationProvider = destinationProviders.stream()
+				.filter(provider -> provider.getProviderName().equals(providerName))
+				.findFirst()
+				.orElseThrow(() -> new DestinationIngestionException("Invalid provider name: " + providerName));
 
-    List<CommonDestination> rawDestinations = destinationProvider.getDestinations();
+		List<CommonDestination> rawDestinations = destinationProvider.getDestinations();
 
-    DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
+		DestinationIngestionInput input = new DestinationIngestionInput(providerName, rawDestinations);
 
-    destinationSortingService.triageRawDestinations(input);
-  }
+		destinationSortingService.triageRawDestinations(input);
+	}
 
-  public List<DestinationDTO> getAutocompleteSuggestions(String query) {
+	public List<DestinationDTO> getAutocompleteSuggestions(String query) {
 
-    if (query == null || query.isBlank()) {
-      return List.of();
-    }
+		if (query == null || query.isBlank()) {
+			return List.of();
+		}
 
-    Locale locale = LocaleContextHolder.getLocale();
+		Locale locale = LocaleContextHolder.getLocale();
 
-    // Default to English if the locale is not supported
-    LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
+		// Default to English if the locale is not supported
+		LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
-    List<Destination> destinations =
-        destinationRepository.findCityOrRegionByNameWithEagerTranslations(languageCode, query);
+		List<Destination> destinations = destinationRepository.findCityOrRegionByNameWithEagerTranslations(languageCode,
+				query);
 
-    return destinations.stream()
-        .map(
-            destination -> {
-              String translationName = destination.getTranslation(languageCode).orElse("");
+		return destinations.stream().map(destination -> {
+			String translationName = destination.getTranslation(languageCode).orElse("");
 
-              if (translationName.isEmpty()) {
-                return null;
-              }
+			if (translationName.isEmpty()) {
+				return null;
+			}
 
-              String countryName =
-                  destination.getCountry() != null
-                      ? destination.getCountry().getTranslation(languageCode).orElse("")
-                      : "";
+			String countryName = destination.getCountry() != null
+					? destination.getCountry().getTranslation(languageCode).orElse("")
+					: "";
 
-              return DestinationDTO.of(destination.getId(), translationName, destination.getType(), countryName);
-            })
-        .filter(Objects::nonNull)
-        .toList();
-  }
+			return DestinationDTO.of(destination.getId(), translationName, destination.getType(), countryName);
+		}).filter(Objects::nonNull).toList();
+	}
 }

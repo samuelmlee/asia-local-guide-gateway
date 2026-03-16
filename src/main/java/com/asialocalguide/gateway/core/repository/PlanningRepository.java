@@ -9,4 +9,5 @@ import com.asialocalguide.gateway.core.domain.planning.Planning;
 import com.asialocalguide.gateway.core.repository.custom.CustomPlanningRepository;
 
 @Repository
-public interface PlanningRepository extends JpaRepository<Planning, UUID>, CustomPlanningRepository {}
+public interface PlanningRepository extends JpaRepository<Planning, UUID>, CustomPlanningRepository {
+}

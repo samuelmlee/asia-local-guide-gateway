@@ -13,28 +13,28 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/auth")
 public class AuthController {
 
-  private final AuthProviderService authProviderService;
+	private final AuthProviderService authProviderService;
 
-  public AuthController(AuthProviderService authProviderService) {
-    this.authProviderService = authProviderService;
-  }
+	public AuthController(AuthProviderService authProviderService) {
+		this.authProviderService = authProviderService;
+	}
 
-  @PostMapping("/check-email")
-  public EmailCheckResultDTO isExistingEmail(@RequestBody @Valid EmailCheckDTO emailCheckDTO) {
-    boolean exists = authProviderService.checkExistingEmail(emailCheckDTO.email());
+	@PostMapping("/check-email")
+	public EmailCheckResultDTO isExistingEmail(@RequestBody @Valid EmailCheckDTO emailCheckDTO) {
+		boolean exists = authProviderService.checkExistingEmail(emailCheckDTO.email());
 
-    return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
-  }
+		return new EmailCheckResultDTO(emailCheckDTO.email(), exists);
+	}
 
-  @DeleteMapping("/users")
-  public void deleteUser(@NotNull Authentication authentication) {
-    String uid = authentication.getName();
+	@DeleteMapping("/users")
+	public void deleteUser(@NotNull Authentication authentication) {
+		String uid = authentication.getName();
 
-    if (uid == null || uid.isBlank()) {
-      throw new UserDeletionException(
-          "Provider User ID to be deleted cannot be null or empty", UserDeletionException.Type.VALIDATION);
-    }
+		if (uid == null || uid.isBlank()) {
+			throw new UserDeletionException("Provider User ID to be deleted cannot be null or empty",
+					UserDeletionException.Type.VALIDATION);
+		}
 
-    authProviderService.deleteProviderUser(uid);
-  }
+		authProviderService.deleteProviderUser(uid);
+	}
 }

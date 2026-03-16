@@ -16,46 +16,50 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AppUser extends BaseEntity {
 
-  @NotNull
-  @Getter
-  @Setter
-  @Email
-  @Column(unique = true, nullable = false)
-  private String email;
+	@NotNull
+	@Getter
+	@Setter
+	@Email
+	@Column(unique = true, nullable = false)
+	private String email;
 
-  @Getter @Setter private String name;
+	@Getter
+	@Setter
+	private String name;
 
-  @OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<UserAuth> userAuths = new HashSet<>();
+	@OneToMany(mappedBy = "appUser", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<UserAuth> userAuths = new HashSet<>();
 
-  public void addUserAuth(UserAuth userAuth) {
-    if (userAuth == null) {
-      return;
-    }
-    userAuths.add(userAuth);
-  }
+	public void addUserAuth(UserAuth userAuth) {
+		if (userAuth == null) {
+			return;
+		}
+		userAuths.add(userAuth);
+	}
 
-  public Optional<UserAuth> findUserAuth(AuthProviderName authProviderName) {
-    if (authProviderName == null || userAuths == null) {
-      return Optional.empty();
-    }
+	public Optional<UserAuth> findUserAuth(AuthProviderName authProviderName) {
+		if (authProviderName == null || userAuths == null) {
+			return Optional.empty();
+		}
 
-    return userAuths.stream()
-        .filter(Objects::nonNull)
-        .filter(ua -> ua.getId() != null && authProviderName.equals(ua.getId().getAuthProviderName()))
-        .findFirst();
-  }
+		return userAuths.stream()
+				.filter(Objects::nonNull)
+				.filter(ua -> ua.getId() != null && authProviderName.equals(ua.getId().getAuthProviderName()))
+				.findFirst();
+	}
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    AppUser that = (AppUser) o;
-    return Objects.equals(getId(), that.getId());
-  }
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		AppUser that = (AppUser) o;
+		return Objects.equals(getId(), that.getId());
+	}
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(getId());
-  }
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(getId());
+	}
 }

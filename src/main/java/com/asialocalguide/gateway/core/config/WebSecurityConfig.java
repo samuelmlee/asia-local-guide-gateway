@@ -14,7 +14,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class WebSecurityConfig {
-	
+
 	@Value("${app.cors.allowed-origins}")
 	private String allowedOrigins;
 
@@ -25,7 +25,7 @@ public class WebSecurityConfig {
 	}
 
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		// No cookies set = No CSRF
 		http.csrf(AbstractHttpConfigurer::disable);
 
@@ -47,9 +47,9 @@ public class WebSecurityConfig {
 				// Allow POST /v1/users, registration without auth
 				.requestMatchers(HttpMethod.POST, "/v1/users")
 				.permitAll()
-	            // Require auth for everything else under /v1/users/**
-	            .requestMatchers("/v1/users/**")
-	            .authenticated()
+				// Require auth for everything else under /v1/users/**
+				.requestMatchers("/v1/users/**")
+				.authenticated()
 				.anyRequest()
 				// TODO: Create API to add admin role
 				.authenticated())

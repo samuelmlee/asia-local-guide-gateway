@@ -14,32 +14,34 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DestinationTranslationId implements Serializable {
-  @Column(name = "destination_id")
-  private UUID destinationId;
+	@Column(name = "destination_id")
+	private UUID destinationId;
 
-  @Column(name = "language_id")
-  private Long languageId;
+	@Column(name = "language_id")
+	private Long languageId;
 
-  public DestinationTranslationId(UUID destinationId, Long languageId) {
-    if (destinationId == null || languageId == null) {
-      throw new IllegalArgumentException(
-          String.format("DestinationId: %s or languageId: %s cannot be null", destinationId, languageId));
-    }
-    this.destinationId = destinationId;
-    this.languageId = languageId;
-  }
+	public DestinationTranslationId(UUID destinationId, Long languageId) {
+		if (destinationId == null || languageId == null) {
+			throw new IllegalArgumentException(
+					String.format("DestinationId: %s or languageId: %s cannot be null", destinationId, languageId));
+		}
+		this.destinationId = destinationId;
+		this.languageId = languageId;
+	}
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    DestinationTranslationId that = (DestinationTranslationId) o;
-    return Objects.equals(getDestinationId(), that.getDestinationId())
-        && Objects.equals(getLanguageId(), that.getLanguageId());
-  }
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		DestinationTranslationId that = (DestinationTranslationId) o;
+		return Objects.equals(getDestinationId(), that.getDestinationId())
+				&& Objects.equals(getLanguageId(), that.getLanguageId());
+	}
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getDestinationId(), getLanguageId());
-  }
+	@Override
+	public int hashCode() {
+		return Objects.hash(getDestinationId(), getLanguageId());
+	}
 }

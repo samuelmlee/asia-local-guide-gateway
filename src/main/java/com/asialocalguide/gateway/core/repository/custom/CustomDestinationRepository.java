@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface CustomDestinationRepository {
 
-  List<Destination> findCityOrRegionByNameWithEagerTranslations(LanguageCode languageCode, String name);
+	List<Destination> findCityOrRegionByNameWithEagerTranslations(LanguageCode languageCode, String name);
 }

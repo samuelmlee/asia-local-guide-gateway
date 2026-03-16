@@ -20,45 +20,49 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class Planning extends BaseEntity {
 
-  @Getter @NotBlank private String name;
+	@Getter
+	@NotBlank
+	private String name;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "app_user_id")
-  @Getter
-  @NotNull
-  private AppUser appUser;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "app_user_id")
+	@Getter
+	@NotNull
+	private AppUser appUser;
 
-  @OneToMany(mappedBy = "planning", cascade = CascadeType.ALL, orphanRemoval = true)
-  @NotEmpty
-  private Set<DayPlan> dayPlans = new HashSet<>();
+	@OneToMany(mappedBy = "planning", cascade = CascadeType.ALL, orphanRemoval = true)
+	@NotEmpty
+	private Set<DayPlan> dayPlans = new HashSet<>();
 
-  @CreatedDate @Getter private Instant createdDate;
+	@CreatedDate
+	@Getter
+	private Instant createdDate;
 
-  public Planning(AppUser appUser, String name) {
-    if (appUser == null || name == null) {
-      throw new IllegalArgumentException(String.format("User: %s or name: %s cannot be null", appUser, name));
-    }
-    this.appUser = appUser;
-    this.name = name;
-  }
+	public Planning(AppUser appUser, String name) {
+		if (appUser == null || name == null) {
+			throw new IllegalArgumentException(String.format("User: %s or name: %s cannot be null", appUser, name));
+		}
+		this.appUser = appUser;
+		this.name = name;
+	}
 
-  public Set<DayPlan> getDayPlans() {
-    return Collections.unmodifiableSet(dayPlans);
-  }
+	public Set<DayPlan> getDayPlans() {
+		return Collections.unmodifiableSet(dayPlans);
+	}
 
-  public void addDayPlan(DayPlan dayPlan) {
-    if (dayPlan == null || dayPlans == null) {
-      return;
-    }
-    dayPlan.setPlanning(this);
-    dayPlans.add(dayPlan);
-  }
+	public void addDayPlan(DayPlan dayPlan) {
+		if (dayPlan == null || dayPlans == null) {
+			return;
+		}
+		dayPlan.setPlanning(this);
+		dayPlans.add(dayPlan);
+	}
 
-  public void removeDayPlan(DayPlan dayPlan) {
-    if (dayPlan == null || dayPlans == null) {
-      return;
-    }
-    dayPlan.setPlanning(null);
-    dayPlans.remove(dayPlan);
-  }
+	public void removeDayPlan(DayPlan dayPlan) {
+		if (dayPlan == null || dayPlans == null) {
+			return;
+		}
+		dayPlan.setPlanning(null);
+		dayPlans.remove(dayPlan);
+	}
 }

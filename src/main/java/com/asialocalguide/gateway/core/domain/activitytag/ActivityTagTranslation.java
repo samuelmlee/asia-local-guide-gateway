@@ -12,60 +12,56 @@ import lombok.NoArgsConstructor;
 @Getter
 public class ActivityTagTranslation {
 
-  @EmbeddedId private ActivityTagTranslationId id;
+	@EmbeddedId
+	private ActivityTagTranslationId id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "activity_tag_id", insertable = false, updatable = false)
-  private ActivityTag activityTag;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "activity_tag_id", insertable = false, updatable = false)
+	private ActivityTag activityTag;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "language_id", insertable = false, updatable = false)
-  private Language language;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "language_id", insertable = false, updatable = false)
+	private Language language;
 
-  @NotEmpty private String name;
+	@NotEmpty
+	private String name;
 
-  @NotEmpty private String promptText;
+	@NotEmpty
+	private String promptText;
 
-  public ActivityTagTranslation(ActivityTag activityTag, Language language, String name, String promptText) {
-    if (activityTag == null || language == null || name == null) {
-      throw new IllegalArgumentException(
-          String.format("ActivityTag: %s or Language: %s or name: %s cannot be null", activityTag, language, name));
-    }
+	public ActivityTagTranslation(ActivityTag activityTag, Language language, String name, String promptText) {
+		if (activityTag == null || language == null || name == null) {
+			throw new IllegalArgumentException(String
+					.format("ActivityTag: %s or Language: %s or name: %s cannot be null", activityTag, language, name));
+		}
 
-    this.id = new ActivityTagTranslationId(activityTag.getId(), language.getId());
-    this.activityTag = activityTag;
-    this.name = name;
-    this.promptText = promptText;
-  }
+		this.id = new ActivityTagTranslationId(activityTag.getId(), language.getId());
+		this.activityTag = activityTag;
+		this.name = name;
+		this.promptText = promptText;
+	}
 
-  protected void setActivityTag(ActivityTag activityTag) {
-    this.activityTag = activityTag;
-  }
+	protected void setActivityTag(ActivityTag activityTag) {
+		this.activityTag = activityTag;
+	}
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass())
+			return false;
 
-    ActivityTagTranslation that = (ActivityTagTranslation) o;
-    return Objects.equals(id, that.id);
-  }
+		ActivityTagTranslation that = (ActivityTagTranslation) o;
+		return Objects.equals(id, that.id);
+	}
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
 
-  @Override
-  public String toString() {
-    return "ActivityTagTranslation{"
-        + "id="
-        + id
-        + ", name='"
-        + name
-        + '\''
-        + ", promptText='"
-        + promptText
-        + '\''
-        + '}';
-  }
+	@Override
+	public String toString() {
+		return "ActivityTagTranslation{" + "id=" + id + ", name='" + name + '\'' + ", promptText='" + promptText + '\''
+				+ '}';
+	}
 }

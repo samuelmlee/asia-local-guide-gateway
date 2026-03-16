@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface CustomActivityTagRepository {
 
-  List<ActivityTag> findAllWithTranslations(LanguageCode languageCode);
+	List<ActivityTag> findAllWithTranslations(LanguageCode languageCode);
 }

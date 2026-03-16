@@ -7,11 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 
-public record ProviderPlanningRequest(
-        @NotNull LocalDate startDate,
-        @NotNull LocalDate endDate,
-        Integer duration,
-        List<String> activityTags,
-        @NotEmpty String providerDestinationId,
-        LanguageCode languageCode) {
+public record ProviderPlanningRequest(@NotNull LocalDate startDate, @NotNull LocalDate endDate, Integer duration,
+		List<String> activityTags, @NotEmpty String providerDestinationId, LanguageCode languageCode) {
 }

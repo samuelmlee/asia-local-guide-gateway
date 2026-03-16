@@ -5,17 +5,16 @@ import lombok.Getter;
 
 @Getter
 public enum ViatorActivitySortingOrder {
-  ASCENDING("ASCENDING"),
-  DESCENDING("DESCENDING");
+	ASCENDING("ASCENDING"), DESCENDING("DESCENDING");
 
-  private final String value;
+	private final String value;
 
-  ViatorActivitySortingOrder(String value) {
-    this.value = value;
-  }
+	ViatorActivitySortingOrder(String value) {
+		this.value = value;
+	}
 
-  @JsonValue
-  public String getValue() {
-    return this.value;
-  }
+	@JsonValue
+	public String getValue() {
+		return this.value;
+	}
 }

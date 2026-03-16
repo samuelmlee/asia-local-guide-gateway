@@ -2,7 +2,7 @@ package com.asialocalguide.gateway.core.service.auth;
 
 public interface AuthProviderService {
 
-  boolean checkExistingEmail(String email);
+	boolean checkExistingEmail(String email);
 
-  void deleteProviderUser(String uid);
+	void deleteProviderUser(String uid);
 }

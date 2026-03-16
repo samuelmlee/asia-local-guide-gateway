@@ -10,27 +10,26 @@ import java.util.Optional;
  * 2. Make sure the Language table has corresponding entries
  */
 public enum LanguageCode {
-  EN,
-  FR;
+	EN, FR;
 
-  public static Optional<LanguageCode> from(String languageString) {
+	public static Optional<LanguageCode> from(String languageString) {
 
-    if (languageString == null || languageString.isEmpty()) {
-      return Optional.empty();
-    }
+		if (languageString == null || languageString.isEmpty()) {
+			return Optional.empty();
+		}
 
-    String lowerCase = languageString.toLowerCase();
+		String lowerCase = languageString.toLowerCase();
 
-    for (LanguageCode lc : values()) {
-      if (lc.toString().equals(lowerCase)) {
-        return Optional.of(lc);
-      }
-    }
-    return Optional.empty();
-  }
+		for (LanguageCode lc : values()) {
+			if (lc.toString().equals(lowerCase)) {
+				return Optional.of(lc);
+			}
+		}
+		return Optional.empty();
+	}
 
-  @Override
-  public String toString() {
-    return this.name().toLowerCase();
-  }
+	@Override
+	public String toString() {
+		return this.name().toLowerCase();
+	}
 }

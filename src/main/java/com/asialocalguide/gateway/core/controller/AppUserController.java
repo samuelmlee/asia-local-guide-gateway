@@ -25,28 +25,30 @@ import jakarta.validation.Valid;
 @RequestMapping("/v1/users")
 public class AppUserController {
 
-  private final AppUserService appUserService;
+	private final AppUserService appUserService;
 
-  public AppUserController(AppUserService appUserService) {
-	  
-    this.appUserService = appUserService;
-  }
+	public AppUserController(AppUserService appUserService) {
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<UserDTO> createAppUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
+		this.appUserService = appUserService;
+	}
 
-    AppUser appUser = appUserService.createAppUser(createUserDTO);
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public ResponseEntity<UserDTO> createAppUser(@RequestBody @Valid CreateUserDTO createUserDTO) {
 
-    URI location =
-        ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(appUser.getId()).toUri();
+		AppUser appUser = appUserService.createAppUser(createUserDTO);
 
-    return ResponseEntity.created(location).body(new UserDTO(appUser.getId()));
-  }
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+				.path("/{id}")
+				.buildAndExpand(appUser.getId())
+				.toUri();
 
-  @GetMapping("/{id}")
-  public ResponseEntity<UserDTO> getAppUser(@PathVariable UUID id) {
-    AppUser appUser = appUserService.getAppUserById(id);
-    return ResponseEntity.ok(new UserDTO(appUser.getId()));
-  }
+		return ResponseEntity.created(location).body(new UserDTO(appUser.getId()));
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<UserDTO> getAppUser(@PathVariable UUID id) {
+		AppUser appUser = appUserService.getAppUserById(id);
+		return ResponseEntity.ok(new UserDTO(appUser.getId()));
+	}
 }

@@ -12,33 +12,33 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class FirebaseAuthProviderService implements AuthProviderService {
 
-  private final FirebaseAuth firebaseAuth;
+	private final FirebaseAuth firebaseAuth;
 
-  public FirebaseAuthProviderService(FirebaseAuth firebaseAuth) {
-    this.firebaseAuth = firebaseAuth;
-  }
+	public FirebaseAuthProviderService(FirebaseAuth firebaseAuth) {
+		this.firebaseAuth = firebaseAuth;
+	}
 
-  @Override
-  public boolean checkExistingEmail(String email) {
-    Objects.requireNonNull(email);
+	@Override
+	public boolean checkExistingEmail(String email) {
+		Objects.requireNonNull(email);
 
-    try {
-      return firebaseAuth.getUserByEmail(email) != null;
+		try {
+			return firebaseAuth.getUserByEmail(email) != null;
 
-    } catch (FirebaseAuthException ex) {
-      log.info("No user found for email : {}", email);
-      return false;
-    }
-  }
+		} catch (FirebaseAuthException ex) {
+			log.info("No user found for email : {}", email);
+			return false;
+		}
+	}
 
-  @Override
-  public void deleteProviderUser(String uid) {
-    Objects.requireNonNull(uid);
+	@Override
+	public void deleteProviderUser(String uid) {
+		Objects.requireNonNull(uid);
 
-    try {
-      firebaseAuth.deleteUser(uid);
-    } catch (FirebaseAuthException ex) {
-      throw new AuthProviderException(String.format("Error deleting Firebase user with uid: %s", uid), ex);
-    }
-  }
+		try {
+			firebaseAuth.deleteUser(uid);
+		} catch (FirebaseAuthException ex) {
+			throw new AuthProviderException(String.format("Error deleting Firebase user with uid: %s", uid), ex);
+		}
+	}
 }

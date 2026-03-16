@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class LanguageService {
 
-  private final LanguageRepository languageRepository;
+	private final LanguageRepository languageRepository;
 
-  public LanguageService(LanguageRepository languageRepository) {
-    this.languageRepository = languageRepository;
-  }
+	public LanguageService(LanguageRepository languageRepository) {
+		this.languageRepository = languageRepository;
+	}
 
-  public List<Language> getAllLanguages() {
-    return languageRepository.findAll();
-  }
+	public List<Language> getAllLanguages() {
+		return languageRepository.findAll();
+	}
 }

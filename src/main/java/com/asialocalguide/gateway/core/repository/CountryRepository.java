@@ -10,10 +10,9 @@ import java.util.Set;
 
 public interface CountryRepository extends JpaRepository<Country, Long> {
 
+	List<Country> findByIso2CodeIn(Set<String> iso2Codes);
 
-    List<Country> findByIso2CodeIn(Set<String> iso2Codes);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT DISTINCT c.iso2Code FROM Country c")
-    Set<String> findAllIso2Codes();
+	@Transactional(readOnly = true)
+	@Query("SELECT DISTINCT c.iso2Code FROM Country c")
+	Set<String> findAllIso2Codes();
 }

@@ -11,13 +11,13 @@ import java.util.List;
 
 public record PlanningCreateRequestDTO(@NotBlank String name, @NotEmpty List<CreateDayPlanDTO> dayPlans) {
 
-  public record CreateDayPlanDTO(
-      @NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") LocalDate date,
-      @NotEmpty List<CreateDayActivityDTO> activities) {}
+	public record CreateDayPlanDTO(
+			@NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") LocalDate date,
+			@NotEmpty List<CreateDayActivityDTO> activities) {
+	}
 
-  public record CreateDayActivityDTO(
-      @NotBlank String productCode,
-      @NotNull BookingProviderName bookingProviderName,
-      @NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime startTime,
-      @NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime endTime) {}
+	public record CreateDayActivityDTO(@NotBlank String productCode, @NotNull BookingProviderName bookingProviderName,
+			@NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime startTime,
+			@NotNull @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime endTime) {
+	}
 }

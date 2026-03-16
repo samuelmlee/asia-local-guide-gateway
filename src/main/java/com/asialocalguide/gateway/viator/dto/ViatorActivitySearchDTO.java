@@ -5,11 +5,16 @@ import java.util.List;
 
 public record ViatorActivitySearchDTO(Filtering filtering, Sorting sorting, Pagination pagination, String currency) {
 
-  public record Filtering(Long destination, List<Integer> tags, LocalDate startDate, LocalDate endDate, Range rating) {}
+	public record Filtering(Long destination, List<Integer> tags, LocalDate startDate, LocalDate endDate,
+			Range rating) {
+	}
 
-  public record Range(Integer from, Integer to) {}
+	public record Range(Integer from, Integer to) {
+	}
 
-  public record Sorting(ViatorActivitySortingType sort, ViatorActivitySortingOrder order) {}
+	public record Sorting(ViatorActivitySortingType sort, ViatorActivitySortingOrder order) {
+	}
 
-  public record Pagination(Integer start, Integer count) {}
+	public record Pagination(Integer start, Integer count) {
+	}
 }

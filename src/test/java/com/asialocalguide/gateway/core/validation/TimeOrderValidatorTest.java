@@ -14,95 +14,98 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class TimeOrderValidatorTest {
 
-  private TimeOrderValidator validator;
+	private TimeOrderValidator validator;
 
-  @Mock private ConstraintValidatorContext context;
+	@Mock
+	private ConstraintValidatorContext context;
 
-  @Mock private ConstraintValidatorContext.ConstraintViolationBuilder builder;
+	@Mock
+	private ConstraintValidatorContext.ConstraintViolationBuilder builder;
 
-  @Mock private ValidTimeOrder annotation;
+	@Mock
+	private ValidTimeOrder annotation;
 
-  @BeforeEach
-  void setUp() {
-    validator = new TimeOrderValidator();
-    when(annotation.startTimeField()).thenReturn("startTime");
-    when(annotation.endTimeField()).thenReturn("endTime");
+	@BeforeEach
+	void setUp() {
+		validator = new TimeOrderValidator();
+		when(annotation.startTimeField()).thenReturn("startTime");
+		when(annotation.endTimeField()).thenReturn("endTime");
 
-    validator.initialize(annotation);
-  }
+		validator.initialize(annotation);
+	}
 
-  @Test
-  void shouldValidateWhenEndTimeIsAfterStartTime() {
-    // Given
-    TestClass testObject = new TestClass(LocalDateTime.of(2023, 1, 1, 10, 0), LocalDateTime.of(2023, 1, 1, 12, 0));
+	@Test
+	void shouldValidateWhenEndTimeIsAfterStartTime() {
+		// Given
+		TestClass testObject = new TestClass(LocalDateTime.of(2023, 1, 1, 10, 0), LocalDateTime.of(2023, 1, 1, 12, 0));
 
-    // When
-    boolean result = validator.isValid(testObject, context);
+		// When
+		boolean result = validator.isValid(testObject, context);
 
-    // Then
-    assertTrue(result);
-  }
+		// Then
+		assertTrue(result);
+	}
 
-  @Test
-  void shouldValidateWhenTimesAreEqual() {
-    // Given
-    LocalDateTime sameTime = LocalDateTime.of(2023, 1, 1, 12, 0);
-    TestClass testObject = new TestClass(sameTime, sameTime);
+	@Test
+	void shouldValidateWhenTimesAreEqual() {
+		// Given
+		LocalDateTime sameTime = LocalDateTime.of(2023, 1, 1, 12, 0);
+		TestClass testObject = new TestClass(sameTime, sameTime);
 
-    // When
-    boolean result = validator.isValid(testObject, context);
+		// When
+		boolean result = validator.isValid(testObject, context);
 
-    // Then
-    assertTrue(result);
-  }
+		// Then
+		assertTrue(result);
+	}
 
-  @Test
-  void shouldNotValidateWhenEndTimeIsBeforeStartTime() {
-    // Given
-    TestClass testObject = new TestClass(LocalDateTime.of(2023, 1, 1, 12, 0), LocalDateTime.of(2023, 1, 1, 10, 0));
+	@Test
+	void shouldNotValidateWhenEndTimeIsBeforeStartTime() {
+		// Given
+		TestClass testObject = new TestClass(LocalDateTime.of(2023, 1, 1, 12, 0), LocalDateTime.of(2023, 1, 1, 10, 0));
 
-    // When
-    boolean result = validator.isValid(testObject, context);
+		// When
+		boolean result = validator.isValid(testObject, context);
 
-    // Then
-    assertFalse(result);
-  }
+		// Then
+		assertFalse(result);
+	}
 
-  @Test
-  void shouldNotValidateWhenTimeValuesAreNull() {
-    // Given
-    TestClass testObject = new TestClass(null, null);
+	@Test
+	void shouldNotValidateWhenTimeValuesAreNull() {
+		// Given
+		TestClass testObject = new TestClass(null, null);
 
-    // When
-    boolean result = validator.isValid(testObject, context);
+		// When
+		boolean result = validator.isValid(testObject, context);
 
-    // Then
-    assertFalse(result);
-  }
+		// Then
+		assertFalse(result);
+	}
 
-  @Test
-  void shouldHandleMissingFields() {
-    // Given
-    Object invalidObject = new Object();
+	@Test
+	void shouldHandleMissingFields() {
+		// Given
+		Object invalidObject = new Object();
 
-    when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
-    when(builder.addConstraintViolation()).thenReturn(context);
+		when(context.buildConstraintViolationWithTemplate(anyString())).thenReturn(builder);
+		when(builder.addConstraintViolation()).thenReturn(context);
 
-    // When
-    boolean result = validator.isValid(invalidObject, context);
+		// When
+		boolean result = validator.isValid(invalidObject, context);
 
-    // Then
-    assertFalse(result);
-  }
+		// Then
+		assertFalse(result);
+	}
 
-  // Simple class that mimics entities with start/end times
-  static class TestClass {
-    private final LocalDateTime startTime;
-    private final LocalDateTime endTime;
+	// Simple class that mimics entities with start/end times
+	static class TestClass {
+		private final LocalDateTime startTime;
+		private final LocalDateTime endTime;
 
-    TestClass(LocalDateTime startTime, LocalDateTime endTime) {
-      this.startTime = startTime;
-      this.endTime = endTime;
-    }
-  }
+		TestClass(LocalDateTime startTime, LocalDateTime endTime) {
+			this.startTime = startTime;
+			this.endTime = endTime;
+		}
+	}
 }

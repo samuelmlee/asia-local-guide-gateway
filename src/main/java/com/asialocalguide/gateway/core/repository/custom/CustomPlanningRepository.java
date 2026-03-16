@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface CustomPlanningRepository {
 
-  boolean existsByAppUserIdAndName(UUID appUserId, String name);
+	boolean existsByAppUserIdAndName(UUID appUserId, String name);
 
-  List<Planning> getPlanningsByAppUserIdAndLanguageCode(UUID appUserId, LanguageCode languageCode);
+	List<Planning> getPlanningsByAppUserIdAndLanguageCode(UUID appUserId, LanguageCode languageCode);
 }

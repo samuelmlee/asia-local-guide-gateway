@@ -16,29 +16,35 @@ import org.hibernate.validator.constraints.URL;
 @Getter
 public class ActivityImage extends BaseEntity {
 
-  @ManyToOne(optional = false, fetch = jakarta.persistence.FetchType.LAZY)
-  @JoinColumn(name = "activity_id", nullable = false)
-  private Activity activity;
+	@ManyToOne(optional = false, fetch = jakarta.persistence.FetchType.LAZY)
+	@JoinColumn(name = "activity_id", nullable = false)
+	private Activity activity;
 
-  @NotNull @Positive private Integer height;
+	@NotNull
+	@Positive
+	private Integer height;
 
-  @NotNull @Positive private Integer width;
+	@NotNull
+	@Positive
+	private Integer width;
 
-  @NotBlank @URL private String url;
+	@NotBlank
+	@URL
+	private String url;
 
-  @NotNull
-  @Enumerated(EnumType.STRING)
-  @JdbcType(PostgreSQLEnumJdbcType.class)
-  private ImageType type;
+	@NotNull
+	@Enumerated(EnumType.STRING)
+	@JdbcType(PostgreSQLEnumJdbcType.class)
+	private ImageType type;
 
-  public ActivityImage(Integer height, Integer width, String url, ImageType type) {
-    this.height = height;
-    this.width = width;
-    this.url = url;
-    this.type = type;
-  }
+	public ActivityImage(Integer height, Integer width, String url, ImageType type) {
+		this.height = height;
+		this.width = width;
+		this.url = url;
+		this.type = type;
+	}
 
-  void setActivity(Activity activity) {
-    this.activity = activity;
-  }
+	void setActivity(Activity activity) {
+		this.activity = activity;
+	}
 }

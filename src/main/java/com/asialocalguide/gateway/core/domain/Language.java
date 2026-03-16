@@ -12,18 +12,19 @@ import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 @Getter
 public class Language {
 
-  @Id private Long id;
+	@Id
+	private Long id;
 
-  @Column(nullable = false, unique = true, length = 2)
-  @Enumerated(EnumType.STRING)
-  @JdbcType(PostgreSQLEnumJdbcType.class)
-  private LanguageCode code;
+	@Column(nullable = false, unique = true, length = 2)
+	@Enumerated(EnumType.STRING)
+	@JdbcType(PostgreSQLEnumJdbcType.class)
+	private LanguageCode code;
 
-  public Language(Long id, LanguageCode code) {
-    if (id == null || code == null) {
-      throw new IllegalArgumentException("Id and code cannot be null");
-    }
-    this.id = id;
-    this.code = code;
-  }
+	public Language(Long id, LanguageCode code) {
+		if (id == null || code == null) {
+			throw new IllegalArgumentException("Id and code cannot be null");
+		}
+		this.id = id;
+		this.code = code;
+	}
 }

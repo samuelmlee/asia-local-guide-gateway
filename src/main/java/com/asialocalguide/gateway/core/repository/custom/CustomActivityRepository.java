@@ -6,7 +6,7 @@ import java.util.Set;
 
 public interface CustomActivityRepository {
 
-  Set<String> findExistingIdsByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds);
+	Set<String> findExistingIdsByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds);
 
-  Set<Activity> findActivitiesByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds);
+	Set<Activity> findActivitiesByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds);
 }

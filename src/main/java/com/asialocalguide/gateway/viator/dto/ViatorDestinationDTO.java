@@ -7,14 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
-public record ViatorDestinationDTO(
-    @NotNull Long destinationId,
-    @NotNull String name,
-    @NotNull String type,
-    @NotNull
-        @JsonDeserialize(using = LookupIdDeserializer.class)
-        @JsonSerialize(using = LookupIdSerializer.class)
-        @JsonProperty("lookupId")
-        @NotNull
-        List<Long> lookupIds,
-    @NotNull Coordinates center) {}
+public record ViatorDestinationDTO(@NotNull Long destinationId, @NotNull String name, @NotNull String type,
+		@NotNull @JsonDeserialize(using = LookupIdDeserializer.class) @JsonSerialize(using = LookupIdSerializer.class) @JsonProperty("lookupId") @NotNull List<Long> lookupIds,
+		@NotNull Coordinates center) {
+}

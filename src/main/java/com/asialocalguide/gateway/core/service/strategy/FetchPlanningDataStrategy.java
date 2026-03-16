@@ -7,7 +7,7 @@ import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 
 public interface FetchPlanningDataStrategy {
 
-  BookingProviderName getProviderName();
+	BookingProviderName getProviderName();
 
-  ProviderPlanningData fetchProviderPlanningData(PlanningRequestDTO request, LanguageCode languageCode);
+	ProviderPlanningData fetchProviderPlanningData(PlanningRequestDTO request, LanguageCode languageCode);
 }

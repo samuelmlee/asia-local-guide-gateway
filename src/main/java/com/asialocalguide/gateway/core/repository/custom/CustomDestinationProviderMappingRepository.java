@@ -5,5 +5,5 @@ import java.util.Set;
 
 public interface CustomDestinationProviderMappingRepository {
 
-  Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName);
+	Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName);
 }

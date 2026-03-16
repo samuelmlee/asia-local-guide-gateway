@@ -11,14 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/activity-tags")
 public class ActivityTagController {
 
-  private final ActivityTagService activityTagService;
+	private final ActivityTagService activityTagService;
 
-  public ActivityTagController(ActivityTagService activityTagService) {
-    this.activityTagService = activityTagService;
-  }
+	public ActivityTagController(ActivityTagService activityTagService) {
+		this.activityTagService = activityTagService;
+	}
 
-  @GetMapping
-  public List<ActivityTagDTO> getActivityTags() {
-    return activityTagService.getActivityTags();
-  }
+	@GetMapping
+	public List<ActivityTagDTO> getActivityTags() {
+		return activityTagService.getActivityTags();
+	}
 }

@@ -17,23 +17,23 @@ import java.io.InputStream;
 @Configuration
 public class FirebaseConfig {
 
-    @Value("file:config/firebase-service-account.json")
-    private Resource privateKey;
+	@Value("file:config/firebase-service-account.json")
+	private Resource privateKey;
 
-    @Bean
-    public FirebaseApp firebaseApp() {
-        try (InputStream credentials = new ByteArrayInputStream(privateKey.getContentAsByteArray())) {
-            FirebaseOptions firebaseOptions = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(credentials))
-                    .build();
-            return FirebaseApp.initializeApp(firebaseOptions);
-        } catch (IOException ex) {
-            throw new BeanCreationException("FirebaseApp", "Failed to initialize FirebaseApp Bean", ex);
-        }
-    }
+	@Bean
+	FirebaseApp firebaseApp() {
+		try (InputStream credentials = new ByteArrayInputStream(privateKey.getContentAsByteArray())) {
+			FirebaseOptions firebaseOptions = FirebaseOptions.builder()
+					.setCredentials(GoogleCredentials.fromStream(credentials))
+					.build();
+			return FirebaseApp.initializeApp(firebaseOptions);
+		} catch (IOException ex) {
+			throw new BeanCreationException("FirebaseApp", "Failed to initialize FirebaseApp Bean", ex);
+		}
+	}
 
-    @Bean
-    public FirebaseAuth firebaseAuth(FirebaseApp firebaseApp) {
-        return FirebaseAuth.getInstance(firebaseApp);
-    }
+	@Bean
+	FirebaseAuth firebaseAuth(FirebaseApp firebaseApp) {
+		return FirebaseAuth.getInstance(firebaseApp);
+	}
 }

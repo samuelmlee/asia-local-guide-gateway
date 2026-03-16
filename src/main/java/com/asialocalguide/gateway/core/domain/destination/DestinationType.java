@@ -1,8 +1,5 @@
 package com.asialocalguide.gateway.core.domain.destination;
 
 public enum DestinationType {
-  REGION,
-  CITY,
-  DISTRICT,
-  OTHER
+	REGION, CITY, DISTRICT, OTHER
 }

@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record DestinationDTO(UUID destinationId, String name, DestinationType type, String parentName) {
 
-  public static DestinationDTO of(UUID destinationId, String name, DestinationType type, String parentName) {
-    return new DestinationDTO(destinationId, name, type, parentName);
-  }
+	public static DestinationDTO of(UUID destinationId, String name, DestinationType type, String parentName) {
+		return new DestinationDTO(destinationId, name, type, parentName);
+	}
 }

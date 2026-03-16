@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface DestinationProvider {
 
-    BookingProviderName getProviderName();
+	BookingProviderName getProviderName();
 
-    List<CommonDestination> getDestinations();
+	List<CommonDestination> getDestinations();
 }

@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LookupIdSerializer extends JsonSerializer<List<Long>> {
-  @Override
-  public void serialize(List<Long> lookupIds, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
-      throws IOException {
+	@Override
+	public void serialize(List<Long> lookupIds, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+			throws IOException {
 
-    String lookupIdString = lookupIds.stream().map(String::valueOf).collect(Collectors.joining("."));
-    jsonGenerator.writeString(lookupIdString);
-  }
+		String lookupIdString = lookupIds.stream().map(String::valueOf).collect(Collectors.joining("."));
+		jsonGenerator.writeString(lookupIdString);
+	}
 }

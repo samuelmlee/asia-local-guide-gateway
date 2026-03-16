@@ -20,49 +20,51 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ViatorFetchActivityStrategyTest {
 
-  @Mock private ViatorActivityService viatorActivityService;
+	@Mock
+	private ViatorActivityService viatorActivityService;
 
-  @Captor ArgumentCaptor<Set<String>> activityIdsCaptor;
+	@Captor
+	ArgumentCaptor<Set<String>> activityIdsCaptor;
 
-  @InjectMocks private ViatorFetchActivityStrategy strategy;
+	@InjectMocks
+	private ViatorFetchActivityStrategy strategy;
 
-  @Test
-  void getProviderName_shouldReturnViator() {
-    assertThat(strategy.getProviderName()).isEqualTo(BookingProviderName.VIATOR);
-  }
+	@Test
+	void getProviderName_shouldReturnViator() {
+		assertThat(strategy.getProviderName()).isEqualTo(BookingProviderName.VIATOR);
+	}
 
-  @Test
-  void fetchProviderActivities_shouldThrowExceptionWhenActivityIdsIsNull() {
-    assertThatThrownBy(() -> strategy.fetchProviderActivities(null))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Activity IDs cannot be null");
-  }
+	@Test
+	void fetchProviderActivities_shouldThrowExceptionWhenActivityIdsIsNull() {
+		assertThatThrownBy(() -> strategy.fetchProviderActivities(null)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("Activity IDs cannot be null");
+	}
 
-  @Test
-  void fetchProviderActivities_shouldReturnEmptyListWhenActivityIdsIsEmpty() {
-    List<CommonPersistableActivity> result = strategy.fetchProviderActivities(Set.of());
+	@Test
+	void fetchProviderActivities_shouldReturnEmptyListWhenActivityIdsIsEmpty() {
+		List<CommonPersistableActivity> result = strategy.fetchProviderActivities(Set.of());
 
-    assertThat(result).isEmpty();
-    verifyNoInteractions(viatorActivityService);
-  }
+		assertThat(result).isEmpty();
+		verifyNoInteractions(viatorActivityService);
+	}
 
-  @Test
-  void fetchProviderActivities_shouldDelegateToServiceWhenActivityIdsHasValues() {
-    Set<String> activityIds = Set.of("activity1", "activity2");
+	@Test
+	void fetchProviderActivities_shouldDelegateToServiceWhenActivityIdsHasValues() {
+		Set<String> activityIds = Set.of("activity1", "activity2");
 
-    strategy.fetchProviderActivities(activityIds);
-    verify(viatorActivityService).fetchProviderActivities(activityIdsCaptor.capture());
+		strategy.fetchProviderActivities(activityIds);
+		verify(viatorActivityService).fetchProviderActivities(activityIdsCaptor.capture());
 
-    assertThat(activityIdsCaptor.getValue()).isEqualTo(activityIds);
-  }
+		assertThat(activityIdsCaptor.getValue()).isEqualTo(activityIds);
+	}
 
-  @Test
-  void fetchProviderActivities_shouldPropagateExceptionsFromService() {
-    Set<String> activityIds = Set.of("activity1");
-    RuntimeException expectedException = new RuntimeException("Service error");
+	@Test
+	void fetchProviderActivities_shouldPropagateExceptionsFromService() {
+		Set<String> activityIds = Set.of("activity1");
+		RuntimeException expectedException = new RuntimeException("Service error");
 
-    when(viatorActivityService.fetchProviderActivities(activityIds)).thenThrow(expectedException);
+		when(viatorActivityService.fetchProviderActivities(activityIds)).thenThrow(expectedException);
 
-    assertThatThrownBy(() -> strategy.fetchProviderActivities(activityIds)).isSameAs(expectedException);
-  }
+		assertThatThrownBy(() -> strategy.fetchProviderActivities(activityIds)).isSameAs(expectedException);
+	}
 }

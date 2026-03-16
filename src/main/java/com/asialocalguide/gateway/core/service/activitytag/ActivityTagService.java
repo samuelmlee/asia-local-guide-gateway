@@ -16,33 +16,29 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ActivityTagService {
 
-  private final ActivityTagRepository activityTagRepository;
+	private final ActivityTagRepository activityTagRepository;
 
-  public ActivityTagService(ActivityTagRepository activityTagRepository) {
-    this.activityTagRepository = activityTagRepository;
-  }
+	public ActivityTagService(ActivityTagRepository activityTagRepository) {
+		this.activityTagRepository = activityTagRepository;
+	}
 
-  public List<ActivityTagDTO> getActivityTags() {
+	public List<ActivityTagDTO> getActivityTags() {
 
-    // The header Accept-Language should be present in the request
-    Locale locale = LocaleContextHolder.getLocale();
+		// The header Accept-Language should be present in the request
+		Locale locale = LocaleContextHolder.getLocale();
 
-    LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
+		LanguageCode languageCode = LanguageCode.from(locale.getLanguage()).orElse(LanguageCode.EN);
 
-    List<ActivityTag> activityTags = this.activityTagRepository.findAllWithTranslations(languageCode);
+		List<ActivityTag> activityTags = this.activityTagRepository.findAllWithTranslations(languageCode);
 
-    return activityTags.stream()
-        .map(
-            activityTag -> {
-              ActivityTagTranslation translation = activityTag.getTranslation(languageCode).orElse(null);
+		return activityTags.stream().map(activityTag -> {
+			ActivityTagTranslation translation = activityTag.getTranslation(languageCode).orElse(null);
 
-              if (translation == null) {
-                return null;
-              }
+			if (translation == null) {
+				return null;
+			}
 
-              return new ActivityTagDTO(activityTag.getId(), translation.getName(), translation.getPromptText());
-            })
-        .filter(Objects::nonNull)
-        .toList();
-  }
+			return new ActivityTagDTO(activityTag.getId(), translation.getName(), translation.getPromptText());
+		}).filter(Objects::nonNull).toList();
+	}
 }

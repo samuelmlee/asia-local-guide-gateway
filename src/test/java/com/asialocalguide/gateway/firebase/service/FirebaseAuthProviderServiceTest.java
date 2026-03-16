@@ -20,82 +20,80 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FirebaseAuthProviderServiceTest {
 
-  @Mock FirebaseAuth firebaseAuth;
+	@Mock
+	FirebaseAuth firebaseAuth;
 
-  @InjectMocks FirebaseAuthProviderService service;
+	@InjectMocks
+	FirebaseAuthProviderService service;
 
-  @Test
-  void existingEmailReturnsTrueWhenUserRecordIsFound() throws Exception {
-    UserRecord mockRecord = mock(UserRecord.class);
-    when(firebaseAuth.getUserByEmail("valid@example.com")).thenReturn(mockRecord);
-    boolean result = service.checkExistingEmail("valid@example.com");
-    assertTrue(result);
-  }
+	@Test
+	void existingEmailReturnsTrueWhenUserRecordIsFound() throws Exception {
+		UserRecord mockRecord = mock(UserRecord.class);
+		when(firebaseAuth.getUserByEmail("valid@example.com")).thenReturn(mockRecord);
+		boolean result = service.checkExistingEmail("valid@example.com");
+		assertTrue(result);
+	}
 
-  @Test
-  void existingEmailReturnsFalseWhenNoUserRecordIsFound() throws Exception {
-    when(firebaseAuth.getUserByEmail("unknown@example.com")).thenReturn(null);
-    boolean result = service.checkExistingEmail("unknown@example.com");
-    assertFalse(result);
-  }
+	@Test
+	void existingEmailReturnsFalseWhenNoUserRecordIsFound() throws Exception {
+		when(firebaseAuth.getUserByEmail("unknown@example.com")).thenReturn(null);
+		boolean result = service.checkExistingEmail("unknown@example.com");
+		assertFalse(result);
+	}
 
-  @Test
-  void existingEmailReturnsFalseWhenExceptionIsThrown() throws Exception {
+	@Test
+	void existingEmailReturnsFalseWhenExceptionIsThrown() throws Exception {
 
-    FirebaseAuthException exception =
-        new FirebaseAuthException(
-            ErrorCode.INTERNAL,
-            "Sample error message",
-            new Exception("Cause of failure"),
-            null,
-            AuthErrorCode.INVALID_ID_TOKEN);
+		FirebaseAuthException exception = new FirebaseAuthException(ErrorCode.INTERNAL,
+				"Sample error message",
+				new Exception("Cause of failure"),
+				null,
+				AuthErrorCode.INVALID_ID_TOKEN);
 
-    when(firebaseAuth.getUserByEmail("throws@example.com")).thenThrow(exception);
-    boolean result = service.checkExistingEmail("throws@example.com");
-    assertFalse(result);
-  }
+		when(firebaseAuth.getUserByEmail("throws@example.com")).thenThrow(exception);
+		boolean result = service.checkExistingEmail("throws@example.com");
+		assertFalse(result);
+	}
 
-  @Test
-  void existingEmailHandlesNullEmail() {
-    assertThatThrownBy(() -> service.checkExistingEmail(null)).isInstanceOf(NullPointerException.class);
-  }
+	@Test
+	void existingEmailHandlesNullEmail() {
+		assertThatThrownBy(() -> service.checkExistingEmail(null)).isInstanceOf(NullPointerException.class);
+	}
 
-  @Test
-  void deleteUser_shouldCallFirebaseDeleteProviderUser() throws Exception {
-    // Arrange
-    String testUid = "test-user-id";
+	@Test
+	void deleteUser_shouldCallFirebaseDeleteProviderUser() throws Exception {
+		// Arrange
+		String testUid = "test-user-id";
 
-    // Act
-    service.deleteProviderUser(testUid);
+		// Act
+		service.deleteProviderUser(testUid);
 
-    // Assert
-    verify(firebaseAuth, times(1)).deleteUser(testUid);
-  }
+		// Assert
+		verify(firebaseAuth, times(1)).deleteUser(testUid);
+	}
 
-  @Test
-  void deleteProviderUser_shouldHandleFirebaseAuthException() throws Exception {
-    // Arrange
-    String testUid = "error-user-id";
-    FirebaseAuthException exception =
-        new FirebaseAuthException(
-            ErrorCode.INTERNAL,
-            "Sample error message",
-            new Exception("Cause of failure"),
-            null,
-            AuthErrorCode.USER_NOT_FOUND);
-    doThrow(exception).when(firebaseAuth).deleteUser(testUid);
+	@Test
+	void deleteProviderUser_shouldHandleFirebaseAuthException() throws Exception {
+		// Arrange
+		String testUid = "error-user-id";
+		FirebaseAuthException exception = new FirebaseAuthException(ErrorCode.INTERNAL,
+				"Sample error message",
+				new Exception("Cause of failure"),
+				null,
+				AuthErrorCode.USER_NOT_FOUND);
+		doThrow(exception).when(firebaseAuth).deleteUser(testUid);
 
-    // Act & Assert - should not throw exception
-    assertThatThrownBy(() -> service.deleteProviderUser(testUid)).isInstanceOf(AuthProviderException.class);
+		// Act & Assert - should not throw exception
+		assertThatThrownBy(() -> service.deleteProviderUser(testUid)).isInstanceOf(AuthProviderException.class);
 
-    verify(firebaseAuth).deleteUser(testUid);
-  }
+		verify(firebaseAuth).deleteUser(testUid);
+	}
 
-  @Test
-  void deleteProviderUser_shouldThrowNullPointerException_whenUidIsNull() {
-    // Act & Assert
-    assertThatThrownBy(() -> service.deleteProviderUser(null)).isInstanceOf(NullPointerException.class);
+	@Test
+	void deleteProviderUser_shouldThrowNullPointerException_whenUidIsNull() {
+		// Act & Assert
+		assertThatThrownBy(() -> service.deleteProviderUser(null)).isInstanceOf(NullPointerException.class);
 
-    verifyNoInteractions(firebaseAuth);
-  }
+		verifyNoInteractions(firebaseAuth);
+	}
 }

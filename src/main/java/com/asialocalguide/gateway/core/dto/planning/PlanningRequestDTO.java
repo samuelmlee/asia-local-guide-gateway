@@ -6,13 +6,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-public record PlanningRequestDTO(
-    @NotNull LocalDate startDate,
-    @NotNull LocalDate endDate,
-    @NotNull UUID destinationId,
-    List<String> activityTagIds) {
+public record PlanningRequestDTO(@NotNull LocalDate startDate, @NotNull LocalDate endDate, @NotNull UUID destinationId,
+		List<String> activityTagIds) {
 
-  public int getDuration() {
-    return (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
-  }
+	public int getDuration() {
+		return (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+	}
 }

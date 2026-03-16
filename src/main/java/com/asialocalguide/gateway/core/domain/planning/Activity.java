@@ -18,83 +18,81 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Activity extends BaseEntity {
-  // Price and availability of an activity are fetched from the provider on demand
+	// Price and availability of an activity are fetched from the provider on demand
 
-  @Column(name = "provider_activity_id", nullable = false)
-  @Getter
-  private String providerActivityId;
+	@Column(name = "provider_activity_id", nullable = false)
+	@Getter
+	private String providerActivityId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "booking_provider_id", nullable = false)
-  @NotNull
-  @Getter
-  private BookingProvider provider;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "booking_provider_id", nullable = false)
+	@NotNull
+	@Getter
+	private BookingProvider provider;
 
-  @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
-  @NotEmpty
-  private Set<ActivityTranslation> activityTranslations = new HashSet<>();
+	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+	@NotEmpty
+	private Set<ActivityTranslation> activityTranslations = new HashSet<>();
 
-  @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<ActivityImage> coverImages = new HashSet<>();
+	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ActivityImage> coverImages = new HashSet<>();
 
-  @DecimalMin(value = "0.0")
-  @DecimalMax(value = "5.0")
-  private Float averageRating;
+	@DecimalMin(value = "0.0")
+	@DecimalMax(value = "5.0")
+	private Float averageRating;
 
-  @Min(value = 0)
-  private Integer reviewCount;
+	@Min(value = 0)
+	private Integer reviewCount;
 
-  @Min(value = 1)
-  private Integer durationMinutes;
+	@Min(value = 1)
+	private Integer durationMinutes;
 
-  @NotBlank @URL private String bookingUrl;
+	@NotBlank
+	@URL
+	private String bookingUrl;
 
-  @LastModifiedDate private Instant lastUpdated;
+	@LastModifiedDate
+	private Instant lastUpdated;
 
-  public Activity(
-      String providerActivityId,
-      BookingProvider provider,
-      Float averageRating,
-      Integer reviewCount,
-      Integer durationMinutes,
-      String bookingUrl) {
+	public Activity(String providerActivityId, BookingProvider provider, Float averageRating, Integer reviewCount,
+			Integer durationMinutes, String bookingUrl) {
 
-    this.providerActivityId = providerActivityId;
-    this.provider = provider;
-    this.averageRating = averageRating;
-    this.reviewCount = reviewCount;
-    this.durationMinutes = durationMinutes;
-    this.bookingUrl = bookingUrl;
-  }
+		this.providerActivityId = providerActivityId;
+		this.provider = provider;
+		this.averageRating = averageRating;
+		this.reviewCount = reviewCount;
+		this.durationMinutes = durationMinutes;
+		this.bookingUrl = bookingUrl;
+	}
 
-  public Set<ActivityTranslation> getActivityTranslations() {
-    return Collections.unmodifiableSet(activityTranslations);
-  }
+	public Set<ActivityTranslation> getActivityTranslations() {
+		return Collections.unmodifiableSet(activityTranslations);
+	}
 
-  public Set<ActivityImage> getCoverImages() {
-    return Collections.unmodifiableSet(coverImages);
-  }
+	public Set<ActivityImage> getCoverImages() {
+		return Collections.unmodifiableSet(coverImages);
+	}
 
-  public void addImage(ActivityImage image) {
-    if (image == null) {
-      return;
-    }
-    image.setActivity(this);
-    coverImages.add(image);
-  }
+	public void addImage(ActivityImage image) {
+		if (image == null) {
+			return;
+		}
+		image.setActivity(this);
+		coverImages.add(image);
+	}
 
-  public void removeImage(ActivityImage image) {
-    if (image == null) {
-      return;
-    }
-    image.setActivity(null);
-    coverImages.remove(image);
-  }
+	public void removeImage(ActivityImage image) {
+		if (image == null) {
+			return;
+		}
+		image.setActivity(null);
+		coverImages.remove(image);
+	}
 
-  public void addTranslation(ActivityTranslation activityTranslation) {
-    if (activityTranslation == null) {
-      return;
-    }
-    activityTranslations.add(activityTranslation);
-  }
+	public void addTranslation(ActivityTranslation activityTranslation) {
+		if (activityTranslation == null) {
+			return;
+		}
+		activityTranslations.add(activityTranslation);
+	}
 }

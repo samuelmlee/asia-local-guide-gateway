@@ -8,13 +8,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class DestinationProviderMappingService {
 
-  private final DestinationProviderMappingRepository destinationProviderMappingRepository;
+	private final DestinationProviderMappingRepository destinationProviderMappingRepository;
 
-  public DestinationProviderMappingService(DestinationProviderMappingRepository destinationProviderMappingRepository) {
-    this.destinationProviderMappingRepository = destinationProviderMappingRepository;
-  }
+	public DestinationProviderMappingService(
+			DestinationProviderMappingRepository destinationProviderMappingRepository) {
+		this.destinationProviderMappingRepository = destinationProviderMappingRepository;
+	}
 
-  public Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName) {
-    return destinationProviderMappingRepository.findProviderDestinationIdsByProviderName(providerName);
-  }
+	public Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName) {
+		return destinationProviderMappingRepository.findProviderDestinationIdsByProviderName(providerName);
+	}
 }

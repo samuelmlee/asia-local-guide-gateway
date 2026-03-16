@@ -8,23 +8,18 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class ViatorConfig {
 
-  private final ViatorProperties viatorProperties;
+	private final ViatorProperties viatorProperties;
 
-  public ViatorConfig(ViatorProperties viatorProperties) {
-    this.viatorProperties = viatorProperties;
-  }
+	public ViatorConfig(ViatorProperties viatorProperties) {
+		this.viatorProperties = viatorProperties;
+	}
 
-  @Bean
-  public RestClient viatorRestClient() {
+	@Bean
+	RestClient viatorRestClient() {
 
-    return RestClient.builder()
-        .baseUrl(viatorProperties.baseUrl())
-        .defaultHeaders(
-            headers -> {
-              headers.set(viatorProperties.authHeader(), viatorProperties.apiKey());
-              headers.set("Accept", MediaType.APPLICATION_JSON + ";" + viatorProperties.apiVersion());
-            })
-        .requestInterceptor(new ViatorRequestInterceptor())
-        .build();
-  }
+		return RestClient.builder().baseUrl(viatorProperties.baseUrl()).defaultHeaders(headers -> {
+			headers.set(viatorProperties.authHeader(), viatorProperties.apiKey());
+			headers.set("Accept", MediaType.APPLICATION_JSON + ";" + viatorProperties.apiVersion());
+		}).requestInterceptor(new ViatorRequestInterceptor()).build();
+	}
 }

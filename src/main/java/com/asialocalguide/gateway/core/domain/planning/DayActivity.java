@@ -14,31 +14,36 @@ import lombok.NoArgsConstructor;
 @ValidTimeOrder
 public class DayActivity extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "day_plan_id")
-  @NotNull
-  private DayPlan dayPlan;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "day_plan_id")
+	@NotNull
+	private DayPlan dayPlan;
 
-  @NotNull private LocalDateTime startTime;
+	@NotNull
+	private LocalDateTime startTime;
 
-  @NotNull private LocalDateTime endTime;
+	@NotNull
+	private LocalDateTime endTime;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "activity_id", referencedColumnName = "id")
-  @NotNull
-  private Activity activity;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "activity_id", referencedColumnName = "id")
+	@NotNull
+	private Activity activity;
 
-  public DayActivity(Activity activity, LocalDateTime startTime, LocalDateTime endTime) {
-    if (startTime == null || endTime == null || activity == null) {
-      throw new IllegalArgumentException(
-          String.format("Start time: %s, end time: %s or activity: %s cannot be null", startTime, endTime, activity));
-    }
-    this.startTime = startTime;
-    this.endTime = endTime;
-    this.activity = activity;
-  }
+	public DayActivity(Activity activity, LocalDateTime startTime, LocalDateTime endTime) {
+		if (startTime == null || endTime == null || activity == null) {
+			throw new IllegalArgumentException(
+					String.format("Start time: %s, end time: %s or activity: %s cannot be null",
+							startTime,
+							endTime,
+							activity));
+		}
+		this.startTime = startTime;
+		this.endTime = endTime;
+		this.activity = activity;
+	}
 
-  void setDayPlan(DayPlan dayPlan) {
-    this.dayPlan = dayPlan;
-  }
+	void setDayPlan(DayPlan dayPlan) {
+		this.dayPlan = dayPlan;
+	}
 }

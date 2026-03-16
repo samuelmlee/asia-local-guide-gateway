@@ -18,88 +18,86 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AppUserService {
 
-  private final AppUserRepository appUserRepository;
+	private final AppUserRepository appUserRepository;
 
-  private final AuthProviderService authProviderService;
+	private final AuthProviderService authProviderService;
 
-  public AppUserService(AppUserRepository appUserRepository, AuthProviderService authProviderService) {
-    this.appUserRepository = appUserRepository;
-    this.authProviderService = authProviderService;
-  }
+	public AppUserService(AppUserRepository appUserRepository, AuthProviderService authProviderService) {
+		this.appUserRepository = appUserRepository;
+		this.authProviderService = authProviderService;
+	}
 
-  @Transactional
-  public AppUser createAppUser(CreateUserDTO createUserDTO) {
-    checkAppUserExistence(createUserDTO);
+	@Transactional
+	public AppUser createAppUser(CreateUserDTO createUserDTO) {
+		checkAppUserExistence(createUserDTO);
 
-    try {
-      return persistNewAppUser(createUserDTO);
+		try {
+			return persistNewAppUser(createUserDTO);
 
-    } catch (Exception e) {
+		} catch (Exception e) {
 
-      log.warn(
-          "Failed to create app userfor email: {}. Deleting provider user: {}",
-          createUserDTO.email(),
-          createUserDTO.providerUserId());
-      deleteProviderUser(createUserDTO);
+			log.warn("Failed to create app userfor email: {}. Deleting provider user: {}",
+					createUserDTO.email(),
+					createUserDTO.providerUserId());
+			deleteProviderUser(createUserDTO);
 
-      throw new UserCreationException(String.format("Failed to create user : %s", createUserDTO), e);
-    }
-  }
+			throw new UserCreationException(String.format("Failed to create user : %s", createUserDTO), e);
+		}
+	}
 
-  private void checkAppUserExistence(CreateUserDTO createUserDTO) {
-    try {
-      Optional<AppUser> userOpt = appUserRepository.findByEmail(createUserDTO.email());
+	private void checkAppUserExistence(CreateUserDTO createUserDTO) {
+		try {
+			Optional<AppUser> userOpt = appUserRepository.findByEmail(createUserDTO.email());
 
-      if (userOpt.isPresent()) {
-        throw new UserCreationException(String.format("User already exists with email: %s", createUserDTO.email()));
-      }
+			if (userOpt.isPresent()) {
+				throw new UserCreationException(
+						String.format("User already exists with email: %s", createUserDTO.email()));
+			}
 
-    } catch (UserCreationException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      throw new UserCreationException(String.format("Failed to check user existence: %s", createUserDTO), ex);
-    }
-  }
+		} catch (UserCreationException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new UserCreationException(String.format("Failed to check user existence: %s", createUserDTO), ex);
+		}
+	}
 
-  @Transactional(readOnly = true)
-  public AppUser getAppUserById(UUID id) {
+	@Transactional(readOnly = true)
+	public AppUser getAppUserById(UUID id) {
 
-    return appUserRepository
-        .findById(id)
-        .orElseThrow(() -> new UserNotFoundException(String.format("User not found with id: %s", id)));
-  }
+		return appUserRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(String.format("User not found with id: %s", id)));
+	}
 
-  @Transactional(readOnly = true)
-  public Optional<AppUser> getUserByProviderNameAndProviderUserId(
-      AuthProviderName providerName, String providerUserId) {
-    if (providerName == null || providerUserId == null) {
-      return Optional.empty();
-    }
+	@Transactional(readOnly = true)
+	public Optional<AppUser> getUserByProviderNameAndProviderUserId(AuthProviderName providerName,
+			String providerUserId) {
+		if (providerName == null || providerUserId == null) {
+			return Optional.empty();
+		}
 
-    return appUserRepository.findUserByProviderNameAndProviderUserId(providerName, providerUserId);
-  }
+		return appUserRepository.findUserByProviderNameAndProviderUserId(providerName, providerUserId);
+	}
 
-  private AppUser persistNewAppUser(CreateUserDTO createUserDTO) {
-    AppUser appUser = new AppUser();
-    appUser.setEmail(createUserDTO.email());
-    appUser.setName(createUserDTO.name());
+	private AppUser persistNewAppUser(CreateUserDTO createUserDTO) {
+		AppUser appUser = new AppUser();
+		appUser.setEmail(createUserDTO.email());
+		appUser.setName(createUserDTO.name());
 
-    UserAuth userAuth = new UserAuth(appUser, createUserDTO.providerName(), createUserDTO.providerUserId());
-    appUser.addUserAuth(userAuth);
+		UserAuth userAuth = new UserAuth(appUser, createUserDTO.providerName(), createUserDTO.providerUserId());
+		appUser.addUserAuth(userAuth);
 
-    return appUserRepository.save(appUser);
-  }
+		return appUserRepository.save(appUser);
+	}
 
-  private void deleteProviderUser(CreateUserDTO createUserDTO) {
-    try {
+	private void deleteProviderUser(CreateUserDTO createUserDTO) {
+		try {
 
-      authProviderService.deleteProviderUser(createUserDTO.providerUserId());
-    } catch (Exception ex) {
-      log.error(
-          "Failed to delete provider user with email: {} for provider: {} after failing to create app user",
-          createUserDTO.email(),
-          createUserDTO.providerName(),
-          ex);
-    }
-  }
+			authProviderService.deleteProviderUser(createUserDTO.providerUserId());
+		} catch (Exception ex) {
+			log.error("Failed to delete provider user with email: {} for provider: {} after failing to create app user",
+					createUserDTO.email(),
+					createUserDTO.providerName(),
+					ex);
+		}
+	}
 }

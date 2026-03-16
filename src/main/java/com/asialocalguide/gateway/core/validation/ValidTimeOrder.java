@@ -7,17 +7,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE})
+@Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = TimeOrderValidator.class)
 public @interface ValidTimeOrder {
-  String message() default "End time must be after start time";
+	String message() default "End time must be after start time";
 
-  Class<?>[] groups() default {};
+	Class<?>[] groups() default {};
 
-  Class<? extends Payload>[] payload() default {};
+	Class<? extends Payload>[] payload() default {};
 
-  String startTimeField() default "startTime";
+	String startTimeField() default "startTime";
 
-  String endTimeField() default "endTime";
+	String endTimeField() default "endTime";
 }

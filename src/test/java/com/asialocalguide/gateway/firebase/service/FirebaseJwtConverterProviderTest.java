@@ -20,56 +20,57 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 @ExtendWith(MockitoExtension.class)
 class FirebaseJwtConverterProviderTest {
 
-  @InjectMocks private FirebaseJwtConverterProvider provider;
+	@InjectMocks
+	private FirebaseJwtConverterProvider provider;
 
-  @Test
-  void convertsSingleRoleToAuthority() {
-    Jwt jwt = mock(Jwt.class);
-    when(jwt.getClaimAsStringList("roles")).thenReturn(List.of("USER"));
+	@Test
+	void convertsSingleRoleToAuthority() {
+		Jwt jwt = mock(Jwt.class);
+		when(jwt.getClaimAsStringList("roles")).thenReturn(List.of("USER"));
 
-    JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
-    AbstractAuthenticationToken authentication = converter.convert(jwt);
-    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+		JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
+		AbstractAuthenticationToken authentication = converter.convert(jwt);
+		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-    assertEquals(1, authorities.size());
-    assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_USER")));
-  }
+		assertEquals(1, authorities.size());
+		assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_USER")));
+	}
 
-  @Test
-  void convertsMultipleRolesToAuthorities() {
-    Jwt jwt = mock(Jwt.class);
-    when(jwt.getClaimAsStringList("roles")).thenReturn(List.of("USER", "ADMIN"));
+	@Test
+	void convertsMultipleRolesToAuthorities() {
+		Jwt jwt = mock(Jwt.class);
+		when(jwt.getClaimAsStringList("roles")).thenReturn(List.of("USER", "ADMIN"));
 
-    JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
-    AbstractAuthenticationToken authentication = converter.convert(jwt);
-    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+		JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
+		AbstractAuthenticationToken authentication = converter.convert(jwt);
+		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-    assertEquals(2, authorities.size());
-    assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_USER")));
-    assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
-  }
+		assertEquals(2, authorities.size());
+		assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_USER")));
+		assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_ADMIN")));
+	}
 
-  @Test
-  void returnsEmptyAuthoritiesWhenRolesListIsEmpty() {
-    Jwt jwt = mock(Jwt.class);
-    when(jwt.getClaimAsStringList("roles")).thenReturn(List.of());
+	@Test
+	void returnsEmptyAuthoritiesWhenRolesListIsEmpty() {
+		Jwt jwt = mock(Jwt.class);
+		when(jwt.getClaimAsStringList("roles")).thenReturn(List.of());
 
-    JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
-    AbstractAuthenticationToken authentication = converter.convert(jwt);
-    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+		JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
+		AbstractAuthenticationToken authentication = converter.convert(jwt);
+		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-    assertTrue(authorities.isEmpty());
-  }
+		assertTrue(authorities.isEmpty());
+	}
 
-  @Test
-  void handlesNullRolesClaimGracefully() {
-    Jwt jwt = mock(Jwt.class);
-    when(jwt.getClaimAsStringList("roles")).thenReturn(null);
+	@Test
+	void handlesNullRolesClaimGracefully() {
+		Jwt jwt = mock(Jwt.class);
+		when(jwt.getClaimAsStringList("roles")).thenReturn(null);
 
-    JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
-    AbstractAuthenticationToken authentication = converter.convert(jwt);
-    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+		JwtAuthenticationConverter converter = provider.getJwtAuthenticationConverter();
+		AbstractAuthenticationToken authentication = converter.convert(jwt);
+		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-    assertTrue(authorities.isEmpty());
-  }
+		assertTrue(authorities.isEmpty());
+	}
 }
