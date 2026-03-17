@@ -1,8 +1,9 @@
 package com.asialocalguide.gateway.core.repository.custom;
 
-import com.asialocalguide.gateway.activity.domain.ActivityTag;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import java.util.List;
+
+import com.asialocalguide.gateway.activitytag.domain.ActivityTag;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 
 public interface CustomActivityTagRepository {
 

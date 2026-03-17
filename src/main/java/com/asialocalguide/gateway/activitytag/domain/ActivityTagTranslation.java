@@ -1,9 +1,15 @@
-package com.asialocalguide.gateway.activity.domain;
+package com.asialocalguide.gateway.activitytag.domain;
+
+import java.util.Objects;
 
 import com.asialocalguide.gateway.core.domain.Language;
-import jakarta.persistence.*;
+
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotEmpty;
-import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

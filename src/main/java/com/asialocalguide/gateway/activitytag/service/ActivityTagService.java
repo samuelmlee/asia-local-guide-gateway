@@ -1,16 +1,19 @@
-package com.asialocalguide.gateway.activity.service;
+package com.asialocalguide.gateway.activitytag.service;
 
-import com.asialocalguide.gateway.activity.domain.ActivityTag;
-import com.asialocalguide.gateway.activity.domain.ActivityTagTranslation;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.asialocalguide.gateway.core.dto.activitytag.ActivityTagDTO;
-import com.asialocalguide.gateway.core.repository.ActivityTagRepository;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+
+import com.asialocalguide.gateway.activitytag.domain.ActivityTag;
+import com.asialocalguide.gateway.activitytag.domain.ActivityTagTranslation;
+import com.asialocalguide.gateway.activitytag.dto.ActivityTagDTO;
+import com.asialocalguide.gateway.activitytag.repository.ActivityTagRepository;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j

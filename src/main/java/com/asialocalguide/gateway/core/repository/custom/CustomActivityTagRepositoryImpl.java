@@ -5,9 +5,9 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.asialocalguide.gateway.activity.domain.ActivityTag;
-import com.asialocalguide.gateway.activity.domain.QActivityTag;
-import com.asialocalguide.gateway.activity.domain.QActivityTagTranslation;
+import com.asialocalguide.gateway.activitytag.domain.ActivityTag;
+import com.asialocalguide.gateway.activitytag.domain.QActivityTag;
+import com.asialocalguide.gateway.activitytag.domain.QActivityTagTranslation;
 import com.asialocalguide.gateway.core.domain.QLanguage;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.querydsl.jpa.impl.JPAQueryFactory;

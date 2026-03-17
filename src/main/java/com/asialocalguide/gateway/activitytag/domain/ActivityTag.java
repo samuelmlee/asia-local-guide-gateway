@@ -1,11 +1,16 @@
-package com.asialocalguide.gateway.activity.domain;
+package com.asialocalguide.gateway.activitytag.domain;
 
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

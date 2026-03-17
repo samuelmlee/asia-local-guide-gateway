@@ -1,10 +1,16 @@
-package com.asialocalguide.gateway.activity.domain;
+package com.asialocalguide.gateway.activitytag.domain;
+
+import java.util.Objects;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
-import jakarta.persistence.*;
+
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
