@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.domain.activitytag;
+package com.asialocalguide.gateway.activity.domain;
 
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import jakarta.persistence.*;

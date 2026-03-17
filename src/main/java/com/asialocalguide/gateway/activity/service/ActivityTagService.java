@@ -1,7 +1,7 @@
-package com.asialocalguide.gateway.core.service.activitytag;
+package com.asialocalguide.gateway.activity.service;
 
-import com.asialocalguide.gateway.core.domain.activitytag.ActivityTag;
-import com.asialocalguide.gateway.core.domain.activitytag.ActivityTagTranslation;
+import com.asialocalguide.gateway.activity.domain.ActivityTag;
+import com.asialocalguide.gateway.activity.domain.ActivityTagTranslation;
 import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.dto.activitytag.ActivityTagDTO;
 import com.asialocalguide.gateway.core.repository.ActivityTagRepository;

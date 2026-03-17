@@ -1,14 +1,16 @@
 package com.asialocalguide.gateway.core.repository.custom;
 
-import com.asialocalguide.gateway.core.domain.QLanguage;
-import com.asialocalguide.gateway.core.domain.activitytag.ActivityTag;
-import com.asialocalguide.gateway.core.domain.activitytag.QActivityTag;
-import com.asialocalguide.gateway.core.domain.activitytag.QActivityTagTranslation;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.asialocalguide.gateway.activity.domain.ActivityTag;
+import com.asialocalguide.gateway.activity.domain.QActivityTag;
+import com.asialocalguide.gateway.activity.domain.QActivityTagTranslation;
+import com.asialocalguide.gateway.core.domain.QLanguage;
+import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 
 @Repository
 public class CustomActivityTagRepositoryImpl implements CustomActivityTagRepository {
