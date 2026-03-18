@@ -1,6 +1,6 @@
 package com.asialocalguide.gateway.viator.dto;
 
-import com.asialocalguide.gateway.core.domain.destination.Coordinates;
+import com.asialocalguide.gateway.destination.domain.Coordinates;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

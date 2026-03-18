@@ -4,26 +4,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.asialocalguide.gateway.core.domain.BookingProvider;
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.planning.*;
-import com.asialocalguide.gateway.core.domain.user.AppUser;
-import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
-import com.asialocalguide.gateway.core.dto.planning.DayActivityDTO;
-import com.asialocalguide.gateway.core.dto.planning.DayPlanDTO;
-import com.asialocalguide.gateway.core.dto.planning.PlanningCreateRequestDTO;
-import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
-import com.asialocalguide.gateway.core.exception.PlanningCreationException;
-import com.asialocalguide.gateway.core.exception.UserNotFoundException;
-import com.asialocalguide.gateway.core.repository.PlanningRepository;
-import com.asialocalguide.gateway.core.service.appuser.AppUserService;
-import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +29,29 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.asialocalguide.gateway.appuser.domain.AppUser;
+import com.asialocalguide.gateway.appuser.domain.AuthProviderName;
+import com.asialocalguide.gateway.appuser.exception.AppUserNotFoundException;
+import com.asialocalguide.gateway.appuser.service.AppUserService;
+import com.asialocalguide.gateway.core.domain.BookingProvider;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
+import com.asialocalguide.gateway.planning.domain.Activity;
+import com.asialocalguide.gateway.planning.domain.ActivityPlanningData;
+import com.asialocalguide.gateway.planning.domain.CommonActivity;
+import com.asialocalguide.gateway.planning.domain.DayActivity;
+import com.asialocalguide.gateway.planning.domain.DayPlan;
+import com.asialocalguide.gateway.planning.domain.Planning;
+import com.asialocalguide.gateway.planning.domain.ProviderPlanningData;
+import com.asialocalguide.gateway.planning.dto.DayActivityDTO;
+import com.asialocalguide.gateway.planning.dto.DayPlanDTO;
+import com.asialocalguide.gateway.planning.dto.PlanningCreateRequestDTO;
+import com.asialocalguide.gateway.planning.dto.PlanningRequestDTO;
+import com.asialocalguide.gateway.planning.exception.PlanningCreationException;
+import com.asialocalguide.gateway.planning.repository.PlanningRepository;
+import com.asialocalguide.gateway.planning.service.ActivityService;
+import com.asialocalguide.gateway.planning.service.PlanningService;
 
 @ExtendWith(MockitoExtension.class)
 class PlanningServiceTest {
@@ -301,7 +322,7 @@ class PlanningServiceTest {
 				.thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> planningService.savePlanning(validCreateRequest, authProviderName, userProviderId))
-				.isInstanceOf(UserNotFoundException.class)
+				.isInstanceOf(AppUserNotFoundException.class)
 				.hasMessageContaining("User not found for operation:");
 	}
 

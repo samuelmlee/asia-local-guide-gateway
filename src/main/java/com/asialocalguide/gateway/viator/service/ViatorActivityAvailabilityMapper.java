@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.viator.service;
 
-import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
-import com.asialocalguide.gateway.core.domain.planning.OneHourTimeSlot;
+import com.asialocalguide.gateway.planning.domain.ActivityPlanningData;
+import com.asialocalguide.gateway.planning.domain.OneHourTimeSlot;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import java.time.DayOfWeek;
