@@ -14,6 +14,10 @@ import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Represents an activity tag entity that categorizes activities.
+ * Contains translations for different languages and mappings to provider-specific tags.
+ */
 @Entity
 @NoArgsConstructor
 public class ActivityTag {
@@ -22,15 +26,29 @@ public class ActivityTag {
 	@Getter
 	private Long id;
 
+	/**
+	 * Set of translations for this activity tag in different languages. Cascade
+	 * operations ensure translations are persisted/deleted with the tag.
+	 */
 	@OneToMany(mappedBy = "activityTag", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ActivityTagTranslation> activityTagTranslations = new HashSet<>();
 
+	/**
+	 * Set of provider-specific id mappings for this activity tag.
+	 * Cascade operations ensure mappings are persisted/deleted with the tag.
+	 */
 	@OneToMany(mappedBy = "activityTag", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ActivityTagProviderMapping> activityTagProviderMappings = new HashSet<>();
 
-	/*
-	 * Method needs the Language entity in ActivityTagTranslation to be eagerly
-	 * loaded from the repository method.
+	/**
+	 * Retrieves the translation of this activity tag for the specified language.
+	 *
+	 * <p>Note: This method requires the Language entity in ActivityTagTranslation
+	 * to be eagerly loaded from the repository query to avoid lazy loading issues.
+	 *
+	 * @param languageCode the language code to search for;
+	 * 
+	 * @return an Optional containing the ActivityTagTranslation if found, or an empty Optional
 	 */
 	public Optional<ActivityTagTranslation> getTranslation(LanguageCode languageCode) {
 		if (languageCode == null || activityTagTranslations.isEmpty()) {
