@@ -1,9 +1,10 @@
-package com.asialocalguide.gateway.core.controller;
+package com.asialocalguide.gateway.auth.controller;
 
-import com.asialocalguide.gateway.core.dto.auth.EmailCheckDTO;
-import com.asialocalguide.gateway.core.dto.auth.EmailCheckResultDTO;
-import com.asialocalguide.gateway.core.exception.ProviderUserDeletionException;
-import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
+import com.asialocalguide.gateway.auth.dto.EmailCheckDTO;
+import com.asialocalguide.gateway.auth.dto.EmailCheckResultDTO;
+import com.asialocalguide.gateway.auth.exception.ProviderUserDeletionException;
+import com.asialocalguide.gateway.auth.service.AuthProviderService;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.security.core.Authentication;

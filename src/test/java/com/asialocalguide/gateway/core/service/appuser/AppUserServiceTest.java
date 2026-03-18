@@ -13,7 +13,8 @@ import com.asialocalguide.gateway.appuser.dto.CreateAppUserDTO;
 import com.asialocalguide.gateway.appuser.exception.AppUserCreationException;
 import com.asialocalguide.gateway.appuser.repository.AppUserRepository;
 import com.asialocalguide.gateway.appuser.service.AppUserService;
-import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
+import com.asialocalguide.gateway.auth.service.AuthProviderService;
+
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

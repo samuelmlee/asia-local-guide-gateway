@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.firebase.service;
 
-import com.asialocalguide.gateway.core.exception.AuthProviderException;
-import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
+import com.asialocalguide.gateway.auth.exception.AuthProviderException;
+import com.asialocalguide.gateway.auth.service.AuthProviderService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import java.util.Objects;

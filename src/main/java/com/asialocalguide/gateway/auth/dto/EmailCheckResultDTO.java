@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.dto.auth;
+package com.asialocalguide.gateway.auth.dto;
 
 import jakarta.validation.constraints.Email;
 

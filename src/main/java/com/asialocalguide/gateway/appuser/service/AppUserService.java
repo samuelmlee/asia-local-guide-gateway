@@ -13,7 +13,7 @@ import com.asialocalguide.gateway.appuser.dto.CreateAppUserDTO;
 import com.asialocalguide.gateway.appuser.exception.AppUserCreationException;
 import com.asialocalguide.gateway.appuser.exception.AppUserNotFoundException;
 import com.asialocalguide.gateway.appuser.repository.AppUserRepository;
-import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
+import com.asialocalguide.gateway.auth.service.AuthProviderService;
 
 import lombok.extern.slf4j.Slf4j;
 

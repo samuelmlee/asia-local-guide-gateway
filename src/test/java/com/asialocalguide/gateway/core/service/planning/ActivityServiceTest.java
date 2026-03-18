@@ -8,13 +8,13 @@ import static org.mockito.Mockito.*;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.Language;
-import com.asialocalguide.gateway.core.exception.ActivityCachingException;
 import com.asialocalguide.gateway.core.service.LanguageService;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
 import com.asialocalguide.gateway.destination.domain.LanguageCode;
 import com.asialocalguide.gateway.planning.domain.Activity;
 import com.asialocalguide.gateway.planning.domain.CommonPersistableActivity;
+import com.asialocalguide.gateway.planning.exception.ActivityCachingException;
 import com.asialocalguide.gateway.planning.repository.ActivityRepository;
 import com.asialocalguide.gateway.planning.service.ActivityService;
 

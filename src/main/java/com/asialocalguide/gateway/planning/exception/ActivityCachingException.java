@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.exception;
+package com.asialocalguide.gateway.planning.exception;
 
 public class ActivityCachingException extends RuntimeException {
 	public ActivityCachingException(String message) {

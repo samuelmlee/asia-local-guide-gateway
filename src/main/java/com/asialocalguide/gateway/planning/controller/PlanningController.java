@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.asialocalguide.gateway.appuser.domain.AuthProviderName;
-import com.asialocalguide.gateway.core.service.auth.AuthService;
+import com.asialocalguide.gateway.auth.service.AuthService;
 import com.asialocalguide.gateway.planning.domain.Planning;
 import com.asialocalguide.gateway.planning.dto.DayPlanDTO;
 import com.asialocalguide.gateway.planning.dto.PlanningCreateRequestDTO;

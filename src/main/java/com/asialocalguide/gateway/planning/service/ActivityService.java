@@ -3,7 +3,6 @@ package com.asialocalguide.gateway.planning.service;
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.core.domain.Language;
-import com.asialocalguide.gateway.core.exception.ActivityCachingException;
 import com.asialocalguide.gateway.core.service.LanguageService;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
 import com.asialocalguide.gateway.core.service.strategy.FetchActivityStrategy;
@@ -12,6 +11,7 @@ import com.asialocalguide.gateway.planning.domain.Activity;
 import com.asialocalguide.gateway.planning.domain.ActivityImage;
 import com.asialocalguide.gateway.planning.domain.ActivityTranslation;
 import com.asialocalguide.gateway.planning.domain.CommonPersistableActivity;
+import com.asialocalguide.gateway.planning.exception.ActivityCachingException;
 import com.asialocalguide.gateway.planning.repository.ActivityRepository;
 
 import java.util.*;

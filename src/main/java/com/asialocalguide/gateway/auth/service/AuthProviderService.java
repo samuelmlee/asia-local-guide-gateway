@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.service.auth;
+package com.asialocalguide.gateway.auth.service;
 
 public interface AuthProviderService {
 

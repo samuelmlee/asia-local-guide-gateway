@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.exception;
+package com.asialocalguide.gateway.auth.exception;
 
 public class AuthProviderException extends RuntimeException {
 

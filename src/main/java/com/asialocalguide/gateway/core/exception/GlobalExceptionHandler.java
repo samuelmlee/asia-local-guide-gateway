@@ -2,6 +2,8 @@ package com.asialocalguide.gateway.core.exception;
 
 import com.asialocalguide.gateway.appuser.exception.AppUserCreationException;
 import com.asialocalguide.gateway.appuser.exception.AppUserNotFoundException;
+import com.asialocalguide.gateway.auth.exception.AuthProviderException;
+import com.asialocalguide.gateway.auth.exception.ProviderUserDeletionException;
 import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuthException;
 import lombok.extern.slf4j.Slf4j;
