@@ -7,6 +7,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 
+/**
+ * Composite primary key for {@link ActivityTagProviderMapping}, combining an activity tag ID
+ * and a booking provider ID.
+ */
 @Embeddable
 @Getter
 public class ActivityTagProviderMappingId implements Serializable {
@@ -16,6 +20,11 @@ public class ActivityTagProviderMappingId implements Serializable {
 	@Column(name = "booking_provider_id")
 	private Long bookingProviderId;
 
+	/**
+	 * @param activityTagId     the ID of the associated activity tag; must not be {@code null}
+	 * @param bookingProviderId the ID of the associated booking provider; must not be {@code null}
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
 	public ActivityTagProviderMappingId(Long activityTagId, Long bookingProviderId) {
 		if (activityTagId == null || bookingProviderId == null) {
 			throw new IllegalArgumentException(

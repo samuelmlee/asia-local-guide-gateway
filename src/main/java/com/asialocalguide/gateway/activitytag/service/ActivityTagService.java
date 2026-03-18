@@ -15,16 +15,34 @@ import com.asialocalguide.gateway.destination.domain.LanguageCode;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service for retrieving activity tags with localized translations.
+ *
+ * <p>Resolves the current locale from the {@code Accept-Language} request header
+ * and maps {@link com.asialocalguide.gateway.activitytag.domain.ActivityTag} entities
+ * to {@link ActivityTagDTO} instances using the matching translation.
+ */
 @Service
 @Slf4j
 public class ActivityTagService {
 
 	private final ActivityTagRepository activityTagRepository;
 
+	/**
+	 * @param activityTagRepository repository used to fetch activity tags with their translations
+	 */
 	public ActivityTagService(ActivityTagRepository activityTagRepository) {
 		this.activityTagRepository = activityTagRepository;
 	}
 
+	/**
+	 * Returns all activity tags translated into the language resolved from the current request locale.
+	 *
+	 * <p>Falls back to {@link LanguageCode#EN} when the request locale cannot be mapped to a
+	 * supported language. Tags without a matching translation are excluded from the result.
+	 *
+	 * @return list of localized activity tag DTOs; never {@code null}
+	 */
 	public List<ActivityTagDTO> getActivityTags() {
 
 		// The header Accept-Language should be present in the request

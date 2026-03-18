@@ -60,6 +60,11 @@ public class ActivityTag {
 				.findFirst();
 	}
 
+	/**
+	 * Adds a translation to this activity tag and sets the back-reference on the translation.
+	 *
+	 * @param translation the translation to add; ignored if {@code null}
+	 */
 	public void addTranslation(ActivityTagTranslation translation) {
 		if (translation == null) {
 			return;
@@ -68,6 +73,11 @@ public class ActivityTag {
 		activityTagTranslations.add(translation);
 	}
 
+	/**
+	 * Removes a translation from this activity tag and clears its back-reference.
+	 *
+	 * @param translation the translation to remove; ignored if {@code null}
+	 */
 	public void removeTranslation(ActivityTagTranslation translation) {
 		if (translation == null) {
 			return;
@@ -76,6 +86,11 @@ public class ActivityTag {
 		activityTagTranslations.remove(translation);
 	}
 
+	/**
+	 * Adds a provider mapping to this activity tag.
+	 *
+	 * @param mapping the provider mapping to add; ignored if {@code null}
+	 */
 	public void addProviderMapping(ActivityTagProviderMapping mapping) {
 		if (mapping == null) {
 			return;
