@@ -1,7 +1,8 @@
 package com.asialocalguide.gateway.destination.service;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.repository.DestinationProviderMappingRepository;
+import com.asialocalguide.gateway.destination.repository.DestinationProviderMappingRepository;
+
 import java.util.Set;
 import org.springframework.stereotype.Service;
 

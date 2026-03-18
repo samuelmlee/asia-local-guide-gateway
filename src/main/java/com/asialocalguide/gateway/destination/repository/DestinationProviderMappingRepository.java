@@ -1,4 +1,4 @@
-package com.asialocalguide.gateway.core.repository;
+package com.asialocalguide.gateway.destination.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
