@@ -39,12 +39,13 @@ public class AppUserService {
 
 		} catch (Exception e) {
 
-			log.warn("Failed to create app user for email: {}. Deleting provider user: {}",
+			log.warn("Failed to create app user for email: {}. Deleting provider user for provider: {}",
 					createAppUserDTO.email(),
-					createAppUserDTO.providerUserId());
+					createAppUserDTO.providerName());
+			
 			deleteProviderUser(createAppUserDTO);
 
-			throw new AppUserCreationException(String.format("Failed to create user : %s", createAppUserDTO), e);
+			throw new AppUserCreationException(String.format("Failed to create user."), e);
 		}
 	}
 
@@ -97,8 +98,8 @@ public class AppUserService {
 
 			authProviderService.deleteProviderUser(createUserDTO.providerUserId());
 		} catch (Exception ex) {
-			log.error("Failed to delete provider user with email: {} for provider: {} after failing to create app user",
-					createUserDTO.email(),
+			
+			log.error("Failed to delete provider user after app user creation failure for provider: {}",
 					createUserDTO.providerName(),
 					ex);
 		}
