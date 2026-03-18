@@ -1,5 +1,7 @@
 package com.asialocalguide.gateway.core.exception;
 
+import com.asialocalguide.gateway.appuser.exception.AppUserCreationException;
+import com.asialocalguide.gateway.appuser.exception.AppUserNotFoundException;
 import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuthException;
 import lombok.extern.slf4j.Slf4j;
@@ -12,22 +14,22 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-	@ExceptionHandler(UserNotFoundException.class)
-	public ProblemDetail handleUserNotFoundException(UserNotFoundException e) {
+	@ExceptionHandler(AppUserNotFoundException.class)
+	public ProblemDetail handleUserNotFoundException(AppUserNotFoundException e) {
 		log.error("Failed to find user: {}", e.getMessage(), e);
 		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
 	}
 
-	@ExceptionHandler(UserCreationException.class)
-	public ProblemDetail handleUserCreationException(UserCreationException e) {
+	@ExceptionHandler(AppUserCreationException.class)
+	public ProblemDetail handleUserCreationException(AppUserCreationException e) {
 		log.error("Failed to create user: {}", e.getMessage(), e);
 		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
 	}
 
-	@ExceptionHandler(UserDeletionException.class)
-	public ProblemDetail handleUserDeletionException(UserDeletionException e) {
+	@ExceptionHandler(ProviderUserDeletionException.class)
+	public ProblemDetail handleUserDeletionException(ProviderUserDeletionException e) {
 
-		if (UserDeletionException.Type.VALIDATION.equals(e.getType())) {
+		if (ProviderUserDeletionException.Type.VALIDATION.equals(e.getType())) {
 			log.error("Invalid request parameters: {}", e.getMessage(), e);
 			return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
 		} else {

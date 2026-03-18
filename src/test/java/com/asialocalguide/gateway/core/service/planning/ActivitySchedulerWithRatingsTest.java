@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import org.junit.jupiter.api.Test;
+
+import com.asialocalguide.gateway.planning.domain.ActivityPlanningData;
+import com.asialocalguide.gateway.planning.service.ActivitySchedulerWithRatings;
 
 class ActivitySchedulerWithRatingsTest {
 	private static final int SLOTS_PER_DAY = 24;

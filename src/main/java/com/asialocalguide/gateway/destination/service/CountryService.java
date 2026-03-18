@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.destination.service;
 
-import com.asialocalguide.gateway.core.repository.CountryRepository;
 import com.asialocalguide.gateway.destination.domain.Country;
+import com.asialocalguide.gateway.destination.repository.CountryRepository;
 
 import java.util.List;
 import java.util.Set;

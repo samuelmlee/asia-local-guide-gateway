@@ -2,7 +2,7 @@ package com.asialocalguide.gateway.core.controller;
 
 import com.asialocalguide.gateway.core.dto.auth.EmailCheckDTO;
 import com.asialocalguide.gateway.core.dto.auth.EmailCheckResultDTO;
-import com.asialocalguide.gateway.core.exception.UserDeletionException;
+import com.asialocalguide.gateway.core.exception.ProviderUserDeletionException;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -27,12 +27,12 @@ public class AuthController {
 	}
 
 	@DeleteMapping("/users")
-	public void deleteUser(@NotNull Authentication authentication) {
+	public void deleteProviderUser(@NotNull Authentication authentication) {
 		String uid = authentication.getName();
 
 		if (uid == null || uid.isBlank()) {
-			throw new UserDeletionException("Provider User ID to be deleted cannot be null or empty",
-					UserDeletionException.Type.VALIDATION);
+			throw new ProviderUserDeletionException("Provider User ID to be deleted cannot be null or empty",
+					ProviderUserDeletionException.Type.VALIDATION);
 		}
 
 		authProviderService.deleteProviderUser(uid);

@@ -6,12 +6,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.asialocalguide.gateway.core.domain.user.AppUser;
-import com.asialocalguide.gateway.core.domain.user.AuthProviderName;
-import com.asialocalguide.gateway.core.domain.user.UserAuth;
-import com.asialocalguide.gateway.core.dto.user.CreateUserDTO;
-import com.asialocalguide.gateway.core.exception.UserCreationException;
-import com.asialocalguide.gateway.core.repository.AppUserRepository;
+import com.asialocalguide.gateway.appuser.domain.AppUser;
+import com.asialocalguide.gateway.appuser.domain.AuthProviderName;
+import com.asialocalguide.gateway.appuser.domain.UserAuth;
+import com.asialocalguide.gateway.appuser.dto.CreateAppUserDTO;
+import com.asialocalguide.gateway.appuser.exception.AppUserCreationException;
+import com.asialocalguide.gateway.appuser.repository.AppUserRepository;
+import com.asialocalguide.gateway.appuser.service.AppUserService;
 import com.asialocalguide.gateway.core.service.auth.AuthProviderService;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class AppUserServiceTest {
 	@Test
 	void createUserShouldSaveUserWhenAppUserDoesNotExistWithEmail() {
 		// Arrange
-		CreateUserDTO createUserDTO = new CreateUserDTO("firebase123",
+		CreateAppUserDTO createUserDTO = new CreateAppUserDTO("firebase123",
 				AuthProviderName.FIREBASE,
 				"test@example.com",
 				"Test User");
@@ -66,7 +67,7 @@ class AppUserServiceTest {
 	@Test
 	void createUserShouldThrowExceptionWhenAppUserAlreadyExists() {
 		// Arrange
-		CreateUserDTO createUserDTO = new CreateUserDTO("firebase123",
+		CreateAppUserDTO createUserDTO = new CreateAppUserDTO("firebase123",
 				AuthProviderName.FIREBASE,
 				"existing@example.com",
 				"Test User");
@@ -77,7 +78,7 @@ class AppUserServiceTest {
 		when(appUserRepository.findByEmail("existing@example.com")).thenReturn(Optional.of(existingAppUser));
 
 		// Act & Assert
-		UserCreationException exception = assertThrows(UserCreationException.class,
+		AppUserCreationException exception = assertThrows(AppUserCreationException.class,
 				() -> appUserService.createAppUser(createUserDTO));
 
 		assertThat(exception.getMessage()).contains("User already exists with email");
@@ -87,7 +88,7 @@ class AppUserServiceTest {
 	@Test
 	void createAppUserShouldThrowExceptionWhenDatabaseErrorOccurs() {
 		// Arrange
-		CreateUserDTO createUserDTO = new CreateUserDTO("firebase123",
+		CreateAppUserDTO createUserDTO = new CreateAppUserDTO("firebase123",
 				AuthProviderName.FIREBASE,
 				"test@example.com",
 				"Test User");
@@ -97,14 +98,14 @@ class AppUserServiceTest {
 		});
 
 		// Act & Assert
-		assertThatThrownBy(() -> appUserService.createAppUser(createUserDTO)).isInstanceOf(UserCreationException.class);
+		assertThatThrownBy(() -> appUserService.createAppUser(createUserDTO)).isInstanceOf(AppUserCreationException.class);
 		verify(authProviderService, times(1)).deleteProviderUser(createUserDTO.providerUserId());
 	}
 
 	@Test
 	void createUserShouldCreateAppUserWithCorrectAssociations() {
 		// Arrange
-		CreateUserDTO createUserDTO = new CreateUserDTO("firebase123",
+		CreateAppUserDTO createUserDTO = new CreateAppUserDTO("firebase123",
 				AuthProviderName.FIREBASE,
 				"test@example.com",
 				"Test User");

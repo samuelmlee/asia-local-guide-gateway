@@ -1,11 +1,11 @@
 package com.asialocalguide.gateway.viator.util;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonDuration;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonImage;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonPricing;
-import com.asialocalguide.gateway.core.domain.planning.CommonActivity.CommonReviews;
+import com.asialocalguide.gateway.planning.domain.CommonActivity;
+import com.asialocalguide.gateway.planning.domain.CommonActivity.CommonDuration;
+import com.asialocalguide.gateway.planning.domain.CommonActivity.CommonImage;
+import com.asialocalguide.gateway.planning.domain.CommonActivity.CommonPricing;
+import com.asialocalguide.gateway.planning.domain.CommonActivity.CommonReviews;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO.DurationDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO.PricingDTO;
