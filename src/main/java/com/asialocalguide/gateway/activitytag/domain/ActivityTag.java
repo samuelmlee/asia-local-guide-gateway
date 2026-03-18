@@ -5,7 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;

@@ -6,10 +6,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.CommonDestination;
-import com.asialocalguide.gateway.core.domain.destination.Coordinates;
-import com.asialocalguide.gateway.core.domain.destination.DestinationType;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.destination.domain.CommonDestination;
+import com.asialocalguide.gateway.destination.domain.Coordinates;
+import com.asialocalguide.gateway.destination.domain.DestinationType;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;

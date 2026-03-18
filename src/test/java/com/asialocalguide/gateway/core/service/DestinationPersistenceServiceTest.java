@@ -1,19 +1,29 @@
 package com.asialocalguide.gateway.core.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import com.asialocalguide.gateway.core.domain.BookingProvider;
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.Language;
-import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
-import com.asialocalguide.gateway.core.service.destination.CountryService;
-import com.asialocalguide.gateway.core.service.destination.DestinationPersistenceService;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +32,21 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.asialocalguide.gateway.core.domain.BookingProvider;
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
+import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
+import com.asialocalguide.gateway.destination.domain.CommonDestination;
+import com.asialocalguide.gateway.destination.domain.Coordinates;
+import com.asialocalguide.gateway.destination.domain.Country;
+import com.asialocalguide.gateway.destination.domain.Destination;
+import com.asialocalguide.gateway.destination.domain.DestinationProviderMapping;
+import com.asialocalguide.gateway.destination.domain.DestinationType;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
+import com.asialocalguide.gateway.destination.repository.DestinationRepository;
+import com.asialocalguide.gateway.destination.service.CountryService;
+import com.asialocalguide.gateway.destination.service.DestinationPersistenceService;
 
 @ExtendWith(MockitoExtension.class)
 class DestinationPersistenceServiceTest {

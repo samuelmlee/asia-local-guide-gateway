@@ -7,11 +7,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
 import com.asialocalguide.gateway.core.domain.planning.ImageType;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;

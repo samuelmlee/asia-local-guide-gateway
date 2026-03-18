@@ -1,7 +1,7 @@
 package com.asialocalguide.gateway.core.service.composer;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.CommonDestination;
+import com.asialocalguide.gateway.destination.domain.CommonDestination;
 
 import java.util.List;
 

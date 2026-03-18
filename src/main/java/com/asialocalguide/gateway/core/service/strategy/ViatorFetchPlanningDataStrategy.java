@@ -2,14 +2,14 @@ package com.asialocalguide.gateway.core.service.strategy;
 
 import com.asialocalguide.gateway.core.domain.BookingProvider;
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.Destination;
-import com.asialocalguide.gateway.core.domain.destination.DestinationProviderMapping;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.dto.planning.PlanningRequestDTO;
 import com.asialocalguide.gateway.core.service.bookingprovider.BookingProviderService;
-import com.asialocalguide.gateway.core.service.destination.DestinationService;
+import com.asialocalguide.gateway.destination.domain.Destination;
+import com.asialocalguide.gateway.destination.domain.DestinationProviderMapping;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
+import com.asialocalguide.gateway.destination.service.DestinationService;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import org.springframework.stereotype.Component;
 

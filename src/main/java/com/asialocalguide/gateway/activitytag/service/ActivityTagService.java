@@ -11,7 +11,7 @@ import com.asialocalguide.gateway.activitytag.domain.ActivityTag;
 import com.asialocalguide.gateway.activitytag.domain.ActivityTagTranslation;
 import com.asialocalguide.gateway.activitytag.dto.ActivityTagDTO;
 import com.asialocalguide.gateway.activitytag.repository.ActivityTagRepository;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 
 import lombok.extern.slf4j.Slf4j;
 

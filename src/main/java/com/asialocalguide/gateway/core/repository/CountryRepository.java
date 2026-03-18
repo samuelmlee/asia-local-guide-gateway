@@ -1,9 +1,10 @@
 package com.asialocalguide.gateway.core.repository;
 
-import com.asialocalguide.gateway.core.domain.destination.Country;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.asialocalguide.gateway.destination.domain.Country;
 
 import java.util.List;
 import java.util.Set;

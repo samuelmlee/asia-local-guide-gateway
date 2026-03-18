@@ -1,7 +1,8 @@
 package com.asialocalguide.gateway.core.domain.planning;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
+
 import jakarta.validation.constraints.*;
 import java.util.List;
 import org.hibernate.validator.constraints.URL;

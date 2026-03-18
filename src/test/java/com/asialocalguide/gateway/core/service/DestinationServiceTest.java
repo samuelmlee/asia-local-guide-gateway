@@ -1,21 +1,16 @@
 package com.asialocalguide.gateway.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.Language;
-import com.asialocalguide.gateway.core.domain.destination.*;
-import com.asialocalguide.gateway.core.dto.destination.DestinationDTO;
-import com.asialocalguide.gateway.core.repository.DestinationRepository;
-import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
-import com.asialocalguide.gateway.core.service.destination.DestinationService;
-import com.asialocalguide.gateway.core.service.destination.DestinationSortingService;
-import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import java.util.List;
 import java.util.Locale;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +18,23 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
+
+import com.asialocalguide.gateway.core.domain.BookingProviderName;
+import com.asialocalguide.gateway.core.domain.Language;
+import com.asialocalguide.gateway.core.service.composer.DestinationProvider;
+import com.asialocalguide.gateway.destination.domain.CommonDestination;
+import com.asialocalguide.gateway.destination.domain.Coordinates;
+import com.asialocalguide.gateway.destination.domain.Country;
+import com.asialocalguide.gateway.destination.domain.Destination;
+import com.asialocalguide.gateway.destination.domain.DestinationIngestionInput;
+import com.asialocalguide.gateway.destination.domain.DestinationTranslation;
+import com.asialocalguide.gateway.destination.domain.DestinationType;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
+import com.asialocalguide.gateway.destination.dto.DestinationDTO;
+import com.asialocalguide.gateway.destination.repository.DestinationRepository;
+import com.asialocalguide.gateway.destination.service.DestinationService;
+import com.asialocalguide.gateway.destination.service.DestinationSortingService;
+import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 
 @ExtendWith(MockitoExtension.class)
 class DestinationServiceTest {

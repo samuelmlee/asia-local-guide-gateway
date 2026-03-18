@@ -26,7 +26,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.ActivityPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.CommonPersistableActivity;
@@ -34,6 +33,7 @@ import com.asialocalguide.gateway.core.domain.planning.ImageType;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningData;
 import com.asialocalguide.gateway.core.domain.planning.ProviderPlanningRequest;
 import com.asialocalguide.gateway.core.service.composer.ActivityProvider;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 import com.asialocalguide.gateway.viator.client.ViatorClient;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityAvailabilityDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorActivityDTO;

@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.asialocalguide.gateway.core.domain.BookingProviderName;
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import com.asialocalguide.gateway.core.domain.planning.Activity;
 import com.asialocalguide.gateway.core.domain.planning.CommonActivity;
 import com.asialocalguide.gateway.core.domain.planning.DayActivity;
@@ -42,6 +41,7 @@ import com.asialocalguide.gateway.core.exception.UserNotFoundException;
 import com.asialocalguide.gateway.core.repository.PlanningRepository;
 import com.asialocalguide.gateway.core.service.appuser.AppUserService;
 import com.asialocalguide.gateway.core.service.strategy.FetchPlanningDataStrategy;
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 
 import lombok.extern.slf4j.Slf4j;
 

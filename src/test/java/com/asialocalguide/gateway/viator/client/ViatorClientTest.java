@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.asialocalguide.gateway.core.domain.destination.Coordinates;
+import com.asialocalguide.gateway.destination.domain.Coordinates;
 import com.asialocalguide.gateway.viator.dto.*;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 import com.github.tomakehurst.wiremock.http.Fault;

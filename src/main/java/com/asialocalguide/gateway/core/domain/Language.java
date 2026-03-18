@@ -1,11 +1,12 @@
 package com.asialocalguide.gateway.core.domain;
 
-import com.asialocalguide.gateway.core.domain.destination.LanguageCode;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
+
+import com.asialocalguide.gateway.destination.domain.LanguageCode;
 
 @Entity
 @NoArgsConstructor
