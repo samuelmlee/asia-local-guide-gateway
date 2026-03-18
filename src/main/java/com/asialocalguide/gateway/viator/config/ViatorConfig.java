@@ -5,11 +5,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Spring configuration that creates the Viator {@link RestClient} bean.
+ *
+ * <p>Configures the base URL, authentication header, API version, and the
+ * request logging interceptor from {@link ViatorProperties}.
+ */
 @Configuration
 public class ViatorConfig {
 
 	private final ViatorProperties viatorProperties;
 
+	/**
+	 * @param viatorProperties externalized Viator API configuration properties
+	 */
 	public ViatorConfig(ViatorProperties viatorProperties) {
 		this.viatorProperties = viatorProperties;
 	}

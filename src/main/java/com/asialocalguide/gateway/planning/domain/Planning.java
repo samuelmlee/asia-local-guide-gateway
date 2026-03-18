@@ -16,6 +16,12 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * JPA entity representing a named travel planning belonging to an {@link AppUser}.
+ *
+ * <p>A planning is composed of one or more {@link DayPlan} instances managed with
+ * cascade-all and orphan removal.
+ */
 @Entity
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
@@ -39,6 +45,11 @@ public class Planning extends BaseEntity {
 	@Getter
 	private Instant createdDate;
 
+	/**
+	 * @param appUser the user who owns this planning; must not be {@code null}
+	 * @param name    the name of the planning; must not be {@code null}
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
 	public Planning(AppUser appUser, String name) {
 		if (appUser == null || name == null) {
 			throw new IllegalArgumentException(String.format("User: %s or name: %s cannot be null", appUser, name));
@@ -47,10 +58,21 @@ public class Planning extends BaseEntity {
 		this.name = name;
 	}
 
+	/**
+	 * Returns an unmodifiable view of all day plans in this planning.
+	 *
+	 * @return set of day plans; never {@code null}
+	 */
 	public Set<DayPlan> getDayPlans() {
 		return Collections.unmodifiableSet(dayPlans);
 	}
 
+	/**
+	 * Adds a day plan to this planning, establishing the bidirectional association.
+	 * Silently ignores {@code null} inputs.
+	 *
+	 * @param dayPlan the day plan to add
+	 */
 	public void addDayPlan(DayPlan dayPlan) {
 		if (dayPlan == null || dayPlans == null) {
 			return;
@@ -59,6 +81,12 @@ public class Planning extends BaseEntity {
 		dayPlans.add(dayPlan);
 	}
 
+	/**
+	 * Removes a day plan from this planning, clearing the bidirectional association.
+	 * Silently ignores {@code null} inputs.
+	 *
+	 * @param dayPlan the day plan to remove
+	 */
 	public void removeDayPlan(DayPlan dayPlan) {
 		if (dayPlan == null || dayPlans == null) {
 			return;

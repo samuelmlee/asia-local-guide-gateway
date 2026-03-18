@@ -9,6 +9,13 @@ import java.lang.reflect.Constructor;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * ByteBuddy interceptor that runs Jakarta Bean Validation on record constructor parameters
+ * at instantiation time.
+ *
+ * <p>Invoked by {@link RecordValidationPlugin} after the canonical record constructor completes.
+ * Throws {@link jakarta.validation.ConstraintViolationException} if any constraint is violated.
+ */
 @Slf4j
 public class RecordValidationInterceptor {
 
@@ -25,6 +32,15 @@ public class RecordValidationInterceptor {
 	private RecordValidationInterceptor() {
 	}
 
+	/**
+	 * Validates the given constructor arguments and throws if any constraint is violated.
+	 *
+	 * @param <T>         the record type being constructed
+	 * @param constructor the canonical constructor of the record
+	 * @param args        the constructor arguments to validate
+	 * @throws jakarta.validation.ConstraintViolationException if one or more constraints fail
+	 * @throws IllegalStateException                           if the validator could not be initialised
+	 */
 	public static <T> void validate(@Origin Constructor<T> constructor, @AllArguments Object[] args) {
 		if (validator == null) {
 			throw new IllegalStateException("Validator is not initialized");

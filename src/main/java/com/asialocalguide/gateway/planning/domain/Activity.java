@@ -14,6 +14,12 @@ import org.hibernate.validator.constraints.URL;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+/**
+ * JPA entity representing a bookable activity from a specific provider.
+ *
+ * <p>Price and availability are fetched from the provider on demand and are not stored here.
+ * Translations and cover images are managed as owned collections with cascade-all and orphan removal.
+ */
 @Entity
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
@@ -54,6 +60,14 @@ public class Activity extends BaseEntity {
 	@LastModifiedDate
 	private Instant lastUpdated;
 
+	/**
+	 * @param providerActivityId the provider's identifier for this activity; must not be {@code null}
+	 * @param provider           the booking provider that owns this activity; must not be {@code null}
+	 * @param averageRating      average rating in the range [0.0, 5.0], or {@code null} if unknown
+	 * @param reviewCount        total number of reviews, or {@code null} if unknown
+	 * @param durationMinutes    activity duration in minutes; must be at least 1
+	 * @param bookingUrl         direct booking URL; must be a valid non-blank URL
+	 */
 	public Activity(String providerActivityId, BookingProvider provider, Float averageRating, Integer reviewCount,
 			Integer durationMinutes, String bookingUrl) {
 
@@ -65,14 +79,30 @@ public class Activity extends BaseEntity {
 		this.bookingUrl = bookingUrl;
 	}
 
+	/**
+	 * Returns an unmodifiable view of all translations for this activity.
+	 *
+	 * @return set of activity translations; never {@code null}
+	 */
 	public Set<ActivityTranslation> getActivityTranslations() {
 		return Collections.unmodifiableSet(activityTranslations);
 	}
 
+	/**
+	 * Returns an unmodifiable view of all cover images for this activity.
+	 *
+	 * @return set of activity images; never {@code null}
+	 */
 	public Set<ActivityImage> getCoverImages() {
 		return Collections.unmodifiableSet(coverImages);
 	}
 
+	/**
+	 * Adds a cover image to this activity, establishing the bidirectional association.
+	 * Silently ignores {@code null} images.
+	 *
+	 * @param image the image to add
+	 */
 	public void addImage(ActivityImage image) {
 		if (image == null) {
 			return;
@@ -81,6 +111,12 @@ public class Activity extends BaseEntity {
 		coverImages.add(image);
 	}
 
+	/**
+	 * Removes a cover image from this activity, clearing the bidirectional association.
+	 * Silently ignores {@code null} images.
+	 *
+	 * @param image the image to remove
+	 */
 	public void removeImage(ActivityImage image) {
 		if (image == null) {
 			return;
@@ -89,6 +125,12 @@ public class Activity extends BaseEntity {
 		coverImages.remove(image);
 	}
 
+	/**
+	 * Adds a translation to this activity.
+	 * Silently ignores {@code null} translations.
+	 *
+	 * @param activityTranslation the translation to add
+	 */
 	public void addTranslation(ActivityTranslation activityTranslation) {
 		if (activityTranslation == null) {
 			return;

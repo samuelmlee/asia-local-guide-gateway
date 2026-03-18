@@ -7,6 +7,12 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Stores the localized name of a {@link Country} for a specific language.
+ *
+ * <p>The composite key is formed by the country ID and the language ID,
+ * represented by {@link CountryTranslationId}.
+ */
 @Entity
 @NoArgsConstructor
 public class CountryTranslation {
@@ -29,6 +35,12 @@ public class CountryTranslation {
 	@NotEmpty
 	private String name;
 
+	/**
+	 * @param country  the country this translation belongs to; must not be {@code null}
+	 * @param language the language of the translation; must not be {@code null}
+	 * @param name     the localized country name; must not be {@code null}
+	 * @throws IllegalArgumentException if any argument is {@code null}
+	 */
 	public CountryTranslation(Country country, Language language, String name) {
 		if (country == null || language == null || name == null) {
 			throw new IllegalArgumentException(

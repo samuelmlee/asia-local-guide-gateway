@@ -12,15 +12,22 @@ import com.asialocalguide.gateway.core.domain.QBookingProvider;
 import com.asialocalguide.gateway.destination.domain.QDestinationProviderMapping;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+/**
+ * QueryDSL-based implementation of {@link CustomDestinationProviderMappingRepository}.
+ */
 @Repository
 public class CustomDestinationProviderMappingRepositoryImpl implements CustomDestinationProviderMappingRepository {
 
 	private final JPAQueryFactory queryFactory;
 
+	/**
+	 * @param queryFactory the QueryDSL factory used to build and execute JPQL queries
+	 */
 	public CustomDestinationProviderMappingRepositoryImpl(JPAQueryFactory queryFactory) {
 		this.queryFactory = queryFactory;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> findProviderDestinationIdsByProviderName(BookingProviderName providerName) {

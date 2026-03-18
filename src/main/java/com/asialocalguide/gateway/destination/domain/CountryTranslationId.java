@@ -7,6 +7,9 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Composite primary key for {@link CountryTranslation}, combining a country ID and a language ID.
+ */
 @NoArgsConstructor
 @Embeddable
 @Getter
@@ -17,6 +20,11 @@ public class CountryTranslationId implements Serializable {
 	@Column(name = "language_id")
 	private Long languageId;
 
+	/**
+	 * @param countryId  the ID of the country; must not be {@code null}
+	 * @param languageId the ID of the language; must not be {@code null}
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
 	public CountryTranslationId(Long countryId, Long languageId) {
 		if (countryId == null || languageId == null) {
 			throw new IllegalArgumentException(

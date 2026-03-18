@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
+/**
+ * Composite primary key for {@link UserAuth}, combining the user's UUID and
+ * the name of the authentication provider.
+ */
 @NoArgsConstructor
 @Embeddable
 @Getter
@@ -23,6 +27,10 @@ public class UserAuthId implements Serializable {
 	@JdbcType(PostgreSQLEnumJdbcType.class)
 	private AuthProviderName authProviderName;
 
+	/**
+	 * @param userId           the UUID of the application user
+	 * @param authProviderName the authentication provider associated with the user
+	 */
 	public UserAuthId(UUID userId, AuthProviderName authProviderName) {
 		this.userId = userId;
 		this.authProviderName = authProviderName;

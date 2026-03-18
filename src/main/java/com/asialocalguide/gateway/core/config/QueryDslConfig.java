@@ -6,6 +6,9 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Spring configuration that exposes a {@link JPAQueryFactory} bean for QueryDSL-based repositories.
+ */
 @Configuration
 public class QueryDslConfig {
 

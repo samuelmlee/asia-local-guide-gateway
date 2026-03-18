@@ -6,6 +6,13 @@ import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 
+/**
+ * Base class for JPA entities that use a UUID version 7 primary key.
+ *
+ * <p>The ID is generated using {@code UUIDv7} (time-ordered epoch) from the
+ * <a href="https://github.com/f4b6a3/uuid-creator">uuid-creator</a> library,
+ * which produces monotonically increasing values suited for B-tree index performance.
+ */
 @Getter
 @MappedSuperclass
 public abstract class BaseEntity {

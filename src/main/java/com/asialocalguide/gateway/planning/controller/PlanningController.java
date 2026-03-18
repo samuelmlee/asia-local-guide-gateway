@@ -27,6 +27,12 @@ import com.asialocalguide.gateway.planning.service.PlanningService;
 
 import jakarta.validation.Valid;
 
+/**
+ * REST controller for planning operations.
+ *
+ * <p>Exposes endpoints to generate a suggested day-by-day activity schedule,
+ * persist a confirmed planning, and retrieve all plannings for the authenticated user.
+ */
 @RestController
 @RequestMapping("v1/plannings")
 public class PlanningController {
@@ -35,16 +41,36 @@ public class PlanningController {
 
 	private final AuthService authService;
 
+	/**
+	 * @param planningService service handling planning generation and persistence
+	 * @param authService     service for resolving the auth provider from a JWT
+	 */
 	public PlanningController(PlanningService planningService, AuthService authService) {
 		this.planningService = planningService;
 		this.authService = authService;
 	}
 
+	/**
+	 * Generates a suggested day-plan schedule for the given request parameters.
+	 *
+	 * @param request the planning parameters (dates, destination, activity tags); must be valid
+	 * @return ordered list of day plans, each containing scheduled activities
+	 */
 	@PostMapping("/generate")
 	public List<DayPlanDTO> generateDayPlans(@Valid @RequestBody PlanningRequestDTO request) {
 		return planningService.generateDayPlans(request);
 	}
 
+	/**
+	 * Persists a confirmed planning for the authenticated user.
+	 *
+	 * <p>Returns HTTP 201 with a {@code Location} header pointing to the created resource,
+	 * and a body containing the new planning's ID.
+	 *
+	 * @param planningRequest the planning to save; must be valid
+	 * @param authentication  the current JWT authentication
+	 * @return 201 response with the created planning's ID
+	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<PlanningCreatedDTO> savePlanning(@Valid @RequestBody PlanningCreateRequestDTO planningRequest,
@@ -66,6 +92,12 @@ public class PlanningController {
 		return ResponseEntity.created(location).body(new PlanningCreatedDTO(planningCreated.getId()));
 	}
 
+	/**
+	 * Returns all plannings belonging to the authenticated user.
+	 *
+	 * @param authentication the current JWT authentication
+	 * @return list of planning summaries for the current user; never {@code null}
+	 */
 	@GetMapping
 	public List<PlanningSummaryDTO> getUserPlannings(Authentication authentication) {
 		AuthProviderName providerName = authService.getProviderFromAuthentication(authentication)

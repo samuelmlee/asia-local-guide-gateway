@@ -7,6 +7,13 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 import lombok.*;
 
+/**
+ * Maps a {@link Destination} to its provider-specific destination identifier for a given
+ * {@link com.asialocalguide.gateway.core.domain.BookingProvider}.
+ *
+ * <p>Enables the gateway to translate internal destination IDs into the identifiers expected
+ * by each external booking provider API.
+ */
 @Getter
 @Entity
 @NoArgsConstructor
@@ -28,6 +35,12 @@ public class DestinationProviderMapping {
 	@NotEmpty
 	private String providerDestinationId;
 
+	/**
+	 * @param destination           the destination this mapping belongs to; must not be {@code null}
+	 * @param provider              the booking provider; must not be {@code null}
+	 * @param providerDestinationId the provider's own destination identifier; must not be {@code null}
+	 * @throws IllegalArgumentException if any argument is {@code null}
+	 */
 	public DestinationProviderMapping(Destination destination, BookingProvider provider, String providerDestinationId) {
 		if (destination == null || provider == null || providerDestinationId == null) {
 			throw new IllegalArgumentException(

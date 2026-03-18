@@ -8,9 +8,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.stereotype.Component;
 
+/**
+ * {@link JwtConverterProvider} implementation for Firebase-issued JWTs.
+ *
+ * <p>Extracts the {@code roles} claim from the JWT and maps each value to a Spring Security
+ * {@link SimpleGrantedAuthority} with the {@code ROLE_} prefix.
+ */
 @Component
 public class FirebaseJwtConverterProvider implements JwtConverterProvider {
 
+	/**
+	 * Returns a {@link JwtAuthenticationConverter} that reads the {@code roles} JWT claim
+	 * and maps each entry to a {@code ROLE_}-prefixed {@link SimpleGrantedAuthority}.
+	 *
+	 * @return a configured converter; never {@code null}
+	 */
 	@Override
 	public JwtAuthenticationConverter getJwtAuthenticationConverter() {
 		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();

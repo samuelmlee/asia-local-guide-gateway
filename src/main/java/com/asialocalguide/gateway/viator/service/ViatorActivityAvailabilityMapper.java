@@ -9,6 +9,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * Utility class that maps Viator availability schedules to the
+ * {@link ActivityPlanningData} structure expected by the constraint-programming scheduler.
+ *
+ * <p>All functionality is exposed via the static
+ * {@link #mapToActivityData(List, List, LocalDate, LocalDate)} method.
+ */
 public class ViatorActivityAvailabilityMapper {
 	/**
 	 * A helper class to flatten a single "bookable item" into an object we can

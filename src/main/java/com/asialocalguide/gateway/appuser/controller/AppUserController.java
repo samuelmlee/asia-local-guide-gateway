@@ -21,17 +21,33 @@ import com.asialocalguide.gateway.appuser.service.AppUserService;
 
 import jakarta.validation.Valid;
 
+/**
+ * REST controller for managing application users.
+ *
+ * <p>Provides endpoints to create and retrieve {@link AppUser} resources.
+ */
 @RestController
 @RequestMapping("/v1/users")
 public class AppUserController {
 
 	private final AppUserService appUserService;
 
+	/**
+	 * @param appUserService service handling app user business logic
+	 */
 	public AppUserController(AppUserService appUserService) {
 
 		this.appUserService = appUserService;
 	}
 
+	/**
+	 * Creates a new application user from the given provider registration data.
+	 *
+	 * <p>Returns {@code 201 Created} with a {@code Location} header pointing to the new user resource.
+	 *
+	 * @param createAppUserDTO validated DTO containing provider user ID, provider name, email, and optional name
+	 * @return response containing the created user's ID and its location URI
+	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<AppUserDTO> createAppUser(@RequestBody @Valid CreateAppUserDTO createAppUserDTO) {
@@ -46,6 +62,12 @@ public class AppUserController {
 		return ResponseEntity.created(location).body(new AppUserDTO(appUser.getId()));
 	}
 
+	/**
+	 * Retrieves the application user with the given ID.
+	 *
+	 * @param id the UUID of the user to retrieve
+	 * @return response containing the user's ID
+	 */
 	@GetMapping("/{id}")
 	public ResponseEntity<AppUserDTO> getAppUser(@PathVariable UUID id) {
 		AppUser appUser = appUserService.getAppUserById(id);

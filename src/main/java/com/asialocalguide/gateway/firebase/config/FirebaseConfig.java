@@ -14,6 +14,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Spring configuration that initialises the Firebase Admin SDK.
+ *
+ * <p>Reads the service account credentials from {@code config/firebase-service-account.json}
+ * and registers {@link FirebaseApp} and {@link FirebaseAuth} as Spring beans.
+ */
 @Configuration
 public class FirebaseConfig {
 

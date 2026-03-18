@@ -17,6 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
+/**
+ * {@link DestinationProvider} implementation backed by the Viator API.
+ *
+ * <p>Fetches all destinations for each supported language in parallel using
+ * {@link java.util.concurrent.CompletableFuture}, then uses the English list as the base
+ * and other languages as additional translations. Country-level destinations are excluded
+ * because the app does not support scheduling within an entire country.
+ */
 @Component
 @Slf4j
 public class ViatorDestinationProvider implements DestinationProvider {
@@ -25,15 +33,26 @@ public class ViatorDestinationProvider implements DestinationProvider {
 
 	private final ViatorClient viatorClient;
 
+	/**
+	 * @param viatorClient the Viator HTTP client
+	 */
 	public ViatorDestinationProvider(ViatorClient viatorClient) {
 		this.viatorClient = viatorClient;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public BookingProviderName getProviderName() {
 		return PROVIDER_TYPE;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws ViatorApiException if any language fetch fails or returns empty results
+	 */
 	@Override
 	public List<CommonDestination> getDestinations() throws ViatorApiException {
 		log.info("Fetching Viator destinations for languages: {}", Arrays.toString(LanguageCode.values()));

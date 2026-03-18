@@ -10,6 +10,13 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 
+/**
+ * Utility class that uses OR-Tools CP-SAT to schedule activities optimally.
+ *
+ * <p>Given an availability matrix, ratings, and durations, the scheduler maximises the total
+ * weighted rating of assigned activities subject to no-overlap and availability constraints.
+ * All functionality is exposed via the static {@link #scheduleActivities(ActivityPlanningData)} method.
+ */
 @Slf4j
 public class ActivitySchedulerWithRatings {
 

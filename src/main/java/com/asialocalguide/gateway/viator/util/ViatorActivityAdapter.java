@@ -15,11 +15,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Utility class that adapts a {@link ViatorActivityDTO} to the provider-agnostic
+ * {@link CommonActivity} model.
+ *
+ * <p>When the input is {@code null} a sentinel "DEFAULT" activity is returned to avoid
+ * propagating nulls through the scheduling pipeline. Only cover images are mapped.
+ */
 public class ViatorActivityAdapter {
 
 	private ViatorActivityAdapter() {
 	}
 
+	/**
+	 * Converts a {@link ViatorActivityDTO} to a {@link CommonActivity}.
+	 *
+	 * <p>If {@code viator} is {@code null}, a placeholder activity with default values is returned.
+	 *
+	 * @param viator the Viator activity to convert
+	 * @return the equivalent {@link CommonActivity}; never {@code null}
+	 */
 	public static CommonActivity toCommon(ViatorActivityDTO viator) {
 		if (viator == null) {
 			return new CommonActivity("[DEFAULT] Missing Activity",

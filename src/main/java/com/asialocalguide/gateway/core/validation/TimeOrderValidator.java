@@ -5,6 +5,13 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 
+/**
+ * Jakarta Bean Validation {@link ConstraintValidator} that enforces chronological ordering of
+ * two {@link java.time.LocalDateTime} fields on an object.
+ *
+ * <p>Field names are configured via the {@link ValidTimeOrder} annotation attributes
+ * {@code startTimeField} and {@code endTimeField}. The constraint passes when start ≤ end.
+ */
 public class TimeOrderValidator implements ConstraintValidator<ValidTimeOrder, Object> {
 	private String startTimeFieldName;
 	private String endTimeFieldName;

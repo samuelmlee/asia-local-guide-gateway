@@ -24,6 +24,13 @@ import com.asialocalguide.gateway.viator.dto.ViatorDestinationDTO;
 import com.asialocalguide.gateway.viator.dto.ViatorDestinationResponseDTO;
 import com.asialocalguide.gateway.viator.exception.ViatorApiException;
 
+/**
+ * HTTP client for the Viator REST API.
+ *
+ * <p>Wraps the configured {@link RestClient} to call the Viator destinations,
+ * product search, product detail, and availability schedule endpoints.
+ * HTTP 404 responses are treated as empty results rather than errors.
+ */
 @Component
 public class ViatorClient {
 
@@ -31,10 +38,20 @@ public class ViatorClient {
 
 	private final RestClient viatorRestClient;
 
+	/**
+	 * @param viatorRestClient the pre-configured Viator REST client bean
+	 */
 	public ViatorClient(RestClient viatorRestClient) {
 		this.viatorRestClient = viatorRestClient;
 	}
 
+	/**
+	 * Fetches all Viator destinations localised for the given language.
+	 *
+	 * @param languageIsoCode the ISO language code to pass in the {@code Accept-Language} header
+	 * @return list of destinations; empty if the API returns 404
+	 * @throws ViatorApiException on any non-404 client or server error
+	 */
 	public List<ViatorDestinationDTO> getAllDestinationsForLanguage(String languageIsoCode) {
 		try {
 			ResponseEntity<ViatorDestinationResponseDTO> entity = viatorRestClient.get()
@@ -65,6 +82,14 @@ public class ViatorClient {
 		}
 	}
 
+	/**
+	 * Searches for activities using the Viator product search endpoint.
+	 *
+	 * @param languageIsoCode the ISO language code to pass in the {@code Accept-Language} header
+	 * @param searchDTO       the search criteria (destination, dates, tags, pagination)
+	 * @return list of matching activities; empty if the API returns 404
+	 * @throws ViatorApiException on any non-404 client or server error
+	 */
 	public List<ViatorActivityDTO> getActivitiesByRequestAndLanguage(String languageIsoCode,
 			ViatorActivitySearchDTO searchDTO) {
 		try {
@@ -95,6 +120,14 @@ public class ViatorClient {
 		}
 	}
 
+	/**
+	 * Fetches detailed information for a single activity by its product code.
+	 *
+	 * @param languageIsoCode the ISO language code to pass in the {@code Accept-Language} header
+	 * @param activityId      the Viator product code
+	 * @return the activity detail, or empty if the activity is not found (404)
+	 * @throws ViatorApiException on any non-404 client or server error
+	 */
 	public Optional<ViatorActivityDetailDTO> getActivityByIdAndLanguage(String languageIsoCode, String activityId) {
 		try {
 			ResponseEntity<ViatorActivityDetailDTO> entity = viatorRestClient.get()
@@ -124,6 +157,13 @@ public class ViatorClient {
 		}
 	}
 
+	/**
+	 * Fetches the availability schedule for the given product code.
+	 *
+	 * @param productCode the Viator product code
+	 * @return the availability schedule, or empty if not found (404)
+	 * @throws ViatorApiException on any non-404 client or server error
+	 */
 	public Optional<ViatorActivityAvailabilityDTO> getAvailabilityByProductCode(String productCode) {
 		try {
 			ResponseEntity<ViatorActivityAvailabilityDTO> entity = viatorRestClient.get()
