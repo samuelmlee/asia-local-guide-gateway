@@ -8,6 +8,11 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity representing a scheduled activity within a {@link DayPlan}.
+ *
+ * <p>The {@code @ValidTimeOrder} constraint ensures {@code startTime} is before {@code endTime}.
+ */
 @Entity
 @NoArgsConstructor
 @Getter
@@ -30,6 +35,12 @@ public class DayActivity extends BaseEntity {
 	@NotNull
 	private Activity activity;
 
+	/**
+	 * @param activity  the activity to schedule; must not be {@code null}
+	 * @param startTime the scheduled start time; must not be {@code null}
+	 * @param endTime   the scheduled end time; must not be {@code null}
+	 * @throws IllegalArgumentException if any argument is {@code null}
+	 */
 	public DayActivity(Activity activity, LocalDateTime startTime, LocalDateTime endTime) {
 		if (startTime == null || endTime == null || activity == null) {
 			throw new IllegalArgumentException(

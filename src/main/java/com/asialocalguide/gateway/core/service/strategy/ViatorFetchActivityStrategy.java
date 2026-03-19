@@ -8,6 +8,11 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * {@link FetchActivityStrategy} implementation for the Viator booking provider.
+ *
+ * <p>Delegates to {@link ViatorActivityService} to retrieve activity details by provider ID.
+ */
 @Component
 @Slf4j
 public class ViatorFetchActivityStrategy implements FetchActivityStrategy {
@@ -16,15 +21,24 @@ public class ViatorFetchActivityStrategy implements FetchActivityStrategy {
 
 	private final ViatorActivityService viatorActivityService;
 
+	/**
+	 * @param viatorActivityService service handling Viator API calls for activity data
+	 */
 	public ViatorFetchActivityStrategy(ViatorActivityService viatorActivityService) {
 		this.viatorActivityService = viatorActivityService;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public BookingProviderName getProviderName() {
 		return providerName;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalArgumentException if {@code activityIds} is {@code null}
+	 */
 	@Override
 	public List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds) {
 		if (activityIds == null) {

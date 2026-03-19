@@ -13,6 +13,13 @@ import com.asialocalguide.gateway.planning.dto.PlanningRequestDTO;
 import com.asialocalguide.gateway.viator.service.ViatorActivityService;
 import org.springframework.stereotype.Component;
 
+/**
+ * {@link FetchPlanningDataStrategy} implementation for the Viator booking provider.
+ *
+ * <p>Resolves the Viator destination ID for the requested destination, constructs a
+ * {@link ProviderPlanningRequest}, and delegates to {@link ViatorActivityService} to
+ * fetch available activities and time slots.
+ */
 @Component
 public class ViatorFetchPlanningDataStrategy implements FetchPlanningDataStrategy {
 
@@ -24,6 +31,11 @@ public class ViatorFetchPlanningDataStrategy implements FetchPlanningDataStrateg
 
 	private final ViatorActivityService viatorActivityService;
 
+	/**
+	 * @param bookingProviderService service for looking up the Viator {@link BookingProvider} record
+	 * @param destinationService     service for resolving destinations and their provider mappings
+	 * @param viatorActivityService  service handling Viator API calls for planning data
+	 */
 	public ViatorFetchPlanningDataStrategy(BookingProviderService bookingProviderService,
 			DestinationService destinationService, ViatorActivityService viatorActivityService) {
 		this.bookingProviderService = bookingProviderService;
@@ -31,11 +43,18 @@ public class ViatorFetchPlanningDataStrategy implements FetchPlanningDataStrateg
 		this.viatorActivityService = viatorActivityService;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public BookingProviderName getProviderName() {
 		return PROVIDER_NAME;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws IllegalStateException    if the Viator {@link BookingProvider} or destination provider mapping is not found
+	 * @throws IllegalArgumentException if the destination does not exist
+	 */
 	@Override
 	public ProviderPlanningData fetchProviderPlanningData(PlanningRequestDTO request, LanguageCode languageCode) {
 		BookingProvider viatorProvider = bookingProviderService.getBookingProviderByName(PROVIDER_NAME)

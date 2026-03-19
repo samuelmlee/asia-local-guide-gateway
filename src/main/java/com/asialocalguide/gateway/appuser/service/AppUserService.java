@@ -17,6 +17,13 @@ import com.asialocalguide.gateway.auth.service.AuthProviderService;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service for creating and retrieving application users.
+ *
+ * <p>On creation, the service verifies that no existing user shares the same email, persists the
+ * new user with its {@link com.asialocalguide.gateway.appuser.domain.UserAuth} entry, and rolls
+ * back the provider-side user registration if persistence fails.
+ */
 @Service
 @Slf4j
 public class AppUserService {
@@ -25,11 +32,25 @@ public class AppUserService {
 
 	private final AuthProviderService authProviderService;
 
+	/**
+	 * @param appUserRepository  repository for persisting and querying app users
+	 * @param authProviderService service used to clean up provider-side users on failure
+	 */
 	public AppUserService(AppUserRepository appUserRepository, AuthProviderService authProviderService) {
 		this.appUserRepository = appUserRepository;
 		this.authProviderService = authProviderService;
 	}
 
+	/**
+	 * Creates and persists a new application user from the given registration data.
+	 *
+	 * <p>If persistence fails after the provider user has already been created, the provider
+	 * user is deleted as a best-effort compensating action before the exception is re-thrown.
+	 *
+	 * @param createAppUserDTO validated DTO containing the new user's details
+	 * @return the persisted {@link AppUser}
+	 * @throws AppUserCreationException if the email is already registered or persistence fails
+	 */
 	@Transactional
 	public AppUser createAppUser(CreateAppUserDTO createAppUserDTO) {
 		checkAppUserExistence(createAppUserDTO);
@@ -65,6 +86,13 @@ public class AppUserService {
 		}
 	}
 
+	/**
+	 * Returns the application user with the given ID.
+	 *
+	 * @param id the UUID of the user to retrieve
+	 * @return the matching {@link AppUser}
+	 * @throws AppUserNotFoundException if no user exists with the given ID
+	 */
 	@Transactional(readOnly = true)
 	public AppUser getAppUserById(UUID id) {
 
@@ -72,6 +100,13 @@ public class AppUserService {
 				.orElseThrow(() -> new AppUserNotFoundException(String.format("User not found with id: %s", id)));
 	}
 
+	/**
+	 * Returns the application user linked to the given provider and provider-assigned user ID.
+	 *
+	 * @param providerName   the authentication provider; returns empty if {@code null}
+	 * @param providerUserId the provider-assigned user identifier; returns empty if {@code null}
+	 * @return an Optional containing the matching user, or empty if not found or inputs are null
+	 */
 	@Transactional(readOnly = true)
 	public Optional<AppUser> getUserByProviderNameAndProviderUserId(AuthProviderName providerName,
 			String providerUserId) {

@@ -15,6 +15,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Maps an {@link ActivityTag} to its provider-specific tag identifier for a given
+ * {@link com.asialocalguide.gateway.core.domain.BookingProvider}.
+ *
+ * <p>Allows the gateway to translate internal activity tags to the tag IDs expected
+ * by each external booking provider.
+ */
 @Entity
 @Getter
 @NoArgsConstructor
@@ -39,6 +46,12 @@ public class ActivityTagProviderMapping {
 	@NotEmpty
 	private String providerActivityTagId;
 
+	/**
+	 * @param activityTag           the internal activity tag; must not be {@code null}
+	 * @param provider              the booking provider this mapping belongs to; must not be {@code null}
+	 * @param providerActivityTagId the provider's own tag identifier; must not be {@code null}
+	 * @throws IllegalArgumentException if any argument is {@code null}
+	 */
 	public ActivityTagProviderMapping(ActivityTag activityTag, BookingProvider provider, String providerActivityTagId) {
 		if (activityTag == null || provider == null || providerActivityTagId == null) {
 			throw new IllegalArgumentException(

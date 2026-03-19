@@ -14,13 +14,36 @@ import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 
+/**
+ * ByteBuddy build-time {@link Plugin} that instruments record constructors annotated with
+ * Jakarta Bean Validation constraints.
+ *
+ * <p>For each matching constructor, the plugin prepends a call to
+ * {@link RecordValidationInterceptor#validate} so that constraint violations are caught
+ * at object creation rather than later in the call stack.
+ */
 public class RecordValidationPlugin implements Plugin {
 
+	/**
+	 * Returns {@code true} for types that declare at least one constrained constructor.
+	 *
+	 * @param target the type being inspected
+	 * @return {@code true} if the type should be instrumented
+	 */
 	@Override
 	public boolean matches(TypeDescription target) {
 		return target.getDeclaredMethods().stream().anyMatch(m -> m.isConstructor() && isConstrained(m));
 	}
 
+	/**
+	 * Instruments all constrained constructors of the given type to delegate to
+	 * {@link RecordValidationInterceptor} after the super constructor call.
+	 *
+	 * @param builder           the ByteBuddy type builder
+	 * @param typeDescription   the type being transformed
+	 * @param classFileLocator  locator for class file resources
+	 * @return the modified builder
+	 */
 	@Override
 	public Builder<?> apply(Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
 		return builder.constructor(this::isConstrained)

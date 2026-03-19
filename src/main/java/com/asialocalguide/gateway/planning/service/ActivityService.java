@@ -21,6 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service for managing {@link Activity} entities.
+ *
+ * <p>Handles lookups by provider name and ID, persistence of new activities, and the caching
+ * workflow that fetches missing activities from registered {@link FetchActivityStrategy} implementations.
+ */
 @Service
 @Slf4j
 public class ActivityService {
@@ -33,6 +39,12 @@ public class ActivityService {
 
 	private final List<FetchActivityStrategy> fetchActivityStrategies;
 
+	/**
+	 * @param activityRepository       repository for activity persistence and lookups
+	 * @param bookingProviderService   service for resolving booking provider entities by name
+	 * @param languageService          service for retrieving all supported languages
+	 * @param fetchActivityStrategies  registered strategies for fetching activities from providers
+	 */
 	public ActivityService(ActivityRepository activityRepository, BookingProviderService bookingProviderService,
 			LanguageService languageService, List<FetchActivityStrategy> fetchActivityStrategies) {
 		this.activityRepository = activityRepository;
@@ -41,6 +53,14 @@ public class ActivityService {
 		this.fetchActivityStrategies = fetchActivityStrategies;
 	}
 
+	/**
+	 * Returns the subset of the given activity IDs that are already persisted for the provider.
+	 *
+	 * @param providerName the booking provider
+	 * @param activityIds  provider-specific IDs to check; must not be {@code null} or empty
+	 * @return set of already-persisted IDs; never {@code null}
+	 * @throws IllegalArgumentException if {@code providerName} or {@code activityIds} is null/empty
+	 */
 	public Set<String> findExistingIdsByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
 		if (providerName == null || activityIds == null || activityIds.isEmpty()) {
 			throw new IllegalArgumentException("Provider name or activity IDs cannot be null or empty");
@@ -48,6 +68,14 @@ public class ActivityService {
 		return activityRepository.findExistingIdsByProviderNameAndIds(providerName, activityIds);
 	}
 
+	/**
+	 * Returns all persisted activities matching the given provider and IDs.
+	 *
+	 * @param providerName the booking provider
+	 * @param activityIds  provider-specific IDs to retrieve; must not be {@code null} or empty
+	 * @return set of matching activities; never {@code null}
+	 * @throws IllegalArgumentException if {@code providerName} or {@code activityIds} is null/empty
+	 */
 	public Set<Activity> findActivitiesByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
 		if (providerName == null || activityIds == null || activityIds.isEmpty()) {
 			throw new IllegalArgumentException("Provider name or activity IDs cannot be null or empty");
@@ -56,6 +84,13 @@ public class ActivityService {
 		return activityRepository.findActivitiesByProviderNameAndIds(providerName, activityIds);
 	}
 
+	/**
+	 * Persists the given list of activities.
+	 *
+	 * @param activities activities to save; must not be {@code null} or empty
+	 * @return the saved entities
+	 * @throws IllegalArgumentException if {@code activities} is null or empty
+	 */
 	public List<Activity> saveAll(List<Activity> activities) {
 		if (activities == null || activities.isEmpty()) {
 			throw new IllegalArgumentException("Activities cannot be null or empty");
@@ -64,6 +99,17 @@ public class ActivityService {
 		return activityRepository.saveAll(activities);
 	}
 
+	/**
+	 * Fetches and caches any activities not yet stored for the given provider-to-ID mapping.
+	 *
+	 * <p>For each provider, determines which IDs are new (not yet cached), fetches their data
+	 * via the matching {@link FetchActivityStrategy}, converts them to {@link Activity} entities,
+	 * and saves them. Per-provider errors are logged and do not abort the overall operation.
+	 *
+	 * @param providerNameToId map of provider name to the set of activity IDs to check and cache;
+	 *                         must not be {@code null} or empty
+	 * @throws ActivityCachingException if the input is invalid or no matching strategies are found
+	 */
 	@Transactional
 	public void cacheNewActivitiesByProvider(Map<BookingProviderName, Set<String>> providerNameToId) {
 

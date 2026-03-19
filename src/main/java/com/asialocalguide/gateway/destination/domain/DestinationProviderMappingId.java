@@ -8,6 +8,10 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Composite primary key for {@link DestinationProviderMapping}, combining a destination UUID
+ * and a booking provider ID.
+ */
 @Embeddable
 @NoArgsConstructor
 @Getter
@@ -18,6 +22,11 @@ public class DestinationProviderMappingId implements Serializable {
 	@Column(name = "booking_provider_id")
 	private Long bookingProviderId;
 
+	/**
+	 * @param destinationId     the UUID of the destination; must not be {@code null}
+	 * @param bookingProviderId the ID of the booking provider; must not be {@code null}
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
 	public DestinationProviderMappingId(UUID destinationId, Long bookingProviderId) {
 		if (destinationId == null || bookingProviderId == null) {
 			throw new IllegalArgumentException(

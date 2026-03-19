@@ -11,6 +11,11 @@ import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.validator.constraints.URL;
 
+/**
+ * JPA entity representing a cover image for an {@link Activity}.
+ *
+ * <p>Images are owned by {@code Activity} and removed via orphan removal when detached.
+ */
 @Entity
 @NoArgsConstructor
 @Getter
@@ -37,6 +42,12 @@ public class ActivityImage extends BaseEntity {
 	@JdbcType(PostgreSQLEnumJdbcType.class)
 	private ImageType type;
 
+	/**
+	 * @param height pixel height of the image; must be positive
+	 * @param width  pixel width of the image; must be positive
+	 * @param url    publicly accessible image URL; must be a valid non-blank URL
+	 * @param type   the intended display context (desktop or mobile); must not be {@code null}
+	 */
 	public ActivityImage(Integer height, Integer width, String url, ImageType type) {
 		this.height = height;
 		this.width = width;

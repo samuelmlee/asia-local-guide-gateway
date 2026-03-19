@@ -28,6 +28,17 @@ import com.asialocalguide.gateway.destination.repository.DestinationRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service responsible for persisting destination data ingested from external booking providers.
+ *
+ * <p>Handles two cases separately:
+ * <ul>
+ *   <li><b>New destinations</b> – creates full {@link Destination} entities with translations
+ *       and a provider mapping, then saves them in batch.</li>
+ *   <li><b>Existing destinations</b> – adds a new {@link DestinationProviderMapping} to
+ *       destinations that are already known but not yet mapped to the given provider.</li>
+ * </ul>
+ */
 @Service
 @Slf4j
 public class DestinationPersistenceService {
@@ -37,6 +48,12 @@ public class DestinationPersistenceService {
 	private final BookingProviderService bookingProviderService;
 	private final LanguageService languageService;
 
+	/**
+	 * @param destinationRepository  repository for saving and loading destinations
+	 * @param countryService         service for looking up countries by ISO code
+	 * @param bookingProviderService service for resolving the booking provider entity
+	 * @param languageService        service for loading supported languages
+	 */
 	public DestinationPersistenceService(DestinationRepository destinationRepository, CountryService countryService,
 			BookingProviderService bookingProviderService, LanguageService languageService) {
 		this.destinationRepository = destinationRepository;

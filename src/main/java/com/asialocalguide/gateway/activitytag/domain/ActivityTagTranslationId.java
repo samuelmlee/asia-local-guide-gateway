@@ -8,6 +8,10 @@ import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Composite primary key for {@link ActivityTagTranslation}, combining an activity tag ID
+ * and a language ID.
+ */
 @NoArgsConstructor
 @Embeddable
 @Getter
@@ -18,6 +22,11 @@ public class ActivityTagTranslationId implements Serializable {
 	@Column(name = "language_id")
 	private Long languageId;
 
+	/**
+	 * @param activityTagId the ID of the associated activity tag; must not be {@code null}
+	 * @param languageId    the ID of the associated language; must not be {@code null}
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
 	public ActivityTagTranslationId(Long activityTagId, Long languageId) {
 		if (activityTagId == null || languageId == null) {
 			throw new IllegalArgumentException(

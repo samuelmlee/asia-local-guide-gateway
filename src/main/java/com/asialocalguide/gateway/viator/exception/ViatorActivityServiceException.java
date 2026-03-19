@@ -1,13 +1,21 @@
 package com.asialocalguide.gateway.viator.exception;
 
+/**
+ * Thrown when fetching or processing Viator activity data fails in the service layer.
+ */
 public class ViatorActivityServiceException extends RuntimeException {
 
-	// Constructor with a specific error message
+	/**
+	 * @param message description of the service failure
+	 */
 	public ViatorActivityServiceException(String message) {
 		super(message);
 	}
 
-	// Constructor with a specific cause
+	/**
+	 * @param message description of the service failure
+	 * @param cause   the underlying exception
+	 */
 	public ViatorActivityServiceException(String message, Throwable cause) {
 		super(message, cause);
 	}

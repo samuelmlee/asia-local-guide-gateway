@@ -7,6 +7,13 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * JPA entity holding the localized title and description for an {@link Activity}.
+ *
+ * <p>The composite key {@link ActivityTranslationId} combines the activity ID and language ID.
+ * Constructing an instance automatically registers it with the parent activity via
+ * {@link Activity#addTranslation(ActivityTranslation)}.
+ */
 @Getter
 @Entity
 @NoArgsConstructor
@@ -28,6 +35,15 @@ public class ActivityTranslation {
 
 	private String description;
 
+	/**
+	 * Creates a translation and registers it with the parent activity.
+	 *
+	 * @param activity    the owning activity; must not be {@code null}
+	 * @param language    the language of this translation; must not be {@code null}
+	 * @param title       the localized title; must not be {@code null}
+	 * @param description the localized description; may be {@code null}
+	 * @throws IllegalArgumentException if {@code activity}, {@code language}, or {@code title} is {@code null}
+	 */
 	public ActivityTranslation(Activity activity, Language language, String title, String description) {
 		if (activity == null || language == null || title == null) {
 			throw new IllegalArgumentException("Activity, Language or title cannot be null");

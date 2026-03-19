@@ -4,12 +4,25 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Utility class providing a static lookup from country English name to its ISO 3166-1 alpha-2 code.
+ *
+ * <p>The mapping covers all standard countries plus select constituent nations of the UK
+ * (England, Wales, Scotland, Northern Ireland) using custom codes.
+ */
 public class Iso2CodeLookupMap {
 
 	private static final Map<String, String> finalMap;
 
+	/**
+	 * Returns the ISO 3166-1 alpha-2 code for the given country name, or {@code null}
+	 * if the name is blank or not found in the lookup map.
+	 *
+	 * @param country the English country name
+	 * @return the two-letter ISO code, or {@code null} if not found
+	 */
 	public static String getIso2Code(String country) {
-		if (country == null || country.isEmpty()) {
+		if (country == null || country.isBlank()) {
 			return null;
 		}
 		return finalMap.get(country);

@@ -11,6 +11,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 
+/**
+ * Represents a country identified by its ISO 3166-1 alpha-2 code.
+ *
+ * <p>Countries own a collection of {@link CountryTranslation} entries providing
+ * localised names and implement {@link Translatable} for uniform name resolution.
+ */
 @Entity
 @NoArgsConstructor
 public class Country implements Translatable {
@@ -29,6 +35,10 @@ public class Country implements Translatable {
 	@Setter
 	private String iso2Code;
 
+	/**
+	 * @param iso2Code the ISO 3166-1 alpha-2 country code; must be exactly 2 characters and not {@code null}
+	 * @throws IllegalArgumentException if the code is {@code null} or not exactly 2 characters long
+	 */
 	public Country(String iso2Code) {
 		if (iso2Code == null || iso2Code.length() != 2) {
 			throw new IllegalArgumentException("ISO2 code must be 2 characters long");
@@ -37,6 +47,12 @@ public class Country implements Translatable {
 		this.iso2Code = iso2Code;
 	}
 
+	/**
+	 * Adds a localised name translation to this country.
+	 *
+	 * @param translation the translation to add; must not be {@code null}
+	 * @throws IllegalArgumentException if {@code translation} is {@code null}
+	 */
 	public void addTranslation(CountryTranslation translation) {
 		if (translation == null) {
 			throw new IllegalArgumentException("Translation cannot be null");
@@ -49,6 +65,12 @@ public class Country implements Translatable {
 
 	/*
 	 * Method needs the Language entity in CountryTranslation to be eagerly loaded.
+	 */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>Requires the {@link com.asialocalguide.gateway.core.domain.Language} entity inside
+	 * each {@link CountryTranslation} to be eagerly loaded to avoid lazy-loading issues.
 	 */
 	@Override
 	public Optional<String> getTranslation(LanguageCode languageCode) {

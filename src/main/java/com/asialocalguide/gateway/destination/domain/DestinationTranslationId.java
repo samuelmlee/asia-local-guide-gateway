@@ -9,6 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Composite primary key for {@link DestinationTranslation}, combining a destination UUID
+ * and a language ID.
+ */
 @NoArgsConstructor
 @Embeddable
 @Getter
@@ -20,6 +24,11 @@ public class DestinationTranslationId implements Serializable {
 	@Column(name = "language_id")
 	private Long languageId;
 
+	/**
+	 * @param destinationId the UUID of the destination; must not be {@code null}
+	 * @param languageId    the ID of the language; must not be {@code null}
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
 	public DestinationTranslationId(UUID destinationId, Long languageId) {
 		if (destinationId == null || languageId == null) {
 			throw new IllegalArgumentException(

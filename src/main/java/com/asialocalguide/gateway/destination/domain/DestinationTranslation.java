@@ -8,6 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Stores the localized name of a {@link Destination} for a specific language.
+ *
+ * <p>The composite key is formed by the destination UUID and the language ID,
+ * represented by {@link DestinationTranslationId}.
+ */
 @Entity
 @NoArgsConstructor
 public class DestinationTranslation {
@@ -31,6 +37,12 @@ public class DestinationTranslation {
 	@Getter
 	private String name;
 
+	/**
+	 * @param destination the destination this translation belongs to; must not be {@code null}
+	 * @param language    the language of the translation; must not be {@code null}
+	 * @param name        the localized destination name; must not be {@code null}
+	 * @throws IllegalArgumentException if any argument is {@code null}
+	 */
 	public DestinationTranslation(Destination destination, Language language, String name) {
 		if (destination == null || language == null || name == null) {
 			throw new IllegalArgumentException(String

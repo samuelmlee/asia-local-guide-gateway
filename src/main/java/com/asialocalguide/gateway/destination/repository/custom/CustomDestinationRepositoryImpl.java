@@ -15,15 +15,30 @@ import com.asialocalguide.gateway.destination.domain.QDestination;
 import com.asialocalguide.gateway.destination.domain.QDestinationTranslation;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+/**
+ * QueryDSL-based implementation of {@link CustomDestinationRepository}.
+ *
+ * <p>Performs a single query with multiple fetch joins to load the destination's translations,
+ * country, and country translations in one round trip, preventing lazy-loading in callers.
+ */
 @Repository
 public class CustomDestinationRepositoryImpl implements CustomDestinationRepository {
 
 	private final JPAQueryFactory queryFactory;
 
+	/**
+	 * @param queryFactory the QueryDSL factory used to build and execute JPQL queries
+	 */
 	public CustomDestinationRepositoryImpl(JPAQueryFactory queryFactory) {
 		this.queryFactory = queryFactory;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>Filters by destination type ({@code CITY} or {@code REGION}) and performs a
+	 * case-insensitive substring match on the translation name.
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public List<Destination> findCityOrRegionByNameWithEagerTranslations(LanguageCode languageCode, String name) {

@@ -7,6 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Embeddable value object representing a geographic point on Earth.
+ *
+ * <p>Latitude must be within {@code [-90, 90]} and longitude within {@code [-180, 180]}.
+ */
 @Embeddable
 @NoArgsConstructor
 @Getter
@@ -22,6 +27,11 @@ public class Coordinates {
 	@DecimalMax(value = "180.0")
 	private Double longitude;
 
+	/**
+	 * @param latitude  the latitude in decimal degrees; must be in {@code [-90, 90]} and not {@code null}
+	 * @param longitude the longitude in decimal degrees; must be in {@code [-180, 180]} and not {@code null}
+	 * @throws IllegalArgumentException if either value is {@code null} or out of range
+	 */
 	public Coordinates(Double latitude, Double longitude) {
 		if (latitude == null) {
 			throw new IllegalArgumentException("Latitude cannot be null");

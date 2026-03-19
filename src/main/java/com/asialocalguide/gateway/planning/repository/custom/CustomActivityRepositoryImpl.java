@@ -9,14 +9,23 @@ import com.asialocalguide.gateway.planning.domain.Activity;
 import com.asialocalguide.gateway.planning.domain.QActivity;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+/**
+ * QueryDSL implementation of {@link CustomActivityRepository}.
+ */
 public class CustomActivityRepositoryImpl implements CustomActivityRepository {
 
 	private final JPAQueryFactory queryFactory;
 
+	/**
+	 * @param queryFactory the QueryDSL JPA query factory
+	 */
 	public CustomActivityRepositoryImpl(JPAQueryFactory queryFactory) {
 		this.queryFactory = queryFactory;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> findExistingIdsByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {
@@ -28,6 +37,9 @@ public class CustomActivityRepositoryImpl implements CustomActivityRepository {
 				.fetch());
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	@Transactional(readOnly = true)
 	public Set<Activity> findActivitiesByProviderNameAndIds(BookingProviderName providerName, Set<String> activityIds) {

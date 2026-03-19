@@ -6,6 +6,13 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import org.hibernate.validator.constraints.URL;
 
+/**
+ * Viator API product detail response, containing the full localized data for a single activity.
+ *
+ * <p>Only cover images are persisted — use {@link #getCoverImage(java.util.function.Predicate)}
+ * to extract the best matching variant. {@link #getDurationMinutes()} returns the effective
+ * duration regardless of fixed vs. variable duration type.
+ */
 public record ViatorActivityDetailDTO(@NotBlank String productCode, @NotBlank String language, @NotBlank String title,
 		@NotBlank String description, @NotEmpty List<ImageDTO> images, List<Integer> tags,
 		List<DestinationDTO> destinations, @NotNull ItineraryDTO itinerary, @URL String productUrl,
@@ -35,6 +42,12 @@ public record ViatorActivityDetailDTO(@NotBlank String productCode, @NotBlank St
 	public record ReviewCountTotalDTO(int rating, int count) {
 	}
 
+	/**
+	 * Returns the effective duration in minutes, preferring fixed duration over variable maximum.
+	 * Returns {@code 0} if neither is set.
+	 *
+	 * @return duration in minutes, or {@code 0} if unavailable
+	 */
 	public int getDurationMinutes() {
 
 		ViatorActivityDetailDTO.DurationDTO duration = itinerary().duration();
@@ -50,6 +63,12 @@ public record ViatorActivityDetailDTO(@NotBlank String productCode, @NotBlank St
 		return 0;
 	}
 
+	/**
+	 * Returns the first cover image variant matching the given predicate.
+	 *
+	 * @param imageFilter a predicate to select the desired variant (e.g. by dimensions)
+	 * @return the matching variant, or empty if no cover image or no variant matches
+	 */
 	public Optional<ImageVariantDTO> getCoverImage(Predicate<ImageVariantDTO> imageFilter) {
 		if (images() == null || images().isEmpty()) {
 			return Optional.empty();

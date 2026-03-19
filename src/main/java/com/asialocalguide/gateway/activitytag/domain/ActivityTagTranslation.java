@@ -13,6 +13,12 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Stores the localized name and prompt text for an {@link ActivityTag} in a specific language.
+ *
+ * <p>The composite key is formed by the activity tag ID and the language ID, represented
+ * by {@link ActivityTagTranslationId}.
+ */
 @Entity
 @NoArgsConstructor
 @Getter
@@ -35,6 +41,13 @@ public class ActivityTagTranslation {
 	@NotEmpty
 	private String promptText;
 
+	/**
+	 * @param activityTag the parent activity tag; must not be {@code null}
+	 * @param language    the language this translation is for; must not be {@code null}
+	 * @param name        the localized display name; must not be {@code null}
+	 * @param promptText  the localized prompt text; may be {@code null}
+	 * @throws IllegalArgumentException if {@code activityTag}, {@code language}, or {@code name} is {@code null}
+	 */
 	public ActivityTagTranslation(ActivityTag activityTag, Language language, String name, String promptText) {
 		if (activityTag == null || language == null || name == null) {
 			throw new IllegalArgumentException(String

@@ -7,8 +7,16 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
+/**
+ * {@link ClientHttpRequestInterceptor} that logs the HTTP method and URI of every
+ * outbound Viator API request at INFO level.
+ */
 @Slf4j
 class ViatorRequestInterceptor implements ClientHttpRequestInterceptor {
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
 			throws IOException {

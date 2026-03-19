@@ -6,6 +6,12 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Links an {@link AppUser} to an external authentication provider.
+ *
+ * <p>Stores the provider-assigned user ID (e.g. a Firebase UID) alongside the
+ * composite key formed by the app user's UUID and the provider name.
+ */
 @Getter
 @Entity
 @NoArgsConstructor
@@ -21,6 +27,12 @@ public class UserAuth {
 	@NotEmpty
 	private String providerUserId;
 
+	/**
+	 * @param appUser          the application user this auth entry belongs to; must not be {@code null}
+	 * @param authProviderName the authentication provider; must not be {@code null}
+	 * @param providerUserId   the user identifier assigned by the provider; must not be {@code null}
+	 * @throws IllegalArgumentException if any argument is {@code null}
+	 */
 	public UserAuth(AppUser appUser, AuthProviderName authProviderName, String providerUserId) {
 		if (appUser == null || authProviderName == null || providerUserId == null) {
 			throw new IllegalArgumentException("User, AuthProviderName or providerUserId cannot be null");

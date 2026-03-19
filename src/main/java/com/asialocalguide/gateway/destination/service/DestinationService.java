@@ -15,6 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for destination retrieval and synchronisation.
+ *
+ * <p>Provides autocomplete search across city and region destinations with localized results,
+ * and coordinates full synchronisation of destinations from external booking providers.
+ */
 @Service
 @Slf4j
 public class DestinationService {
@@ -25,6 +31,11 @@ public class DestinationService {
 
 	private final DestinationRepository destinationRepository;
 
+	/**
+	 * @param destinationProviders      all registered {@link DestinationProvider} implementations
+	 * @param destinationSortingService service that triages ingested destinations into new/existing buckets
+	 * @param destinationRepository     repository for destination lookups
+	 */
 	public DestinationService(List<DestinationProvider> destinationProviders,
 			DestinationSortingService destinationSortingService, DestinationRepository destinationRepository) {
 		this.destinationProviders = destinationProviders;
@@ -32,10 +43,25 @@ public class DestinationService {
 		this.destinationRepository = destinationRepository;
 	}
 
+	/**
+	 * Returns the destination with the given ID, if one exists.
+	 *
+	 * @param id the UUID of the destination to retrieve
+	 * @return an Optional containing the matching destination, or empty if not found
+	 */
 	public Optional<Destination> findDestinationById(UUID id) {
 		return destinationRepository.findById(id);
 	}
 
+	/**
+	 * Triggers a full synchronisation of destinations from the given booking provider.
+	 *
+	 * <p>Fetches all raw destinations from the provider, then delegates to
+	 * {@link DestinationSortingService} to triage and persist them.
+	 *
+	 * @param providerName the provider to synchronise; must not be {@code null}
+	 * @throws DestinationIngestionException if no registered provider matches the given name
+	 */
 	public void syncDestinationsForProvider(BookingProviderName providerName) {
 
 		Objects.requireNonNull(providerName);
@@ -52,6 +78,15 @@ public class DestinationService {
 		destinationSortingService.triageRawDestinations(input);
 	}
 
+	/**
+	 * Returns localized destination autocomplete suggestions matching the given query string.
+	 *
+	 * <p>Only city and region destinations are considered. Results are filtered to the
+	 * language resolved from the current request locale, falling back to English.
+	 *
+	 * @param query the search substring; returns empty list if blank or {@code null}
+	 * @return list of matching destination DTOs; never {@code null}
+	 */
 	public List<DestinationDTO> getAutocompleteSuggestions(String query) {
 
 		if (query == null || query.isBlank()) {

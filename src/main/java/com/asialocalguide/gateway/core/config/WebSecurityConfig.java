@@ -12,6 +12,17 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/**
+ * Spring Security configuration for the gateway application.
+ *
+ * <p>Configures the security filter chain with:
+ * <ul>
+ *   <li>CSRF disabled (stateless JWT-based API)</li>
+ *   <li>CORS configured from the {@code app.cors.allowed-origins} property</li>
+ *   <li>Per-endpoint authorization rules</li>
+ *   <li>OAuth2 JWT resource server using the injected {@link JwtConverterProvider}</li>
+ * </ul>
+ */
 @Configuration
 public class WebSecurityConfig {
 

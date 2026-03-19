@@ -11,6 +11,17 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service that triages raw destinations received from a booking provider into two buckets:
+ * <ul>
+ *   <li><b>New destinations</b> – no matching entity exists; will be created and persisted.</li>
+ *   <li><b>Existing destinations</b> – a matching entity is found by coordinates;
+ *       a new provider mapping will be added to it.</li>
+ * </ul>
+ *
+ * <p>Destinations whose country ISO code is not supported, or that already have a provider
+ * mapping for the given provider, are silently skipped.
+ */
 @Slf4j
 @Service
 public class DestinationSortingService {
@@ -20,6 +31,12 @@ public class DestinationSortingService {
 	private final DestinationProviderMappingService destinationProviderMappingService;
 	private final DestinationPersistenceService destinationPersistenceService;
 
+	/**
+	 * @param destinationRepository              repository for destination lookups by country
+	 * @param countryService                     service for retrieving valid ISO country codes
+	 * @param destinationProviderMappingService  service for checking existing provider mappings
+	 * @param destinationPersistenceService      service for persisting new and updated destinations
+	 */
 	public DestinationSortingService(DestinationRepository destinationRepository, CountryService countryService,
 			DestinationProviderMappingService destinationProviderMappingService,
 			DestinationPersistenceService destinationPersistenceService) {
@@ -30,6 +47,16 @@ public class DestinationSortingService {
 		this.destinationPersistenceService = destinationPersistenceService;
 	}
 
+	/**
+	 * Triages and persists raw destinations from the given ingestion input.
+	 *
+	 * <p>Filters out destinations already mapped for the provider, groups the remainder by
+	 * country ISO code, matches against existing destinations by coordinates, and delegates
+	 * persistence of new and updated destinations to {@link DestinationPersistenceService}.
+	 *
+	 * @param ingestionInput the ingestion data containing provider name and raw destinations;
+	 *                       must not be {@code null} and its fields must not be {@code null}
+	 */
 	public void triageRawDestinations(DestinationIngestionInput ingestionInput) {
 		Objects.requireNonNull(ingestionInput);
 		Objects.requireNonNull(ingestionInput.providerName());

@@ -45,6 +45,13 @@ import com.asialocalguide.gateway.planning.repository.PlanningRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service for generating and persisting travel plannings.
+ *
+ * <p>Coordinates between {@link FetchPlanningDataStrategy} implementations to retrieve
+ * provider activity data, invokes the constraint-programming scheduler, and handles the full
+ * lifecycle of persisting a confirmed {@link Planning} including activity caching.
+ */
 @Service
 @Slf4j
 public class PlanningService {
@@ -57,6 +64,12 @@ public class PlanningService {
 
 	private final PlanningRepository planningRepository;
 
+	/**
+	 * @param fetchPlanningDataStrategies all registered provider strategies for fetching planning data
+	 * @param appUserService              service for resolving the app user
+	 * @param activityService             service for caching and retrieving activities
+	 * @param planningRepository          repository for persisting and querying plannings
+	 */
 	public PlanningService(List<FetchPlanningDataStrategy> fetchPlanningDataStrategies, AppUserService appUserService,
 			ActivityService activityService, PlanningRepository planningRepository) {
 		this.fetchPlanningDataStrategies = fetchPlanningDataStrategies;
@@ -65,6 +78,15 @@ public class PlanningService {
 		this.planningRepository = planningRepository;
 	}
 
+	/**
+	 * Generates a suggested day-by-day activity schedule for the given request.
+	 *
+	 * <p>Fetches planning data from all registered providers, uses the first successful result,
+	 * runs the CP-SAT scheduler, and maps the solution to a list of {@link DayPlanDTO}s.
+	 *
+	 * @param request the planning parameters (dates, destination, activity tags)
+	 * @return ordered list of day plans; empty if no provider data is available
+	 */
 	public List<DayPlanDTO> generateDayPlans(PlanningRequestDTO request) {
 
 		LanguageCode languageCode = getLanguageCodeFromContext();
@@ -158,6 +180,19 @@ public class PlanningService {
 		return date.atTime(time);
 	}
 
+	/**
+	 * Persists a confirmed planning for the authenticated user.
+	 *
+	 * <p>Validates the request, caches any new activities, builds the planning entity from the
+	 * request, and saves it. Throws {@link PlanningCreationException} on any error.
+	 *
+	 * @param planningRequest  the confirmed planning data; must not be {@code null}
+	 * @param authProviderName the authentication provider identifying the user; must not be {@code null}
+	 * @param userProviderId   the provider-specific user ID; must not be {@code null}
+	 * @return the persisted {@link Planning} entity
+	 * @throws PlanningCreationException if input is invalid, the user is not found,
+	 *                                   or persistence fails
+	 */
 	@Transactional
 	public Planning savePlanning(PlanningCreateRequestDTO planningRequest, AuthProviderName authProviderName,
 			String userProviderId) {
@@ -378,6 +413,14 @@ public class PlanningService {
 		}
 	}
 
+	/**
+	 * Returns summary information for all plannings belonging to the authenticated user.
+	 *
+	 * @param providerName   the authentication provider identifying the user
+	 * @param userProviderId the provider-specific user ID
+	 * @return list of planning summaries; never {@code null}
+	 * @throws com.asialocalguide.gateway.appuser.exception.AppUserNotFoundException if the user is not found
+	 */
 	@Transactional
 	public List<PlanningSummaryDTO> getUserPlannings(AuthProviderName providerName, String userProviderId) {
 

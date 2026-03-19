@@ -3,6 +3,12 @@ package com.asialocalguide.gateway.planning.domain;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 
+/**
+ * Enum of one-hour time slots covering a full 24-hour period, starting at 06:00.
+ *
+ * <p>Each constant carries an {@code index} (used as an array position in availability matrices),
+ * and the start/end hour and minute of the slot.
+ */
 @Getter
 public enum OneHourTimeSlot {
 	SLOT_6AM(0, 6, 0, 6, 59), SLOT_7AM(1, 7, 0, 7, 59), SLOT_8AM(2, 8, 0, 8, 59), SLOT_9AM(3, 9, 0, 9, 59),
@@ -26,6 +32,13 @@ public enum OneHourTimeSlot {
 		this.endMinute = endMinute;
 	}
 
+	/**
+	 * Returns the slot index for the given {@code "HH:mm"} time string, or {@code -1} if
+	 * the string is blank, malformed, or does not fall within any defined slot.
+	 *
+	 * @param time a time string in {@code "HH:mm"} format
+	 * @return the zero-based slot index, or {@code -1} if not found
+	 */
 	public static int getIndexFromTimeString(String time) {
 		if (time == null || time.isEmpty()) {
 			return -1;
@@ -49,6 +62,13 @@ public enum OneHourTimeSlot {
 		return -1;
 	}
 
+	/**
+	 * Converts a duration in minutes to the number of one-hour time slots it occupies,
+	 * rounding up. Returns at least {@code 1}.
+	 *
+	 * @param durationInMinutes duration in minutes
+	 * @return number of slots occupied (minimum 1)
+	 */
 	public static int getDurationInSlots(int durationInMinutes) {
 		// Occupies one slot per hour, rounded up
 		return Math.max(1, (int) Math.ceil((double) durationInMinutes / 60));

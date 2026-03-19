@@ -2,6 +2,11 @@ package com.asialocalguide.gateway.viator.dto;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/**
+ * Sort field options for Viator product search requests.
+ *
+ * <p>The enum name is used as the JSON value via {@link com.fasterxml.jackson.annotation.JsonValue}.
+ */
 public enum ViatorActivitySortingType {
 	DEFAULT, PRICE, TRAVELER_RATING, ITINERARY_DURATION, DATE_ADDED;
 

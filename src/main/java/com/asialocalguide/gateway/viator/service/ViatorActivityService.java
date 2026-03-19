@@ -46,6 +46,13 @@ import com.asialocalguide.gateway.viator.util.ViatorActivityAdapter;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * {@link ActivityProvider} implementation backed by the Viator API.
+ *
+ * <p>Fetches activity search results, availability schedules, and detailed multi-language
+ * activity data from Viator, then maps them to provider-agnostic domain objects.
+ * Availability and detail fetches use virtual-thread parallelism for throughput.
+ */
 @Service
 @Slf4j
 public class ViatorActivityService implements ActivityProvider {
@@ -58,15 +65,29 @@ public class ViatorActivityService implements ActivityProvider {
 
 	private final ViatorClient viatorClient;
 
+	/**
+	 * @param viatorClient the Viator HTTP client
+	 */
 	public ViatorActivityService(ViatorClient viatorClient) {
 		this.viatorClient = viatorClient;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public BookingProviderName getProviderName() {
 		return providerName;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>Searches for activities matching the request, fetches their availability schedules
+	 * in parallel, and maps the combined data to a {@link ProviderPlanningData}.
+	 *
+	 * @throws ViatorActivityServiceException if any step in the pipeline fails
+	 */
 	@Override
 	public ProviderPlanningData fetchProviderPlanningData(ProviderPlanningRequest request) {
 		validatePlanningRequest(request);
@@ -91,6 +112,14 @@ public class ViatorActivityService implements ActivityProvider {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>Fetches full activity detail for each ID across all supported languages in parallel,
+	 * using English as the base and other languages as additional translations.
+	 *
+	 * @throws ViatorActivityServiceException if the fetch fails or no English activities are found
+	 */
 	@Override
 	public List<CommonPersistableActivity> fetchProviderActivities(Set<String> activityIds) {
 		if (activityIds == null || activityIds.isEmpty()) {

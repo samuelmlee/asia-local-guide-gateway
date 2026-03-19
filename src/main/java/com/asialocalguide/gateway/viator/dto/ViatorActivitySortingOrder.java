@@ -3,6 +3,9 @@ package com.asialocalguide.gateway.viator.dto;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
+/**
+ * Sort direction options for Viator product search requests.
+ */
 @Getter
 public enum ViatorActivitySortingOrder {
 	ASCENDING("ASCENDING"), DESCENDING("DESCENDING");
