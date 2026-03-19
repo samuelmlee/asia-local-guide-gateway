@@ -13,7 +13,7 @@ import com.asialocalguide.gateway.core.domain.BookingProviderName;
 import com.asialocalguide.gateway.destination.dto.DestinationDTO;
 import com.asialocalguide.gateway.destination.service.DestinationService;
 
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * REST controller for destination-related endpoints.
@@ -43,7 +43,7 @@ public class DestinationController {
 	 * @return list of matching destination DTOs; never {@code null}
 	 */
 	@GetMapping("/autocomplete")
-	public List<DestinationDTO> getAutocompleteSuggestions(@RequestParam(required = true) @Size(min = 1) String query) {
+	public List<DestinationDTO> getAutocompleteSuggestions(@RequestParam(required = true) @NotBlank String query) {
 		return destinationService.getAutocompleteSuggestions(query);
 	}
 

@@ -22,7 +22,7 @@ public class Iso2CodeLookupMap {
 	 * @return the two-letter ISO code, or {@code null} if not found
 	 */
 	public static String getIso2Code(String country) {
-		if (country == null || country.isEmpty()) {
+		if (country == null || country.isBlank()) {
 			return null;
 		}
 		return finalMap.get(country);

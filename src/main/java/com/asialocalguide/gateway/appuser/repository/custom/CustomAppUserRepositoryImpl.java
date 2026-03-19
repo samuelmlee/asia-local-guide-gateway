@@ -30,7 +30,7 @@ public class CustomAppUserRepositoryImpl implements CustomAppUserRepository {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * <p>Uses a fetch join on {@code userAuths} so the collection is populated
+	 * <p>Uses a fetch join on filtered {@code userAuths} so the collection is populated
 	 * without additional queries after this method returns.
 	 */
 	@Override
