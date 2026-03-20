@@ -14,22 +14,10 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>asia-local-guide-gateway</name>
 	<description>Activity calendar generation app</description>
-	<url />
-	<licenses>
-		<license />
-	</licenses>
-	<developers>
-		<developer />
-	</developers>
-	<scm>
-		<connection />
-		<developerConnection />
-		<tag />
-		<url />
-	</scm>
 	<properties>
 		<java.version>21</java.version>
 		<querydsl.version>5.1.0</querydsl.version>
+		<openapi-generator-maven-plugin-version>7.20.0</openapi-generator-maven-plugin-version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -227,6 +215,51 @@
 					</dependency>
 				</dependencies>
 			</plugin>
+
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>${openapi-generator-maven-plugin-version}</version>
+				<executions>
+					<execution>
+						<id>generate-planning</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>
+								${project.basedir}/src/main/resources/api/planning-api.yaml</inputSpec>
+							<output>
+								${project.build.directory}/generated-sources/openapi</output>
+							<generatorName>spring</generatorName>
+							<modelPackage>
+								com.asialocalguide.gateway.planning.dto</modelPackage>
+
+							<generateApis>false</generateApis>
+							<generateApiTests>false</generateApiTests>
+							<generateApiDocumentation>true</generateApiDocumentation>
+							<generateModels>true</generateModels>
+							<generateModelTests>false</generateModelTests>
+							<generateModelDocumentation>true</generateModelDocumentation>
+							<generateSupportingFiles>false</generateSupportingFiles>
+
+							<configOptions>
+								<dateLibrary>java8</dateLibrary>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
+								<openApiNullable>false</openApiNullable>
+								<documentationProvider>none</documentationProvider>
+								<booleanGetterPrefix>is</booleanGetterPrefix>
+								<useEnumCaseInsensitive>true</useEnumCaseInsensitive>
+								<!-- Validation -->
+								<useBeanValidation>true</useBeanValidation>
+								<performBeanValidation>true</performBeanValidation>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 

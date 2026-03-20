@@ -1,0 +1,60 @@
+openapi: 3.0.3
+info:
+  title: Asia Local Guide - Auth API
+  version: v1
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+
+  /v1/auth/check-email:
+    post:
+      tags:
+        - Auth
+      summary: Check if an email address is already registered
+      operationId: checkEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailCheckDTO"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailCheckResultDTO"
+        "400":
+          description: Invalid request body
+
+  /v1/auth/users:
+    delete:
+      tags:
+        - Auth
+      summary: Delete the authenticated provider user
+      operationId: deleteProviderUser
+      responses:
+        "200":
+          description: User deleted successfully
+        "401":
+          description: Unauthorized
+
+components:
+  schemas:
+
+    EmailCheckDTO:
+      type: object
+      properties:
+        email:
+          type: string
+
+    EmailCheckResultDTO:
+      type: object
+      properties:
+        email:
+          type: string
+        exists:
+          type: boolean

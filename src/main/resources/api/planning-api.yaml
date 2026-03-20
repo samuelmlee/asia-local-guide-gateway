@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: Asia Local Guide - Planning API
+  version: v1
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+
+  /v1/plannings:
+    get:
+      tags:
+        - Planning
+      summary: Get all plannings for the authenticated user
+      operationId: getUserPlannings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanningSummaryDTO"
+    post:
+      tags:
+        - Planning
+      summary: Save a new planning
+      operationId: savePlanning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanningCreateRequestDTO"
+      responses:
+        "201":
+          description: Planning created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanningCreatedDTO"
+        "400":
+          description: Invalid request body
+
+  /v1/plannings/generate:
+    post:
+      tags:
+        - Planning
+      summary: Generate day plans for a trip
+      operationId: generateDayPlans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanningRequestDTO"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DayPlanDTO"
+        "400":
+          description: Invalid request body
+
+components:
+  schemas:
+
+    PlanningSummaryDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    PlanningCreateRequestDTO:
+      type: object
+      required:
+        - name
+        - dayPlans
+      properties:
+        name:
+          type: string
+          minLength: 1
+        dayPlans:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateDayPlanDTO"
+          minItems: 1
+
+    PlanningCreatedDTO:
+      type: object
+      properties:
+        planningId:
+          type: string
+          format: uuid
+
+    PlanningRequestDTO:
+      type: object
+      required:
+        - destinationId
+        - startDate
+        - endDate
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        destinationId:
+          type: string
+          format: uuid
+        activityTagIds:
+          type: array
+          items:
+            type: string
+        duration:
+          type: integer
+          format: int32
+
+    CreateDayPlanDTO:
+      type: object
+      required:
+        - date
+        - activities
+      properties:
+        date:
+          type: string
+          format: date
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateDayActivityDTO"
+          minItems: 1
+
+    CreateDayActivityDTO:
+      type: object
+      required:
+        - bookingProviderName
+        - startTime
+        - endTime
+      properties:
+        productCode:
+          type: string
+          minLength: 1
+        bookingProviderName:
+          type: string
+          enum:
+            - VIATOR
+            - GET_YOUR_GUIDE
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+
+    DayPlanDTO:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayActivityDTO"
+
+    DayActivityDTO:
+      type: object
+      properties:
+        productCode:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        combinedAverageRating:
+          type: number
+          format: double
+        reviewCount:
+          type: integer
+          format: int32
+        durationMinutes:
+          type: integer
+          format: int32
+        fromPrice:
+          type: number
+          format: double
+        currency:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommonImage"
+        providerUrl:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        bookingProviderName:
+          type: string
+          enum:
+            - VIATOR
+            - GET_YOUR_GUIDE
+
+    CommonImage:
+      type: object
+      properties:
+        height:
+          type: integer
+          format: int32
+        width:
+          type: integer
+          format: int32
+        url:
+          type: string
